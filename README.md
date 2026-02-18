@@ -39,7 +39,7 @@ Le travail se base notamment sur les recherches suivantes :
 | Rôle | Nom | Contact |
 | :--- | :--- | :--- |
 | **Étudiant** | **Elie Bussod** | [Elie.Bussod@etu.unige.ch](mailto:Elie.Bussod@etu.unige.ch) |
-| **Responsable** | **Arnaud Casteigts** <br> **Pierre Leone** | [Arnaud.Casteights@unige.ch](mailto:Arnaud.Casteights@unige.ch) <br> [Pierre.Leone@unige.ch](mailto:Pierre.Leone@unige.ch) |
+| **Responsables** | **Arnaud Casteigts** <br> **Pierre Leone** | [Arnaud.Casteights@unige.ch](mailto:Arnaud.Casteights@unige.ch) <br> [Pierre.Leone@unige.ch](mailto:Pierre.Leone@unige.ch) |
 
 ---
 
