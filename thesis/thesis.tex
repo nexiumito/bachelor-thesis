@@ -1,0 +1,148 @@
+\documentclass[11pt,a4paper]{report}
+
+% --- Packages de base ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel} % Typo française
+\usepackage{graphicx}      
+\usepackage{geometry}      
+\geometry{a4paper, top=3cm, bottom=3cm, left=2.5cm, right=2.5cm}
+\usepackage{hyperref}      
+\usepackage{fancyhdr}      
+
+% --- Packages pour le design ---
+\usepackage{eso-pic}       
+\usepackage{tikz}          
+\usepackage{titlesec}      
+
+% --- Configuration des liens ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={Travail de Bachelor - Elie Bussod},
+}
+
+% --- Configuration des en-têtes et pieds de page (fancyhdr) ---
+\pagestyle{fancy}
+\fancyhf{} 
+\fancyhead[L]{\leftmark} 
+\fancyhead[R]{\thepage}  
+\renewcommand{\headrulewidth}{0.4pt} 
+\renewcommand{\footrulewidth}{0pt}   
+
+% --- Configuration des gros numéros de chapitre (titlesec) ---
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\filright} 
+  {\fontsize{80}{90}\selectfont\color{gray}\thechapter} 
+  {1ex} 
+  {\Huge\color{black}} 
+\titlespacing*{\chapter}{0pt}{10pt}{40pt}
+
+\begin{document}
+
+% =============================================================
+
+% PAGE DE GARDE
+\begin{titlepage}
+    % écusson en fond 
+    \AddToShipoutPictureBG*{
+        \begin{tikzpicture}[remember picture, overlay]
+            % position
+            \node[anchor=south east, opacity=0.15, rotate=25] 
+            at ([xshift=3.1cm, yshift=4cm]current page.south east) {
+                \includegraphics[width=1\textwidth]{images/ecusson_unige.png}
+            };
+        \end{tikzpicture}
+    }
+    
+    % logos
+    \noindent
+    \begin{minipage}[c]{0.45\textwidth}
+        \begin{flushleft}
+            \includegraphics[height=1.75cm]{images/logo_unige.png}
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.45\textwidth}
+        \begin{flushright}
+            \includegraphics[height=2.9cm]{images/logo_unige_sciences.png}
+        \end{flushright}
+    \end{minipage}
+    
+    \begin{center}
+        \vspace*{1.5cm}
+        
+        {\Large \textsc{Université de Genève}} \\[0.5cm]
+        {\large \textsc{Faculté des Sciences}} \\[0.2cm]
+        {\large Département d'Informatique} \\[2cm]
+        
+        {\large Travail de Bachelor en Sciences Informatiques} \\[1cm]
+        {\large Année académique 2025-2026} \\[2cm]
+        
+        % Titre
+        \rule{\linewidth}{0.5mm} \\[0.5cm]
+        {\huge \bfseries Programmation dynamique pour formules SAT \\[0.4cm] }
+        \rule{\linewidth}{0.5mm} \\[2.5cm]
+        
+    \end{center}
+    
+    % Auteur et Superviseurs
+    \begin{flushleft} \large
+        \textbf{Auteur :}\\
+        Elie \textsc{Bussod} \\[1cm]
+        \textbf{Superviseurs :} \\
+        Prof. Arnaud \textsc{Casteigts} \\
+        Prof. Pierre \textsc{Leone}
+    \end{flushleft}
+    
+    \vfill
+    \begin{center}
+        {\large Date de rendu : Juin 2026}
+    \end{center}
+\end{titlepage}
+
+% =============================================================
+
+
+% Résumé / Abstract (Chapitre non numéroté)
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+Bla bla abstract
+\clearpage
+
+% Table des matières
+\tableofcontents
+\clearpage
+
+% Liste des figures
+\listoffigures
+\clearpage
+
+
+% Introduction
+\chapter{Introduction}
+\label{chap:intro}
+
+\newpage
+Bla bla bla
+
+% =============================================================
+
+% Annexes
+\appendix
+\chapter{Annexes}
+\label{chap:annexes}
+\clearpage
+
+% Bibliographie
+\chapter*{Bibliographie}
+\addcontentsline{toc}{chapter}{Bibliographie}
+
+% Déclaration d'utilisation de l'IA
+\chapter*{Déclaration d'utilisation de l'IA}
+\addcontentsline{toc}{chapter}{Déclaration d'utilisation de l'IA}
+\clearpage
+
+\end{document}

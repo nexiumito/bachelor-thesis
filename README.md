@@ -47,12 +47,12 @@ Toutes les implémentations en Python et les scripts liés à ce projet se trouv
 
 ---
 
-## Auteurs & Encadrement
+## Auteur & Superviseurs :
 
 | Rôle | Nom | Contact |
 | :--- | :--- | :--- |
 | **Étudiant** | **Elie Bussod** | [Elie.Bussod@etu.unige.ch](mailto:Elie.Bussod@etu.unige.ch) |
-| **Responsables** | **Arnaud Casteigts** <br> **Pierre Leone** | [Arnaud.Casteights@unige.ch](mailto:Arnaud.Casteights@unige.ch) <br> [Pierre.Leone@unige.ch](mailto:Pierre.Leone@unige.ch) |
+| **Responsables** | **Arnaud Casteigts** <br> **Pierre Leone** | [Arnaud.Casteigts@unige.ch](mailto:Arnaud.Casteigts@unige.ch) <br> [Pierre.Leone@unige.ch](mailto:Pierre.Leone@unige.ch) |
 
 ---
 
