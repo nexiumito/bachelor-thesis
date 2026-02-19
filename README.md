@@ -15,26 +15,39 @@
 
 ---
 
-## 📖 À propos du projet
+## Sujet
 
 L'objectif principal est d'étudier et d'implémenter des approches modernes pour la résolution de formules SAT, en se concentrant spécifiquement sur la **programmation dynamique**. Le projet vise à appréhender les structures particulières de certaines formules pour optimiser la résolution de problèmes complexes comme **MAXSAT** et **#SAT** (comptage de solutions).
 
-### 🎯 Objectifs
-* Comprendre et implémenter les algorithmes décrits dans la littérature scientifique récente.
+### Objectifs
+* Comprendre et implémenter les algorithmes décrits dans la [littérature scientifique récente](doc/MaxSat.pdf).
 * Étudier les différentes approches (modernes) de ces problèmes 
-     >par ex. *Counting, Knowledge Compilation and Application, Stefan Mengel, 2021*
+     >par ex. [*Counting, Knowledge Compilation and Application, Stefan Mengel, 2021*](doc/)
 
 ---
 
-## 📚 Références Clés
+## Références Clés
 
 Le travail se base notamment sur les recherches suivantes :
 
-> **Solving #SAT and MAXSAT by dynamic programming** > *S.H. Saether, J.A. Telle, M. Vatshelle*
+> [**Solving #SAT and MAXSAT by dynamic programming**](doc/MaxSAT) <br>
+> *S.H. Saether, J.A. Telle, M. Vatshelle*
 
 ---
 
-## 👤 Auteurs & Encadrement
+## Rapport
+
+Le rapport complet détaillant l'étude, les algorithmes et les résultats du projet est disponible ici : **[Thesis](thesis/thesis.pdf)**
+
+---
+
+## Implémentation
+
+Toutes les implémentations en Python et les scripts liés à ce projet se trouvent dans le répertoire suivant : **[Code](code/)**
+
+---
+
+## Auteurs & Encadrement
 
 | Rôle | Nom | Contact |
 | :--- | :--- | :--- |
@@ -43,10 +56,20 @@ Le travail se base notamment sur les recherches suivantes :
 
 ---
 
-## 🛠️ Installation & Utilisation
+## Installation & Utilisation
 
-*(à compléter)*
+1. **Cloner le dépôt** : 
+   ```bash
+   git clone https://github.com/nexiumito/bachelor-thesis.git
+   ```
+2. **Créer un environnement Python** (sur VSCode: `^P`, `>`, `Python: Create Environment`)
+3. **Installer toutes les dépendances** : 
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```bash
-# Cloner le repo
-git clone [https://github.com/ton-username/ton-repo.git](https://github.com/ton-username/ton-repo.git)
+### Mise à jour
+
+1. `pip freeze > requirements.txt`
+
+### Utilisation
