@@ -20,9 +20,9 @@
 L'objectif principal est d'étudier et d'implémenter des approches modernes pour la résolution de formules SAT, en se concentrant spécifiquement sur la **programmation dynamique**. Le projet vise à appréhender les structures particulières de certaines formules pour optimiser la résolution de problèmes complexes comme **MAXSAT** et **#SAT** (comptage de solutions).
 
 ### Objectifs
-* Comprendre et implémenter les algorithmes décrits dans la [littérature scientifique récente](doc/MaxSat.pdf).
+* Comprendre et implémenter les algorithmes décrits dans la [littérature scientifique récente](doc/Solving_SharpSAT_and_MaxSAT_Dynamic_Programming.pdf).
 * Étudier les différentes approches (modernes) de ces problèmes 
-     >par ex. [*Counting, Knowledge Compilation and Application, Stefan Mengel, 2021*](doc/)
+     >par ex. [*Counting, Knowledge Compilation and Application, Stefan Mengel, 2021*](doc/Counting_Knowledge_Compilation_and_Application_Stefan_Mengel.pdf)
 
 ---
 
@@ -30,20 +30,20 @@ L'objectif principal est d'étudier et d'implémenter des approches modernes pou
 
 Le travail se base notamment sur les recherches suivantes :
 
-> [**Solving #SAT and MAXSAT by dynamic programming**](doc/MaxSAT) <br>
+> [**Solving #SAT and MAXSAT by dynamic programming**](doc/Solving_SharpSAT_and_MaxSAT_Dynamic_Programming.pdf) <br>
 > *S.H. Saether, J.A. Telle, M. Vatshelle*
 
 ---
 
 ## Rapport
 
-Le rapport complet détaillant l'étude, les algorithmes et les résultats du projet est disponible ici : **[Thesis](thesis/thesis.pdf)**
+Le rapport complet détaillant l'étude, les algorithmes et les résultats du projet est disponible ici : **[thesis](thesis/thesis.pdf)**
 
 ---
 
 ## Implémentation
 
-Toutes les implémentations en Python et les scripts liés à ce projet se trouvent dans le répertoire suivant : **[Code](code/)**
+Toutes les implémentations en Python et les scripts liés à ce projet se trouvent dans le répertoire suivant : **[src](src/)**
 
 ---
 
