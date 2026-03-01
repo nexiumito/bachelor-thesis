@@ -8,7 +8,7 @@
   
   **Travail de Bachelor en Sciences Informatiques** @ *Université de Genève - Faculté des Sciences*
 
-  ![Language](https://img.shields.io/badge/Language-Python-blue?style=for-the-badge&logo=python) ![Year](https://img.shields.io/badge/Année-2025%20--%202026-orange?style=for-the-badge)
+  ![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c) ![Year](https://img.shields.io/badge/Année-2025%20--%202026-orange?style=for-the-badge)
   ![Status](https://img.shields.io/badge/Status-En%20Cours-green?style=for-the-badge)
 
 </div>
@@ -43,7 +43,7 @@ Le rapport complet détaillant l'étude, les algorithmes et les résultats du pr
 
 ## Implémentation
 
-Toutes les implémentations en Python et les scripts liés à ce projet se trouvent dans le répertoire suivant : **[src](src/)**
+Toutes les implémentations en C et les scripts liés à ce projet se trouvent dans le répertoire suivant : **[src](src/)**
 
 ---
 
@@ -62,14 +62,5 @@ Toutes les implémentations en Python et les scripts liés à ce projet se trouv
    ```bash
    git clone https://github.com/nexiumito/bachelor-thesis.git
    ```
-2. **Créer un environnement Python** (sur VSCode: `^P`, `>`, `Python: Create Environment`)
-3. **Installer toutes les dépendances** : 
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Mise à jour
-
-1. `pip freeze > requirements.txt`
 
 ### Utilisation
