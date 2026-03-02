@@ -1,0 +1,4 @@
+-Explication du format dimacs: https://fairmut3x.wordpress.com/2011/07/29/cnf-conjunctive-normal-form-dimacs-format-explained/
+-Transformation de Tseytin: https://en.wikipedia.org/wiki/Tseytin_transformation
+-Z3 Python API guide: https://ericpony.github.io/z3py-tutorial/guide-examples.htm
+-CNF generator for factoring problems: https://cgi.luddy.indiana.edu/~sabry/cnf.html

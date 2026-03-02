@@ -1,0 +1,8 @@
+{
+  "experiment_name": "time_analysis_K30_5",
+  "type": "time",
+  "k_values": 30,
+  "nb_mults": 5,
+  "simplifie": false,
+  "bloat": false
+}
