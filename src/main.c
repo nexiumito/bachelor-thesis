@@ -72,10 +72,10 @@ void print_binary(uint64_t n, int num_clauses) {
 // --- LE MAIN ---
 
 int main() {
-    // 1. Initialiser la formule
+    // Initialisation formule
     SAT_Formula f = create_exemple_formula();
 
-    // 2. Initialiser all_clauses_mask
+    // Initialisation all_clauses_mask
     // On veut un masque avec des 1 pour toutes les clauses de la formule.
     // Pour 4 clauses, on veut '0000...1111' en binaire, ce qui vaut 15 en décimal.
     // Astuce C : (1ULL << 4) donne 16 ('10000'). Si on fait -1, ça donne 15 ('01111').
@@ -95,11 +95,10 @@ int main() {
     uint64_t parent_delta_mask = (1ULL << 0);
     Node* parent = create_internal_node(leaf_x1, leaf_x2, parent_delta_mask);
 
-    // 4. Lancer la Procédure 1 (Bottom-Up)
-    printf("Lancement de compute_ps_prime_bottom_up...\n");
+    printf("Lancement de compute_ps_prime_bottom_up\n");
     PS_Set* result = compute_ps_prime_bottom_up(parent, &f, all_clauses_mask);
 
-    // 5. Afficher les résultats
+    // Résultat
     printf("\n=== RESULTATS AU NOEUD PARENT ===\n");
     printf("Taille de PS'(F_v) : %d\n", result->size);
     printf("Masques retenus (Bits: C3 C2 C1 C0) :\n");

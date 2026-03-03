@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -Wall -Wextra -g # -O3, à décommenter pour les tests de performance finaux
+CFLAGS = -Wall -Wextra -g # -O3 (à décommenter pour les tests de performance finaux)
 
 TARGET = sat_solver
 

@@ -1,1 +1,0 @@
-Travail de Bachelor de Loic Bardi qui va m'être utile pour la suite
