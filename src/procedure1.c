@@ -3,9 +3,48 @@
 
 #include "procedure1.h"
 
-// Fonction utilitaire pour ajouter un masque sans doublon (remplace le set() Python ou le Trie)
+
+/* Fonction utilitaire pour ajouter un masque sans doublon (remplace le Trie binaire (table de hachage ?) pour le moment)
+ 
+ GESTION DES DOUBLONS DANS PS'(F_v)
+ Le but de cette fonction est d'ajouter un masque représentant un ensemble de clauses satisfaites, tout en garantissant l'unicité (élimination des doublons)
+ La taille maximale de cet ensemble correspond à la ps-width (notée k).
+
+3 approches possibles et leurs compromis :
+
+ * 1. TABLEAU DYNAMIQUE (l'implémentation actuelle) : parcourt tout le tableau (boucle for) avant chaque ajout
+ - Avantages : 
+   * rapide pour des petits ensembles (k faible)
+   * bon cache locality pour le CPU (données contiguës)
+   * comparaison de 64 clauses en 1 seule instruction d'horloge (==).
+ - Inconvénients :
+   * Complexité temporelle en O(k) par insertion.
+   * Si k devient très grand (ex: 10 000), le temps d'insertion explose (goulot d'étranglement en O(k^2) au global)
+
+ * 2. TRIE BINAIRE (recommandation théorique du papier, p. 68) : arbre de profondeur m, où chaque niveau teste le bit d'une clause (0=gauche, 1=droite)
+ - Avantages :
+   * complexité temporelle en O(m) stricte par insertion
+   * temps d'insertion totalement indépendant de k (taille de PS')
+   * aligné avec la théorie du papier
+ - Inconvénients (langage C...) :
+   * demande bcp d'allocations mémoire dynamiques (malloc par noeud).
+   * cache misses constants
+   * plus lent ?
+
+ * 3. TABLE DE HACHAGE / HASH SET : calcule un hash du masque de bits et on le place dans un tableau indexé par ce hash
+ - Avantages :
+   * complexité moyenne en O(1) (ou O(m/64) pour de grands masques).
+   * combine la performance matérielle du tableau (bonne localité comme le tableau dynamique) et l'indépendance par rapport à k (comme le trie binaire)
+ - Inconvénients :
+  * Nécessite de coder une bonne fonction de hachage et de gérer les collisions (?)
+
+ L'implémentation actuelle agit comme une preuve de concept (PoC) optimisée au niveau matériel pour de petites instances. 
+ Pour des formules réelles massives générant une grande ps-width (et dépassant la limite d'un seul uint64_t), transition vers une table de hachage devrait être la solution la plus robuste pour concilier la théorie du papier et les performances du langage C
+
+*/
+
 void add_to_ps_set(PS_Set* set, uint64_t mask) {
-    // Vérification des doublons en O(|cla(F)|) simulé ici par O(k)
+    // Vérification des doublons en O(|cla(F)|) simulé ici par O(k) oû k est le nombre d'élément deja trouvé
     for (int i = 0; i < set->size; i++) {
         if (set->masks[i] == mask) return; // Doublon ignoré
     }

@@ -1,3 +1,4 @@
+taille des formules ?? Trie binaire ou table de hachage ????
 parser
 générateur formule CNF
 procedure 2 et 3
