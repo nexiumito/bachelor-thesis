@@ -11,18 +11,18 @@ typedef struct {
     int num_vars;
     int num_clauses;
     
-    // On veut représenter un ensemble de clauses par un seul nombre entier uint64_t (64 bits)
+    // On représentee un ensemble de clauses par un seul nombre entier uint64_t
     // Le bit à la position i correspond à la clause d'indice i
     // Si le bit vaut 1, la clause est dans l'ensemble, sinon non
 
-    // masques pré-calculés (indice 0 pas utilisé car les variables vont de 1 à n)
-    uint64_t mask_pos[MAX_VARS + 1]; // liste de toutes les clauses qui sont satisfaites si x = vrai (clause où x apparait sous forme de littéral positif)
-    uint64_t mask_neg[MAX_VARS + 1]; // liste de toutes les clauses qui sont satisfaites si x = faux (clause où x apparait sous forme de littéral negatif)
+    // masques pré-calculés (variables de 1 à n)
+    uint64_t mask_pos[MAX_VARS + 1]; // liste de toutes les clauses qui sont satisfaites si x = vrai 
+    uint64_t mask_neg[MAX_VARS + 1]; // liste de toutes les clauses qui sont satisfaites si x = faux 
 } SAT_Formula;
 
-// L'ensemble de clauses PS'
+// L'ensemble de clauses PS'(Fv). Stocke plusieurs combinaisons possibles de clauses satisfaites
 typedef struct {
-    uint64_t* masks;
+    uint64_t* masks; //tableau dynamique qui grandit avec size et capacity. Chaque élément du tableau est un masque (une combinaison)
     int size;
     int capacity;
 } PS_Set;
@@ -31,10 +31,10 @@ typedef struct {
 typedef struct Node {
     bool is_leaf;
     int var_index;               
-    uint64_t delta_clauses_mask; 
-    struct Node* left;
+    uint64_t delta_clauses_mask; //masque indiquant quelles clauses sont à l'intérieur de delta(v) 
+    struct Node* left; // pointeur vers les enfants de v
     struct Node* right;
-    PS_Set* ps_prime_v;          
+    PS_Set* ps_prime_v; // pointeur pour stocker le résultat    
 } Node;
 
 #endif

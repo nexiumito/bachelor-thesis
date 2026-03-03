@@ -4,7 +4,7 @@
 
 #include "procedure1.h"
 
-#define MAX_VARS 100 // à ajuster ???
+#define MAX_VARS 100 // ??
 
 // parser pas encore implémenté, fonction temporaire pour avoir un exemple à tester
 SAT_Formula create_exemple_formula() {
@@ -62,35 +62,28 @@ Node* create_internal_node(Node* left, Node* right, uint64_t delta_mask) {
     return n;
 }
 
-// Fonction pour afficher un entier 64 bits en binaire (très utile pour débugger !)
+// Afficher un entier 64 bits en binaire 
 void print_binary(uint64_t n, int num_clauses) {
     for (int i = num_clauses - 1; i >= 0; i--) {
         printf("%llu", (n >> i) & 1ULL);
     }
 }
 
-// --- LE MAIN ---
-
 int main() {
-    // Initialisation formule
     SAT_Formula f = create_exemple_formula();
 
-    // Initialisation all_clauses_mask
     // On veut un masque avec des 1 pour toutes les clauses de la formule.
-    // Pour 4 clauses, on veut '0000...1111' en binaire, ce qui vaut 15 en décimal.
-    // Astuce C : (1ULL << 4) donne 16 ('10000'). Si on fait -1, ça donne 15 ('01111').
     uint64_t all_clauses_mask = (1ULL << f.num_clauses) - 1;
 
-    // 3. Construire un petit arbre de test manuellement
-    // Enfant gauche : la variable x1. Au début, aucune clause n'est dans sa coupe.
+    // Petit arbre de test manuel
+    // Enfant gauche : variable x1. Au début aucune clause n'est dans sa coupe.
     Node* leaf_x1 = create_leaf(1, 0ULL); 
     
-    // Enfant droit : la variable x2. Au début, aucune clause n'est dans sa coupe.
+    // Enfant droit : variable x2. Au début aucune clause n'est dans sa coupe.
     Node* leaf_x2 = create_leaf(2, 0ULL); 
 
-    // Noeud parent : Il unit x1 et x2.
-    // Pour tester le "filtre" de la procédure 1, on va dire que ce noeud "englobe" 
-    // entièrement la Clause C0 (index 0). Donc la clause 0 est DANS delta(v).
+    // Noeud parent : unit x1 et x2
+    // Pour tester le filtre de la procédure 1, on va dire que ce noeud "englobe" entièrement la Clause C0 (index 0). Donc la clause 0 est DANS delta(v).
     // Son masque de delta_clauses devient donc (1ULL << 0), soit le bit 0 à 1.
     uint64_t parent_delta_mask = (1ULL << 0);
     Node* parent = create_internal_node(leaf_x1, leaf_x2, parent_delta_mask);
@@ -99,7 +92,7 @@ int main() {
     PS_Set* result = compute_ps_prime_bottom_up(parent, &f, all_clauses_mask);
 
     // Résultat
-    printf("\n=== RESULTATS AU NOEUD PARENT ===\n");
+    printf("\n === RESULTATS AU NOEUD PARENT ===\n");
     printf("Taille de PS'(F_v) : %d\n", result->size);
     printf("Masques retenus (Bits: C3 C2 C1 C0) :\n");
     for (int i = 0; i < result->size; i++) {
