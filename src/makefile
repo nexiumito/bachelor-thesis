@@ -1,21 +1,26 @@
 CC = gcc
 
-CFLAGS = -Wall -Wextra -g # -O3 (à décommenter pour les tests de performance finaux)
+# -O3 : optimisation pour la vitesse d'exécution
+# -g : permet de garder les symboles de débogage 
+CFLAGS = -Wall -Wextra -O3 -g
+
+SRCS = main.c procedure1.c trie.c tree_generation.c
+OBJS = $(SRCS:.c=.o)
 
 TARGET = sat_solver
-
-OBJS = main.o procedure1.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-main.o: main.c formula.h procedure1.h
-	$(CC) $(CFLAGS) -c main.c
-
-procedure1.o: procedure1.c formula.h procedure1.h
-	$(CC) $(CFLAGS) -c procedure1.c
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+rebuild: clean all
+
+# clean et rebuild ne sont pas des fichiers
+.PHONY: all clean rebuild

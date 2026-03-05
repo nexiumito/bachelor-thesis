@@ -1,7 +1,7 @@
-taille des formules ?? Trie binaire ou table de hachage ????
 parser
 générateur formule CNF
-procedure 2 et 3
 
-Q1 : on utilise des formules pouvant aller jusqu'à quelle taille ? ici implémentation pour des formules de 64 clauses maximum
-     nombre de variables maximum ?
+procedure 2 
+heuristique générer x arbres et garder celui qui a la plus petite ps-width
+
+procedure 3

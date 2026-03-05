@@ -1,127 +1,160 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "procedure1.h"
 
+// ============================================================================
+// UTILITAIRES BITSET
+// ============================================================================
 
-/*
- GESTION DES DOUBLONS DANS PS'(F_v)
- Le but de cette fonction est d'ajouter un masque représentant un ensemble de clauses satisfaites, tout en garantissant l'unicité (élimination des doublons)
- La taille maximale de cet ensemble correspond à la ps-width (notée k).
-
-3 approches possibles et leurs compromis :
-
- * 1. TABLEAU DYNAMIQUE (l'implémentation actuelle) : parcourt tout le tableau (boucle for) avant chaque ajout
- - Avantages : 
-   * rapide pour des petits ensembles (k faible)
-   * bon cache locality pour le CPU (données contiguës)
-   * comparaison de 64 clauses en 1 seule instruction d'horloge (==).
- - Inconvénients :
-   * Complexité temporelle en O(k) par insertion.
-   * Si k devient très grand (ex: 10 000), le temps d'insertion explose (goulot d'étranglement en O(k^2) au global)
-
- * 2. TRIE BINAIRE (recommandation théorique du papier, p. 68) : arbre de profondeur m, où chaque niveau teste le bit d'une clause (0=gauche, 1=droite)
- - Avantages :
-   * complexité temporelle en O(m) stricte par insertion
-   * temps d'insertion totalement indépendant de k (taille de PS')
-   * aligné avec la théorie du papier
- - Inconvénients (langage C...) :
-   * demande bcp d'allocations mémoire dynamiques (malloc par noeud)
-   * cache misses constants
-   * plus lent ?
-
- * 3. TABLE DE HACHAGE / HASH SET : calcule un hash du masque de bits et on le place dans un tableau indexé par ce hash
- - Avantages :
-   * complexité moyenne en O(1)
-   * combine la performance matérielle du tableau (bonne localité comme le tableau dynamique) et l'indépendance par rapport à k (comme le trie binaire)
- - Inconvénients :
-  * Nécessite de coder une bonne fonction de hachage et de gérer les collisions (?)
-
- L'implémentation actuelle agit comme une preuve de concept (PoC) optimisée au niveau matériel pour de petites instances. 
- Pour des formules réelles massives générant une grande ps-width (et dépassant la limite d'un seul uint64_t), transition vers une table de hachage devrait être la solution la plus robuste pour concilier la théorie du papier et les performances du langage C
-
-*/
-
-
-// Fonction pour ajouter un masque sans doublon (remplace le Trie binaire (table de hachage ?) pour le moment)
-void add_to_ps_set(PS_Set* set, uint64_t mask) {
-    // vérification des doublons en O(|cla(F)|) simulé ici par O(k) oû k est le nombre d'élément deja trouvé
-    for (int i = 0; i < set->size; i++) {
-        if (set->masks[i] == mask) return; // doublon ignoré
-    }
-    
-    // ajout dynamique
-    if (set->size == set->capacity) {
-        set->capacity *= 2;
-        set->masks = realloc(set->masks, set->capacity * sizeof(uint64_t));
-    }
-    set->masks[set->size++] = mask;
+Bitset* create_bitset(int num_clauses) {
+    Bitset* b = malloc(sizeof(Bitset));
+    b->num_words = (num_clauses + 63) / 64; // arrondi supérieur
+    b->words = calloc(b->num_words, sizeof(uint64_t)); // met tout à 0
+    return b;
 }
 
-// Fonction cas de base pour les feuilles
-PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, uint64_t all_clauses_mask) {
-    // initialisation de l'ensemble
-    PS_Set* ps_v = malloc(sizeof(PS_Set));
-    ps_v->capacity = 2; // maximum 2 affectations (Vrai ou Faux)
-    ps_v->size = 0;
-    ps_v->masks = malloc(ps_v->capacity * sizeof(uint64_t));
 
-    // identifier la variable de cette feuille
-    int x = leaf->var_index;
+void free_bitset(Bitset* b) {
+    if (b) {
+        if (b->words) free(b->words);
+        free(b);
+    }
+}
 
-    // masque de filtrage : cla(F_v) = cla(F) \ delta(v)
-    uint64_t mask_Fv = all_clauses_mask & ~(leaf->delta_clauses_mask);
 
-    // Cas 1 : si on affecte x = Vrai
-    // On prend les clauses satisfaites par x=Vrai et on applique le filtre
-    uint64_t C_true = f->mask_pos[x] & mask_Fv;
-    add_to_ps_set(ps_v, C_true);
+Bitset* bitset_copy(Bitset* src, int num_clauses) {
+    Bitset* dest = create_bitset(num_clauses);
+    memcpy(dest->words, src->words, src->num_words * sizeof(uint64_t));
+    return dest;
+}
 
-    // Cas 2 : Si on affecte x = Faux 
-    // On prend les clauses satisfaites par x=Faux et on applique le filtre
-    uint64_t C_false = f->mask_neg[x] & mask_Fv;
-    add_to_ps_set(ps_v, C_false);
+
+// dest = (b1 U b2) ∩ filter_mask
+void bitset_union_and_filter(Bitset* dest, Bitset* b1, Bitset* b2, Bitset* filter_mask) {
+    for (int i = 0; i < dest->num_words; i++) {
+        uint64_t un = b1->words[i] | b2->words[i];
+        dest->words[i] = un & filter_mask->words[i];
+    }
+}
+
+
+
+// ============================================================================
+// GESTION DU PS_SET LOCAL (Pour un noeud de l'arbre)
+// ============================================================================
+
+PS_Set* create_ps_set(int initial_capacity) {
+    PS_Set* set = malloc(sizeof(PS_Set));
+    set->capacity = initial_capacity;
+    set->size = 0;
+    set->sets = malloc(set->capacity * sizeof(Bitset*));
+    set->ps_ids = malloc(set->capacity * sizeof(int));
+    return set;
+}
+
+
+// Ajoute un Bitset au PS_Set du noeud SEULEMENT s'il n'y est pas déjà
+void add_to_node_ps_set(PS_Set* set, Bitset* new_mask, int ps_id) {
+    // Élimination locale des doublons grâce à l'identifiant entier
+    for (int i = 0; i < set->size; i++) {
+        if (set->ps_ids[i] == ps_id) {
+            free_bitset(new_mask); // libérer la mémoire temporaire
+            return;
+        }
+    }
+    
+    // ajout si unique
+    if (set->size == set->capacity) {
+        set->capacity *= 2;
+        set->sets = realloc(set->sets, set->capacity * sizeof(Bitset*));
+        set->ps_ids = realloc(set->ps_ids, set->capacity * sizeof(int));
+    }
+    set->sets[set->size] = new_mask;
+    set->ps_ids[set->size] = ps_id;
+    set->size++;
+}
+
+
+
+// ============================================================================
+// PROCEDURE 1 : GENERATION DE PS'(F_v)
+// ============================================================================
+
+PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, BinaryTrie* trie) {
+    PS_Set* ps_v = create_ps_set(2);
+
+    if (leaf->type == NODE_LEAF_VAR) {
+        int x = leaf->index;
+
+        // Cas 1 : variable x = Vrai (mask_pos[x] & mask_Fv)
+        Bitset* C_true = create_bitset(f->num_clauses);
+        for(int i = 0; i < C_true->num_words; i++) {
+            C_true->words[i] = f->mask_pos[x]->words[i] & mask_Fv->words[i];
+        }
+        int id_true = insert_or_get_ps_set(trie, C_true, f->num_clauses);
+        add_to_node_ps_set(ps_v, C_true, id_true);
+
+        // Cas 2 : variable x = Faux (mask_neg[x] & mask_Fv)
+        Bitset* C_false = create_bitset(f->num_clauses);
+        for(int i = 0; i < C_false->num_words; i++) {
+            C_false->words[i] = f->mask_neg[x]->words[i] & mask_Fv->words[i];
+        }
+        int id_false = insert_or_get_ps_set(trie, C_false, f->num_clauses);
+        add_to_node_ps_set(ps_v, C_false, id_false);
+
+    } else if (leaf->type == NODE_LEAF_CLAUSE) {
+        // feuille clause = ensemble vide
+        Bitset* C_empty = create_bitset(f->num_clauses);
+        int id_empty = insert_or_get_ps_set(trie, C_empty, f->num_clauses);
+        add_to_node_ps_set(ps_v, C_empty, id_empty);
+    }
 
     return ps_v;
 }
 
-
-// PS'(Fv) = (C1 U C2) ET cla(Fv)
-PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, uint64_t all_clauses_mask){
-    //condition d'arrêt de la récursivité
-    if (node->is_leaf) {
-        node->ps_prime_v = compute_leaf_ps_prime(node, f, all_clauses_mask);
-        return node->ps_prime_v;
+PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTrie* trie) {
+    // mask_Fv = cla(F) \ delta(v)
+    Bitset* mask_Fv = create_bitset(f->num_clauses);
+    for(int i = 0; i < mask_Fv->num_words; i++) {
+        mask_Fv->words[i] = all_clauses_mask->words[i] & ~(node->delta_mask->words[i]);
     }
 
-    // appels récursifs bottom-up
-    PS_Set* ps_c1 = compute_ps_prime_bottom_up(node->left, f, all_clauses_mask);
-    PS_Set* ps_c2 = compute_ps_prime_bottom_up(node->right, f, all_clauses_mask);
+    // condition d'arrêt (feuille)
+    if (node->type == NODE_LEAF_VAR || node->type == NODE_LEAF_CLAUSE) {
+        PS_Set* leaf_set = compute_leaf_ps_prime(node, f, mask_Fv, trie);
+        free_bitset(mask_Fv);
+        
+        node->ps_prime_v = leaf_set; 
+        return leaf_set;
+    }
 
-    // initialisation ensemble vide (L dans le papier)
-    PS_Set* ps_v = malloc(sizeof(PS_Set));
-    ps_v->capacity = 16;
-    ps_v->size = 0;
-    ps_v->masks = malloc(ps_v->capacity * sizeof(uint64_t));
+    PS_Set* ps_c1 = compute_ps_prime_bottom_up(node->left, f, all_clauses_mask, trie);
+    PS_Set* ps_c2 = compute_ps_prime_bottom_up(node->right, f, all_clauses_mask, trie);
 
-    // masque de filtrage cla(F_v) = cla(F) \ delta(v)
-    uint64_t mask_Fv = all_clauses_mask & ~(node->delta_clauses_mask);
+    // ensemble L pour le noeud courant
+    PS_Set* ps_v = create_ps_set(16);
 
-    // produit cartésien et filtrage
+    // (C1 U C2) ∩ cla(Fv)
     for (int i = 0; i < ps_c1->size; i++) {
         for (int j = 0; j < ps_c2->size; j++) {
+            Bitset* C1 = ps_c1->sets[i];
+            Bitset* C2 = ps_c2->sets[j];
             
-            uint64_t C1 = ps_c1->masks[i];
-            uint64_t C2 = ps_c2->masks[j];
+            Bitset* C_filtered = create_bitset(f->num_clauses);
+            bitset_union_and_filter(C_filtered, C1, C2, mask_Fv);
             
-            uint64_t C_union = C1 | C2;
-            uint64_t C_filtered = C_union & mask_Fv;
+            // vérifie dans le binary trie pour récupérer un entier unique
+            int id = insert_or_get_ps_set(trie, C_filtered, f->num_clauses);
             
-            // ajout avec vérif des doublons
-            add_to_ps_set(ps_v, C_filtered);
+            // tente de l'ajouter à l'ensemble du noeud
+            add_to_node_ps_set(ps_v, C_filtered, id);
         }
     }
 
-    node->ps_prime_v = ps_v;
+    free_bitset(mask_Fv);
+    
+    node->ps_prime_v = ps_v; 
     return ps_v;
 }

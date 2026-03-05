@@ -2,10 +2,14 @@
 #define PROCEDURE1_H
 
 #include "formula.h"
+#include "trie.h"
 
-// Uniquement les signatures des fonctions de la procédure 1
-PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, uint64_t all_clauses_mask);
-void add_to_ps_set(PS_Set* set, uint64_t mask);
-PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, uint64_t all_clauses_mask);
+
+Bitset* create_bitset(int num_clauses);
+void free_bitset(Bitset* b);
+Bitset* bitset_copy(Bitset* src, int num_clauses);
+void bitset_union_and_filter(Bitset* dest, Bitset* b1, Bitset* b2, Bitset* filter_mask);
+
+PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTrie* trie);
 
 #endif
