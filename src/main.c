@@ -5,45 +5,11 @@
 #include "formula.h"
 #include "trie.h"
 #include "procedure1.h"
+#include "tree_generation.h"
+
 
 // ============================================================================
-// FONCTIONS UTILITAIRES POUR LE TEST MANUEL (création de l'arbre de l'exemple p. 67)
-// ============================================================================
-
-Node* create_leaf(NodeType type, int index, int num_clauses) {
-    Node* n = malloc(sizeof(Node));
-    n->type = type;
-    n->index = index;
-    n->left = NULL;
-    n->right = NULL;
-    n->delta_mask = create_bitset(num_clauses);
-    
-    // Si la feuille représente une clause, on active son bit dans la coupe locale
-    if (type == NODE_LEAF_CLAUSE) {
-        int word_idx = index / 64;
-        int bit_idx = index % 64;
-        n->delta_mask->words[word_idx] |= (1ULL << bit_idx);
-    }
-    return n;
-}
-
-Node* create_internal(Node* left, Node* right, int num_clauses) {
-    Node* n = malloc(sizeof(Node));
-    n->type = NODE_INTERNAL;
-    n->index = 0;
-    n->left = left;
-    n->right = right;
-    n->delta_mask = create_bitset(num_clauses);
-    
-    // Le masque (coupe) d'un parent est l'union logique des masques de ses enfants
-    for(int i = 0; i < n->delta_mask->num_words; i++) {
-        n->delta_mask->words[i] = left->delta_mask->words[i] | right->delta_mask->words[i];
-    }
-    return n;
-}
-
-// ============================================================================
-// CONSTRUCTION DE LA FORMULE (Figure 2 du papier)
+// CONSTRUCTION DE LA FORMULE (Figure 2 p.67 du papier)
 // ============================================================================
 
 SAT_Formula create_figure2_formula() {
@@ -64,12 +30,12 @@ SAT_Formula create_figure2_formula() {
     f.mask_pos[1]->words[0] |= (1ULL << 0);
     f.mask_pos[2]->words[0] |= (1ULL << 0);
 
-    // Clause c2 (index 1) : {x1, ¬x2, x3}
+    // Clause c2 (index 1) : {x1, NOTx2, x3}
     f.mask_pos[1]->words[0] |= (1ULL << 1);
     f.mask_neg[2]->words[0] |= (1ULL << 1);
     f.mask_pos[3]->words[0] |= (1ULL << 1);
 
-    // Clause c3 (index 2) : {x2, ¬x4, x5}
+    // Clause c3 (index 2) : {x2, NOTx4, x5}
     f.mask_pos[2]->words[0] |= (1ULL << 2);
     f.mask_neg[4]->words[0] |= (1ULL << 2);
     f.mask_pos[5]->words[0] |= (1ULL << 2);
@@ -111,29 +77,29 @@ int main() {
     BinaryTrie* trie = create_trie(1024);
 
 
-    // Construction manuelle du sous-arbre pour le nœud 'v' de la Figure 2 page 67
+    // Construction manuelle du sous-arbre pour le noeud 'v' de la Figure 2 page 67
     // Noeud v couvre les variables {x1, x2} et les clauses {c1, c3}.
     // Indexation de nos clauses : c1=0, c2=1, c3=2, c4=3.
     
     // Branche gauche (variables x1 et x2)
-    Node* leaf_x1 = create_leaf(NODE_LEAF_VAR, 1, f.num_clauses);
-    Node* leaf_x2 = create_leaf(NODE_LEAF_VAR, 2, f.num_clauses);
-    Node* u1 = create_internal(leaf_x1, leaf_x2, f.num_clauses);
+    Node* leaf_x1 = create_leaf_node(NODE_LEAF_VAR, 1, f.num_clauses);
+    Node* leaf_x2 = create_leaf_node(NODE_LEAF_VAR, 2, f.num_clauses);
+    Node* u1 = create_internal_node(leaf_x1, leaf_x2, f.num_clauses);
 
     // Branche droite (clauses c1 et c3)
-    Node* leaf_c1 = create_leaf(NODE_LEAF_CLAUSE, 0, f.num_clauses);
-    Node* leaf_c3 = create_leaf(NODE_LEAF_CLAUSE, 2, f.num_clauses);
-    Node* u2 = create_internal(leaf_c1, leaf_c3, f.num_clauses);
+    Node* leaf_c1 = create_leaf_node(NODE_LEAF_CLAUSE, 0, f.num_clauses);
+    Node* leaf_c3 = create_leaf_node(NODE_LEAF_CLAUSE, 2, f.num_clauses);
+    Node* u2 = create_internal_node(leaf_c1, leaf_c3, f.num_clauses);
 
     // noeud v (parent de u1 et u2)
-    Node* v = create_internal(u1, u2, f.num_clauses);
+    Node* v = create_internal_node(u1, u2, f.num_clauses);
 
     printf("Calcul bottom-up de PS'(F_v) via la Procedure 1...\n");
     PS_Set* result = compute_ps_prime_bottom_up(v, &f, all_clauses_mask, trie);
 
 
     printf("\n=== RESULTATS AU NOEUD v ===\n");
-    printf("Taille de PS'(F_v) trouvee : %d\n", result->size);
+    printf("Taille de PS'(F_v) trouvée : %d\n", result->size);
     printf("Nombre total de noeuds alloues dans le Trie : %d\n", trie->next_free);
     printf("\nMasques retenus (Bits: c4 c3 c2 c1) :\n");
     
@@ -167,6 +133,7 @@ int calculate_tree_ps_width(Node* node) {
 // ============================================================================
 // Génération aléatoire de l'arbre
 // ============================================================================
+
 //int main() {
 //    printf("Initialisation de la formule...\n");
 //    SAT_Formula f = create_figure2_formula();

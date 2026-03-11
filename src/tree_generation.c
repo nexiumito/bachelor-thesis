@@ -14,7 +14,7 @@ Node* create_leaf_node(NodeType type, int index, int num_clauses) {
     if (type == NODE_LEAF_CLAUSE) {
         int word_idx = index / 64;
         int bit_idx = index % 64;
-        n->delta_mask->words[word_idx] |= (1ULL << bit_idx);
+        n->delta_mask->words[word_idx] |= (1ULL << bit_idx); // fonctionne très bien avec un simple "=", utilisation OU logique est une bonne pratique...
     }
     return n;
 }
@@ -36,7 +36,7 @@ Node* create_internal_node(Node* left, Node* right, int num_clauses) {
 
 Node* generate_random_tree(SAT_Formula* f) {
     int total_leaves = f->num_vars + f->num_clauses;
-    Node** pool = malloc(total_leaves * sizeof(Node*));
+    Node** pool = malloc(total_leaves * sizeof(Node*)); // tableau contenant des pointeurs vers tout les noeuds qui n'ont pas de parent
     
     // initialisation des feuilles
     int pool_size = 0;
@@ -48,11 +48,11 @@ Node* generate_random_tree(SAT_Formula* f) {
     }
     
     // construction bottom-up aléatoire
-    srand(time(NULL)); // générateur aléatoire
+    srand(time(NULL)); // génération seed aléatoire
     
     while (pool_size > 1) {
         // sélection de deux indices distincts au hasard
-        int idx1 = rand() % pool_size;
+        int idx1 = rand() % pool_size; // nouvelle seed calculé à partir de l'ancienne à chaque fois
         int idx2;
         do {
             idx2 = rand() % pool_size;

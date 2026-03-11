@@ -26,7 +26,7 @@ void free_bitset(Bitset* b) {
 
 Bitset* bitset_copy(Bitset* src, int num_clauses) {
     Bitset* dest = create_bitset(num_clauses);
-    memcpy(dest->words, src->words, src->num_words * sizeof(uint64_t));
+    memcpy(dest->words, src->words, src->num_words * sizeof(uint64_t)); // copie mémoire
     return dest;
 }
 
@@ -49,15 +49,15 @@ PS_Set* create_ps_set(int initial_capacity) {
     PS_Set* set = malloc(sizeof(PS_Set));
     set->capacity = initial_capacity;
     set->size = 0;
-    set->sets = malloc(set->capacity * sizeof(Bitset*));
-    set->ps_ids = malloc(set->capacity * sizeof(int));
+    set->sets = malloc(set->capacity * sizeof(Bitset*)); // tableau pointeur vers bitset..
+    set->ps_ids = malloc(set->capacity * sizeof(int)); // return du trie
     return set;
 }
 
 
 // Ajoute un Bitset au PS_Set du noeud SEULEMENT s'il n'y est pas déjà
 void add_to_node_ps_set(PS_Set* set, Bitset* new_mask, int ps_id) {
-    // Élimination locale des doublons grâce à l'identifiant entier
+    // Elimination locale des doublons grâce à l'identifiant entier
     for (int i = 0; i < set->size; i++) {
         if (set->ps_ids[i] == ps_id) {
             free_bitset(new_mask); // libérer la mémoire temporaire

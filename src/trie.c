@@ -7,8 +7,8 @@ static int allocate_trie_node(BinaryTrie* trie) {
     if (trie->next_free >= trie->capacity) {
         trie->capacity *= 2;
         trie->nodes = realloc(trie->nodes, trie->capacity * sizeof(TrieNode));
-        if (!trie->nodes) {
-            fprintf(stderr, "Erreur fatale : Impossible d'allouer de la mémoire pour le Trie Binaire.\n");
+        if (!trie->nodes) { // adresse mémoire pour le tableau de nodes non valide
+            fprintf(stderr, "Erreur : Impossible d'allouer de la mémoire pour le Trie Binaire.\n");
             exit(EXIT_FAILURE);
         }
     }
@@ -22,11 +22,15 @@ static int allocate_trie_node(BinaryTrie* trie) {
 }
 
 
-// Initialise le binary trie. initial_capacity : nombre de noeuds pré-alloués pour éviter les realloc fréquents
+// Initialise le binary trie. initial_capacity : nombre de noeuds pré-alloués pour éviter les realloc fréquents (par défaut 1024)
 BinaryTrie* create_trie(int initial_capacity) {
     BinaryTrie* trie = malloc(sizeof(BinaryTrie));
     trie->capacity = initial_capacity > 0 ? initial_capacity : 1024;
     trie->nodes = malloc(trie->capacity * sizeof(TrieNode));
+    if (!trie->nodes) { // pas assez de mémoire
+        fprintf(stderr, "Erreur : Impossible d'allouer de la mémoire pour le Trie Binaire.\n");
+        exit(EXIT_FAILURE);
+    }
     trie->next_free = 0;
     trie->num_ps_sets = 0;
 
@@ -39,7 +43,7 @@ BinaryTrie* create_trie(int initial_capacity) {
 
 // Libère proprement tout le Trie 
 void free_trie(BinaryTrie* trie) {
-    if (trie) {
+    if (trie) { 
         if (trie->nodes) {
             free(trie->nodes);
         }
