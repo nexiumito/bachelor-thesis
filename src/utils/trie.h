@@ -1,7 +1,7 @@
 #ifndef TRIE_H
 #define TRIE_H
 
-#include "formula.h"
+#include "bitset.h"
 
 
 // Un noeud du binary trie
@@ -17,7 +17,10 @@ typedef struct {
     TrieNode* nodes;  // tableau contigu en mémoire
     int capacity;     // capacité totale actuelle du tableau
     int next_free;    // prochain index disponible (donc taille actuelle)
-    int num_ps_sets;  // compteur global pour attribuer les ID uniques 
+    int num_ps_sets;  // compteur global pour attribuer les ID uniques
+    
+    int* seen_array;   
+    int seen_capacity;
 } BinaryTrie;
 
 

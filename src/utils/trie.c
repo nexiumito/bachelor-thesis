@@ -1,6 +1,7 @@
+#include "trie.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "trie.h"
 
 // Alloue un nouveau noeud dans le pool (gère automatiquement le redimensionnement du pool si la capacité est atteinte)
 static int allocate_trie_node(BinaryTrie* trie) {
@@ -34,6 +35,9 @@ BinaryTrie* create_trie(int initial_capacity) {
     trie->next_free = 0;
     trie->num_ps_sets = 0;
 
+    trie->seen_capacity = trie->capacity;
+    trie->seen_array = calloc(trie->seen_capacity, sizeof(int));
+
     // noeud racine toujours à l'index 0
     allocate_trie_node(trie);
 
@@ -44,9 +48,8 @@ BinaryTrie* create_trie(int initial_capacity) {
 // Libère proprement tout le Trie 
 void free_trie(BinaryTrie* trie) {
     if (trie) { 
-        if (trie->nodes) {
-            free(trie->nodes);
-        }
+        if (trie->nodes) free(trie->nodes);
+        if (trie->seen_array) free(trie->seen_array); // NOUVEAU
         free(trie);
     }
 }
@@ -84,6 +87,18 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
 
     // feuille : profondeur = num_clauses
     if (trie->nodes[current_node].ps_id == -1) {
+        // anti seg-fault
+        if (trie->num_ps_sets >= trie->seen_capacity) {
+            int old_cap = trie->seen_capacity;
+            trie->seen_capacity *= 2; // On double la taille !
+            trie->seen_array = realloc(trie->seen_array, trie->seen_capacity * sizeof(int));
+            
+            // realloc n'initialise pas à zéro, il faut le faire manuellement
+            // pour que les nouvelles cases soient bien considérées comme "jamais vues"
+            for (int i = old_cap; i < trie->seen_capacity; i++) {
+                trie->seen_array[i] = 0; 
+            }
+        }
         // nouveau PS-set : attribution d'un identifiant unique
         trie->nodes[current_node].ps_id = trie->num_ps_sets++;
     }

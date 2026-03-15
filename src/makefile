@@ -1,26 +1,30 @@
 CC = gcc
-
-# -O3 : optimisation pour la vitesse d'exécution
-# -g : permet de garder les symboles de débogage 
 CFLAGS = -Wall -Wextra -O3 -g
 
-SRCS = main.c procedure1.c trie.c tree_generation.c
+SRCS = main.c \
+       utils/bitset.c \
+       utils/ps_set.c \
+       utils/trie.c \
+       core/parser.c \
+       core/decomposition_tree.c \
+       algo/procedure1.c \
+       algo/procedure2.c
+
 OBJS = $(SRCS:.c=.o)
 
-TARGET = sat_solver
+EXEC = sat_solver
 
-all: $(TARGET)
+all: $(EXEC)
 
-$(TARGET): $(OBJS)
+$(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(EXEC)
 
 rebuild: clean all
 
-# clean et rebuild ne sont pas des fichiers
 .PHONY: all clean rebuild

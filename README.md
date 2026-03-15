@@ -60,7 +60,38 @@ Toutes les implémentations en C et les scripts liés à ce projet se trouvent d
 
 1. **Cloner le dépôt** : 
    ```bash
-   git clone https://github.com/nexiumito/bachelor-thesis.git
+   git clone [https://github.com/nexiumito/bachelor-thesis.git](https://github.com/nexiumito/bachelor-thesis.git)
+   cd bachelor-thesis/src
    ```
 
-### Utilisation
+2. **Générer des instances de test (Optionnel)** :
+Un script Python est fourni pour générer des formules SAT spécifiques (Totalement aléatoires ou Graphes d'intervalles bipartis).
+
+```bash
+python3 script/generator.py
+```
+Les fichiers générés seront placés dans le dossier script/instances_test/.
+
+3. **Compiler le solveur** :
+```bash
+make
+```
+
+4. **Syntaxe** :
+
+Le solveur prend deux arguments obligatoires : le chemin vers le fichier .cnf à résoudre, et le mode de décomposition en arbre souhaité.
+
+```bash
+./sat_solver <chemin_vers_fichier.cnf> <mode>
+```
+
+Modes disponibles :
+- **manual** : Utilise l'arbre de décomposition manuel (issu de la Figure 2 du papier).
+- **random** : Génère un arbre de décomposition de manière purement aléatoire.
+- **linear** : Génère une décomposition linéaire (Linear Branch Decomposition), optimisée en se basant sur la topologie des variables.
+
+**Exemple d'exécution** :
+
+```bash
+./sat_solver script/instances_test/type3_k3_v40_c100_b20.cnf linear
+```

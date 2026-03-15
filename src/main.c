@@ -1,59 +1,25 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
 
-#include "formula.h"
-#include "trie.h"
-#include "procedure1.h"
-#include "tree_generation.h"
-
-
-// ============================================================================
-// CONSTRUCTION DE LA FORMULE (Figure 2 p.67 du papier)
-// ============================================================================
-
-SAT_Formula create_figure2_formula() {
-    SAT_Formula f;
-    f.num_vars = 5;
-    f.num_clauses = 4;
-
-    // Allocation des tableaux de Bitsets (de l'indice 0 à num_vars)
-    f.mask_pos = malloc((f.num_vars + 1) * sizeof(Bitset*));
-    f.mask_neg = malloc((f.num_vars + 1) * sizeof(Bitset*));
-    
-    for(int i = 0; i <= f.num_vars; i++) {
-        f.mask_pos[i] = create_bitset(f.num_clauses);
-        f.mask_neg[i] = create_bitset(f.num_clauses);
-    }
-
-    // Clause c1 (index 0) : {x1, x2}
-    f.mask_pos[1]->words[0] |= (1ULL << 0);
-    f.mask_pos[2]->words[0] |= (1ULL << 0);
-
-    // Clause c2 (index 1) : {x1, NOTx2, x3}
-    f.mask_pos[1]->words[0] |= (1ULL << 1);
-    f.mask_neg[2]->words[0] |= (1ULL << 1);
-    f.mask_pos[3]->words[0] |= (1ULL << 1);
-
-    // Clause c3 (index 2) : {x2, NOTx4, x5}
-    f.mask_pos[2]->words[0] |= (1ULL << 2);
-    f.mask_neg[4]->words[0] |= (1ULL << 2);
-    f.mask_pos[5]->words[0] |= (1ULL << 2);
-
-    // Clause c4 (index 3) : {x2, x3, x5}
-    f.mask_pos[2]->words[0] |= (1ULL << 3);
-    f.mask_pos[3]->words[0] |= (1ULL << 3);
-    f.mask_pos[5]->words[0] |= (1ULL << 3);
-
-    return f;
-}
+#include "core/formula.h"
+#include "core/parser.h"
+#include "core/decomposition_tree.h"
+#include "utils/bitset.h"
+#include "utils/ps_set.h"
+#include "utils/trie.h"
+#include "algo/procedure1.h"
+#include "algo/procedure2.h"
 
 // ============================================================================
 // AFFICHAGE
 // ============================================================================
 
 void print_binary(Bitset* b, int num_clauses) {
-    // Affiche les bits de gauche (clause de plus grand indice) à droite (clause d'indice 0)
+    // Affiche les bits de gauche (clause de plus grand indice) à droite (clause 0)
     for (int i = num_clauses - 1; i >= 0; i--) {
         int word_idx = i / 64;
         int bit_idx = i % 64;
@@ -62,104 +28,185 @@ void print_binary(Bitset* b, int num_clauses) {
     }
 }
 
+// Affiche joliment le contenu du PS_Set d'un noeud donné
+void print_node_ps_set(Node* node, SAT_Formula* f, const char* node_name) {
+    if (!node || !node->ps_prime_v) return;
+    
+    PS_Set* result = node->ps_prime_v;
+    printf("\n=== RESULTATS AU NOEUD %s ===\n", node_name);
+    printf("Taille de PS'(F_v) trouvee : %d\n", result->size);
+    printf("Masques retenus (Bits: c%d ... c1) :\n", f->num_clauses);
+    
+    for (int i = 0; i < result->size; i++) {
+        printf("  - Ensemble ID %d : ", result->ps_ids[i]);
+        print_binary(result->sets[i], f->num_clauses);
+        printf("\n");
+    }
+}
+
+// Parcourt l'arbre pour trouver et afficher le(s) noeud(s) qui cause(nt) la ps-width maximale
+void print_max_ps_nodes(Node* node, SAT_Formula* f, int max_width) {
+    if (!node) return;
+    if (node->ps_prime_v && node->ps_prime_v->size == max_width) {
+        printf("\n[!] Noeud interne creant la ps-width maximale de %d trouve :\n", max_width);
+        print_node_ps_set(node, f, "MAX_WIDTH_NODE");
+    }
+    print_max_ps_nodes(node->left, f, max_width);
+    print_max_ps_nodes(node->right, f, max_width);
+}
+
+
 // ============================================================================
 // MAIN
 // ============================================================================
 
-int main() {
-    printf("Initialisation de la formule (Figure 2)...\n");
-    SAT_Formula f = create_figure2_formula();
+#define TREE_MANUAL 0
+#define TREE_RANDOM 1
+#define TREE_LINEAR 2
 
-    // masque universel contenant toutes les clauses
-    Bitset* all_clauses_mask = create_bitset(f.num_clauses);
-    all_clauses_mask->words[0] = (1ULL << f.num_clauses) - 1; // 1111 en binaire
-
-    BinaryTrie* trie = create_trie(1024);
-
-
-    // Construction manuelle du sous-arbre pour le noeud 'v' de la Figure 2 page 67
-    // Noeud v couvre les variables {x1, x2} et les clauses {c1, c3}.
-    // Indexation de nos clauses : c1=0, c2=1, c3=2, c4=3.
-    
-    // Branche gauche (variables x1 et x2)
-    Node* leaf_x1 = create_leaf_node(NODE_LEAF_VAR, 1, f.num_clauses);
-    Node* leaf_x2 = create_leaf_node(NODE_LEAF_VAR, 2, f.num_clauses);
-    Node* u1 = create_internal_node(leaf_x1, leaf_x2, f.num_clauses);
-
-    // Branche droite (clauses c1 et c3)
-    Node* leaf_c1 = create_leaf_node(NODE_LEAF_CLAUSE, 0, f.num_clauses);
-    Node* leaf_c3 = create_leaf_node(NODE_LEAF_CLAUSE, 2, f.num_clauses);
-    Node* u2 = create_internal_node(leaf_c1, leaf_c3, f.num_clauses);
-
-    // noeud v (parent de u1 et u2)
-    Node* v = create_internal_node(u1, u2, f.num_clauses);
-
-    printf("Calcul bottom-up de PS'(F_v) via la Procedure 1...\n");
-    PS_Set* result = compute_ps_prime_bottom_up(v, &f, all_clauses_mask, trie);
-
-
-    printf("\n=== RESULTATS AU NOEUD v ===\n");
-    printf("Taille de PS'(F_v) trouvée : %d\n", result->size);
-    printf("Nombre total de noeuds alloues dans le Trie : %d\n", trie->next_free);
-    printf("\nMasques retenus (Bits: c4 c3 c2 c1) :\n");
-    
-    for (int i = 0; i < result->size; i++) {
-        printf("  - Ensemble ID %d : ", result->ps_ids[i]);
-        print_binary(result->sets[i], f.num_clauses);
-        printf("\n");
+int main(int argc, char *argv[]) {
+    // vérif du nombre d'arguments
+    if (argc != 3) {
+        printf("Erreur : Mauvais nombre d'arguments.\n\n");
+        printf("Utilisation : %s <chemin_vers_fichier.cnf> <mode_arbre>\n", argv[0]);
+        printf("Modes disponibles :\n");
+        printf("  manual : Arbre manuel (Figure 2, page 67 du papier)\n");
+        printf("  random : Arbre aleatoire pur\n");
+        printf("  linear : Linear Branch Decomposition (optimise pour les structures locales)\n\n");
+        printf("Exemple : %s script/instances_test/type3_k3_v40_c100_b20.cnf linear\n", argv[0]);
+        return 1;
     }
+
+    // recup des arguments
+    char* filename = argv[1];
+    char* mode_str = argv[2];
+    int execution_mode = -1;
+
+    // décodage du mode
+    if (strcmp(mode_str, "manual") == 0) {
+        execution_mode = TREE_MANUAL;
+    } else if (strcmp(mode_str, "random") == 0) {
+        execution_mode = TREE_RANDOM;
+    } else if (strcmp(mode_str, "linear") == 0) {
+        execution_mode = TREE_LINEAR;
+    } else {
+        printf("Erreur : Mode '%s' inconnu.\n", mode_str);
+        printf("Veuillez choisir parmi : manual, random, linear\n");
+        return 1;
+    }
+
+    // lecture de la formule dynamique
+    printf("Lecture de la formule depuis le fichier CNF : %s\n", filename);
+    SAT_Formula* f_ptr = parse_cnf(filename);
+    if (!f_ptr) {
+        printf("Erreur critique lors de l'ouverture ou du parsing du fichier.\n");
+        return 1;
+    }
+
+    SAT_Formula f = *f_ptr;
+
+    printf("=== CARACTERISTIQUES DE LA FORMULE ===\n");
+    printf(" Variables : %d\n", f.num_vars);
+    printf(" Clauses   : %d\n", f.num_clauses);
+    printf("======================================\n");
+
+    Bitset* all_clauses_mask = create_bitset(f.num_clauses);
+    for (int i = 0; i < f.num_clauses; i++) {
+        set_bit(all_clauses_mask, i);
+    }
+
+    // Si m est petit, on alloue au moins 100 000 pour être tranquille
+    // Si m est grand, on alloue O(m^2) pour les bons arbres
+    int initial_capacity = (f.num_clauses * f.num_clauses > 100000) ? 
+                       (f.num_clauses * f.num_clauses * 2) : 100000;
+    BinaryTrie* trie = create_trie(initial_capacity);
+    Node* root = NULL;
+
+    // variables temps
+    clock_t start_time, end_time;
+    double time_used_tree = 0.0, time_used_proc1 = 0.0, time_used_proc2 = 0.0;
+
+    // --- CONSTRUCTION DE L'ARBRE ---
+    if (execution_mode == TREE_MANUAL) {
+        printf("\n>>> EXECUTION : ARBRE MANUEL (Figure 2, page 67) <<<\n");
+        
+        start_time = clock();
+        
+        Node* leaf_x1 = create_leaf_node(NODE_LEAF_VAR, 1, f.num_clauses);
+        Node* leaf_x2 = create_leaf_node(NODE_LEAF_VAR, 2, f.num_clauses);
+        Node* u1 = create_internal_node(leaf_x1, leaf_x2, f.num_clauses);
+
+        Node* leaf_c1 = create_leaf_node(NODE_LEAF_CLAUSE, 0, f.num_clauses);
+        Node* leaf_c3 = create_leaf_node(NODE_LEAF_CLAUSE, 2, f.num_clauses);
+        Node* u2 = create_internal_node(leaf_c1, leaf_c3, f.num_clauses);
+
+        root = create_internal_node(u1, u2, f.num_clauses); 
+        end_time = clock();
+
+        time_used_tree = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+        printf("[Temps] Generation de l'arbre manuel : %f secondes\n", time_used_tree);
+    } 
+    else if (execution_mode == TREE_RANDOM) {
+        printf("\n>>> EXECUTION : ARBRE ALEATOIRE <<<\n");
+        
+        start_time = clock();
+        root = generate_random_tree(&f);
+        end_time = clock();
+        
+        time_used_tree = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+        printf("[Temps] Generation de l'arbre aleatoire : %f secondes\n\n", time_used_tree);
+    }
+    else if (execution_mode == TREE_LINEAR) {
+        printf("\n>>> EXECUTION : ARBRE LINEAIRE (Linear Branch Decomposition) <<<\n");
+
+        start_time = clock();
+        root = generate_linear_tree(&f);
+        end_time = clock();
+
+        time_used_tree = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+        printf("[Temps] Generation de l'arbre lineaire : %f secondes\n\n", time_used_tree);
+    }
+
+    // --- PROCEDURE 1 (BOTTOM-UP) ---
+    printf(">>> EXECUTION : PROCEDURE 1 (Bottom-Up) <<<\n");
+    start_time = clock();
+    compute_ps_prime_bottom_up(root, &f, all_clauses_mask, trie);
+    end_time = clock();
+    time_used_proc1 = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    printf("[Temps] Execution Procedure 1 : %f secondes\n\n", time_used_proc1);
+
+    // --- PROCEDURE 2 (TOP-DOWN) ---
+    printf(">>> EXECUTION : PROCEDURE 2 (Top-Down) <<<\n");
+    start_time = clock();
+    
+    // Le print SAT/UNSAT se fait dans cette fonction (sans saut de ligne au début)
+    compute_ps_double_prime_top_down(root, &f, trie);
+    
+    end_time = clock();
+    time_used_proc2 = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    printf("[Temps] Execution Procedure 2 : %f secondes\n", time_used_proc2);
+
+    // --- RESUME ---
+    int max_p_prime = calculate_tree_ps_width(root);
+    int max_p_double_prime = calculate_tree_ps_double_prime_width(root);
+
+    printf("\n=== RESUME DE L'EXECUTION ===\n");
+    printf("Taille max de P'(v)  (Etats generes par Proc 1) : %d\n", max_p_prime);
+    printf("Taille max de P''(v) (Etats utiles apres Proc 2): %d\n", max_p_double_prime);
+    printf("Borne superieure ps-width de la formule F       : <= %d\n", max_p_prime);
+    printf("Noeuds uniques generes dans le Trie (RAM)       : %d\n", trie->num_ps_sets);
+    printf("Temps total de resolution                       : %f secondes\n", 
+           time_used_tree + time_used_proc1 + time_used_proc2);
+
+    if (execution_mode == TREE_MANUAL) {
+        print_node_ps_set(root, &f, "v (Figure 2)");
+    }
+
+    // --- NETTOYAGE ---
+    free_formula(f_ptr);
+    free_trie(trie);
+    free_tree(root);
+    free_bitset(all_clauses_mask);
 
     return 0;
 }
-
-// ============================================================================
-// CALCUL DE LA PS-WIDTH DE L'ARBRE
-// ============================================================================
-// Parcourt l'arbre récursivement pour trouver la plus grande taille de PS'(F_v)
-int calculate_tree_ps_width(Node* node) {
-    if (!node || !node->ps_prime_v) return 0;
-    
-    int max_width = node->ps_prime_v->size;
-    
-    int left_width = calculate_tree_ps_width(node->left);
-    int right_width = calculate_tree_ps_width(node->right);
-    
-    if (left_width > max_width) max_width = left_width;
-    if (right_width > max_width) max_width = right_width;
-    
-    return max_width;
-}
-
-// ============================================================================
-// Génération aléatoire de l'arbre
-// ============================================================================
-
-//int main() {
-//    printf("Initialisation de la formule...\n");
-//    SAT_Formula f = create_figure2_formula();
-//
-//    Bitset* all_clauses_mask = create_bitset(f.num_clauses);
-//    all_clauses_mask->words[0] = (1ULL << f.num_clauses) - 1;
-//
-//    BinaryTrie* trie = create_trie(1024);
-//
-//    printf("Generation d'un arbre de decomposition aleatoire...\n");
-//    Node* root = generate_random_tree(&f);
-//
-//    printf("Execution de la Procedure 1 (Bottom-Up)...\n");
-//    compute_ps_prime_bottom_up(root, &f, all_clauses_mask, trie);
-//
-//    // Extraction de la ps-width (le maximum global de l'arbre)
-//    int ps_width = calculate_tree_ps_width(root);
-//
-//    printf("\n=== RESULTATS DE L'ARBRE ALEATOIRE ===\n");
-//    printf("PS-width de cette decomposition : %d\n", ps_width);
-//    printf("Noeuds uniques generes dans le Trie : %d\n", trie->num_ps_sets);
-//
-//    // Libération mémoire
-//    free_tree(root);
-//    free_trie(trie);
-//    free_bitset(all_clauses_mask);
-//
-//    return 0;
-//}

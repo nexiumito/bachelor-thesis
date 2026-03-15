@@ -1,7 +1,0 @@
-parser
-générateur formule CNF
-
-procedure 2 
-heuristique générer x arbres et garder celui qui a la plus petite ps-width
-
-procedure 3
