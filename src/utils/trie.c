@@ -71,7 +71,8 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
         if (bit == 0) {
             // clause pas dans l'ensemble : gauche
             if (trie->nodes[current_node].left == -1) {
-                trie->nodes[current_node].left = allocate_trie_node(trie);
+                int new_node_index = allocate_trie_node(trie); 
+                trie->nodes[current_node].left = new_node_index; 
             }
             current_node = trie->nodes[current_node].left;
         } 
@@ -79,7 +80,8 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
         else {
             // clause est dans l'ensemble : droite
             if (trie->nodes[current_node].right == -1) {
-                trie->nodes[current_node].right = allocate_trie_node(trie);
+                int new_node_index = allocate_trie_node(trie); 
+                trie->nodes[current_node].right = new_node_index; 
             }
             current_node = trie->nodes[current_node].right;
         }
