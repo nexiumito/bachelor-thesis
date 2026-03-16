@@ -51,3 +51,5 @@ projetBachelorLoicBardi
 # objet
 *.o
 sat_solver
+
+checkpoint/
