@@ -161,15 +161,21 @@ int calculate_tree_ps_width(Node* node) {
     return max_width;
 }
 
-int calculate_tree_ps_double_prime_width(Node* node) {
+int calculate_tree_ps_prime_barre_width(Node* node) {
     if (!node || !node->ps_double_prime_v) return 0;
     
     int max_width = node->ps_double_prime_v->size;
-    int left_width = calculate_tree_ps_double_prime_width(node->left);
-    int right_width = calculate_tree_ps_double_prime_width(node->right);
+    int left_width = calculate_tree_ps_prime_barre_width(node->left);
+    int right_width = calculate_tree_ps_prime_barre_width(node->right);
     
     if (left_width > max_width) max_width = left_width;
     if (right_width > max_width) max_width = right_width;
     
     return max_width;
 }
+int calculate_tree_max_ps_width(Node* node) {
+    int ps_width = calculate_tree_ps_width(node);
+    int ps_prime_barre_width = calculate_tree_ps_prime_barre_width(node);
+    return (ps_width > ps_prime_barre_width) ? ps_width : ps_prime_barre_width;
+}
+

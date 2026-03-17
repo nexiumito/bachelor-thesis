@@ -31,6 +31,7 @@ Node* generate_random_tree(SAT_Formula* f);
 Node* generate_linear_tree(SAT_Formula* f);
 void free_tree(Node* root);
 int calculate_tree_ps_width(Node* node);
-int calculate_tree_ps_double_prime_width(Node* node);
+int calculate_tree_ps_prime_barre_width(Node* node);
+int calculate_tree_max_ps_width(Node* node);
 
 #endif

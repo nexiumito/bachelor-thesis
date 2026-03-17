@@ -5,6 +5,7 @@
 #include "../core/formula.h"
 #include "../utils/trie.h"
 
-void compute_ps_double_prime_top_down(Node* root, SAT_Formula* f, BinaryTrie* trie);
+
+void compute_ps_bar_top_down(Node* root, SAT_Formula* f, BinaryTrie* trie);
 
 #endif
