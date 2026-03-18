@@ -17,7 +17,7 @@ Node* create_leaf_node(NodeType type, int index, int num_clauses) {
     n->right = NULL;
 
     n->ps_prime_v = NULL;
-    n->ps_double_prime_v = NULL;
+    n->ps_prime_v_barre = NULL;
 
     n->delta_mask = create_bitset(num_clauses);
     
@@ -39,7 +39,7 @@ Node* create_internal_node(Node* left, Node* right, int num_clauses) {
     n->right = right;
 
     n->ps_prime_v = NULL;
-    n->ps_double_prime_v = NULL;
+    n->ps_prime_v_barre = NULL;
 
     n->delta_mask = create_bitset(num_clauses);
     
@@ -142,7 +142,7 @@ void free_tree(Node* root) {
     free_bitset(root->delta_mask);
 
     if (root->ps_prime_v) free_ps_set(root->ps_prime_v);
-    if (root->ps_double_prime_v) free_ps_set(root->ps_double_prime_v);
+    if (root->ps_prime_v_barre) free_ps_set(root->ps_prime_v_barre);
 
     free(root);
 }
@@ -162,9 +162,9 @@ int calculate_tree_ps_width(Node* node) {
 }
 
 int calculate_tree_ps_prime_barre_width(Node* node) {
-    if (!node || !node->ps_double_prime_v) return 0;
+    if (!node || !node->ps_prime_v_barre) return 0;
     
-    int max_width = node->ps_double_prime_v->size;
+    int max_width = node->ps_prime_v_barre->size;
     int left_width = calculate_tree_ps_prime_barre_width(node->left);
     int right_width = calculate_tree_ps_prime_barre_width(node->right);
     

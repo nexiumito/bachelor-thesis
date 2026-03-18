@@ -1,10 +1,9 @@
 import random
 import os
 
-def generate_type1_random_ksat(num_vars, num_clauses, k=3):
+def generate_random_ksat(num_vars, num_clauses, k=3):
     """
-    Génère une formule k-SAT totalement aléatoire (Type 1 du papier).
-    Utile pour observer la transition de phase (ratio m/n approx 4.26 pour 3-SAT).
+    Génère une formule k-SAT totalement aléatoire.
     """
     clauses = []
     variables = list(range(1, num_vars + 1))
@@ -22,11 +21,10 @@ def generate_type1_random_ksat(num_vars, num_clauses, k=3):
         
     return clauses
 
-def generate_type3_bounded_pswidth(num_vars, num_clauses, num_blocks, k=3):
+def generate_bounded_pswidth(num_vars, num_clauses, num_blocks, k=3):
     """
-    Génère une formule k-SAT avec une ps-width bornée (Type 3 du papier).
-    Les variables sont réparties en blocs. Une clause ne lie que des variables
-    d'un bloc i et/ou de son voisin i+1.
+    Génère une formule k-SAT avec une ps-width bornée.
+    Les variables sont réparties en blocs. Une clause ne lie que des variables d'un bloc i et/ou de son voisin i+1.
     """
     clauses = []
     variables = list(range(1, num_vars + 1))
@@ -74,24 +72,6 @@ def write_dimacs(num_vars, clauses, filename):
         for clause in clauses:
             f.write(" ".join(map(str, clause)) + " 0\n")
 
-
-    # FORMULES DE TYPE 3 (Bounded PS-Width)
-    # Pour garantir que le solveur C (Procédure 1) s'exécute en quelques millisecondes
-    # avec un arbre aléatoire, il faut limiter la ps-width. Voici les formules
-    # de calcul pour garder une structure mathématique saine :
-    # Pour une formule ni trop dense, ni trop triviale, on garde un ratio (clauses / variables) autour de 3.
-    # N_BLOCKS : limiter la ps-width 
-    # Pour que la génération fonctionne, une clause piochant dans 2 blocs voisins
-    # doit avoir accès à au moins K variables. Donc : (Taille du bloc * 2) >= K.
-    # Pour une ps-width minimale, on vise des blocs très petits (2 ou 3 variables).
-    # -> Calcul : N_BLOCKS = N_VARS / Taille_du_bloc (viser une taille de 2)
-    # -> Exemple : 20 variables / 2 = 10 blocs.
-    # EXEMPLES TYPES :
-    # - Très petit  : N_CLAUSES = 20,  N_VARS = 8,   K = 3, N_BLOCKS = 4
-    # - Petit       : N_CLAUSES = 50,  N_VARS = 20,  K = 3, N_BLOCKS = 10
-    # - Moyen       : N_CLAUSES = 100, N_VARS = 40,  K = 3, N_BLOCKS = 20
-    # - Grand       : N_CLAUSES = 200, N_VARS = 80,  K = 3, N_BLOCKS = 40
-
 if __name__ == "__main__":
     # crée un dossier dédié pour éviter de polluer le dossier script
     output_dir = "instances_test"
@@ -116,15 +96,15 @@ if __name__ == "__main__":
         # blocs de taille 2 ou 3 maximum
         blocks = max(1, vars_target // 2) 
 
-        # --- GÉNÉRATION TYPE 1 (Aléatoire pur) ---
+        # --- GÉNÉRATION Aléatoire pur ---
         filename_t1 = f"{output_dir}/type1_k{k}_v{vars_target}_c{clauses}.cnf"
-        clauses_t1 = generate_type1_random_ksat(vars_target, clauses, k)
+        clauses_t1 = generate_random_ksat(vars_target, clauses, k)
         write_dimacs(vars_target, clauses_t1, filename_t1)
         print(f"[OK] {filename_t1}")
 
-        # --- GÉNÉRATION TYPE 3 (PS-Width bornée) ---
+        # --- GÉNÉRATION PS-Width bornée ---
         filename_t3 = f"{output_dir}/type3_k{k}_v{vars_target}_c{clauses}_b{blocks}.cnf"
-        clauses_t3 = generate_type3_bounded_pswidth(vars_target, clauses, blocks, k)
+        clauses_t3 = generate_bounded_pswidth(vars_target, clauses, blocks, k)
         write_dimacs(vars_target, clauses_t3, filename_t3)
         print(f"[OK] {filename_t3}")
 

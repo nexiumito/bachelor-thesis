@@ -21,8 +21,8 @@ typedef struct Node {
     struct Node* left;
     struct Node* right;
     
-    PS_Set* ps_prime_v;
-    PS_Set* ps_double_prime_v;  
+    PS_Set* ps_prime_v; // pour un noeud v : 
+    PS_Set* ps_prime_v_barre;  
 } Node;
 
 Node* create_leaf_node(NodeType type, int index, int num_clauses);

@@ -46,9 +46,9 @@ void print_node_ps_set(Node* node, SAT_Formula* f, const char* node_name) {
 
 // Affiche le contenu du PS'(Fv_barre) d'un noeud
 void print_node_ps_barre_set(Node* node, SAT_Formula* f, const char* node_name) {
-    if (!node || !node->ps_double_prime_v) return;
+    if (!node || !node->ps_prime_v_barre) return;
     
-    PS_Set* result = node->ps_double_prime_v;
+    PS_Set* result = node->ps_prime_v_barre;
     printf("\n=== PS'(F_%s_barre) ===\n", node_name);
     printf("Taille : %d\n", result->size);
     printf("Masques (Bits: c%d ... c1) :\n", f->num_clauses);
@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
         print_node_ps_set(root, &f, "racine");
         // Afficher aussi le noeud "v" (enfant gauche de la racine)
         if (root->left) {
-            print_node_ps_set(root->left, &f, "v (Figure 2)");
+            print_node_ps_set(root->left, &f, "v");
             print_node_ps_barre_set(root->left, &f, "v");
         }
     }

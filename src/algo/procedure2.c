@@ -19,10 +19,10 @@ static void compute_ps_bar_recursive(Node* parent, SAT_Formula* f, BinaryTrie* t
     
     // --- Calcul de PS'(F_left_barre) ---
     {
-        PS_Set* ps_sibling = right->ps_prime_v; // PS'(F_right) = PS'(F_sibling_de_left)
-        PS_Set* ps_bar_parent = parent->ps_double_prime_v; // PS'(F_parent_barre)
+        PS_Set* ps_sibling = right->ps_prime_v; // PS'(F_right) = PS'(F_sibling_de_left) (calculé procédure 1)
+        PS_Set* ps_bar_parent = parent->ps_prime_v_barre; // PS'(F_parent_barre) (calculer dans l'étape précédente top-down)
         
-        left->ps_double_prime_v = create_ps_set(ps_sibling->size * ps_bar_parent->size + 1);
+        left->ps_prime_v_barre = create_ps_set(ps_sibling->size * ps_bar_parent->size + 1);
         
         for (int i = 0; i < ps_sibling->size; i++) {
             for (int j = 0; j < ps_bar_parent->size; j++) {
@@ -35,7 +35,7 @@ static void compute_ps_bar_recursive(Node* parent, SAT_Formula* f, BinaryTrie* t
                 }
                 
                 int id = insert_or_get_ps_set(trie, result, f->num_clauses);
-                add_to_node_ps_set(left->ps_double_prime_v, result, id, left->id, trie);
+                add_to_node_ps_set(left->ps_prime_v_barre, result, id, left->id, trie);
             }
         }
     }
@@ -43,9 +43,9 @@ static void compute_ps_bar_recursive(Node* parent, SAT_Formula* f, BinaryTrie* t
     // --- Calcul de PS'(F_right_barre) ---
     {
         PS_Set* ps_sibling = left->ps_prime_v; // PS'(F_left_barre) = PS'(F_sibling_de_right)
-        PS_Set* ps_bar_parent = parent->ps_double_prime_v;
+        PS_Set* ps_bar_parent = parent->ps_prime_v_barre; //même principe, tout est déjà pré-calculé
         
-        right->ps_double_prime_v = create_ps_set(ps_sibling->size * ps_bar_parent->size + 1);
+        right->ps_prime_v_barre = create_ps_set(ps_sibling->size * ps_bar_parent->size + 1);
         
         for (int i = 0; i < ps_sibling->size; i++) {
             for (int j = 0; j < ps_bar_parent->size; j++) {
@@ -58,7 +58,7 @@ static void compute_ps_bar_recursive(Node* parent, SAT_Formula* f, BinaryTrie* t
                 }
                 
                 int id = insert_or_get_ps_set(trie, result, f->num_clauses);
-                add_to_node_ps_set(right->ps_double_prime_v, result, id, right->id, trie);
+                add_to_node_ps_set(right->ps_prime_v_barre, result, id, right->id, trie);
             }
         }
     }
@@ -72,17 +72,16 @@ static void compute_ps_bar_recursive(Node* parent, SAT_Formula* f, BinaryTrie* t
 void compute_ps_bar_top_down(Node* root, SAT_Formula* f, BinaryTrie* trie) {
     if (!root || !root->ps_prime_v) return;
     
-    // IMPORTANT : réinitialiser le seen_array du trie (pollué par procédure1 avec les node_id utilisés pour dédupliquer PS'(Fv))
-    // Si on ne reset pas, add_to_node_ps_set rejette des PS-sets valides en croyant qu'ils sont des doublons (faux positif car même node_id, mais PS_Set différent).
-    memset(trie->seen_array, 0, trie->seen_capacity * sizeof(int));
+    // réinitialiser le seen_array du trie (pollué par procédure1 avec les node_id utilisés pour dédupliquer PS'(Fv))
+    memset(trie->seen_array, 0, trie->seen_capacity * sizeof(int)); // si on ne reset pas, add_to_node_ps_set rejette des PS-sets valides en croyant qu'ils sont des doublons (faux positif car même node_id, mais PS_Set différent).
     
-    // Cas de base : PS'(F_racine_barre) = {vide}
-    root->ps_double_prime_v = create_ps_set(1);
+    // cas de base : PS'(F_racine_barre) = {vide = 0000...000}
+    root->ps_prime_v_barre = create_ps_set(1);
     Bitset* empty_set = create_bitset(f->num_clauses);
     int empty_id = insert_or_get_ps_set(trie, empty_set, f->num_clauses);
-    add_to_node_ps_set(root->ps_double_prime_v, empty_set, empty_id, root->id, trie);
+    add_to_node_ps_set(root->ps_prime_v_barre, empty_set, empty_id, root->id, trie);
     
-    // Propagation top-down
+    // propagation top-down
     compute_ps_bar_recursive(root, f, trie);
 }
 
