@@ -19,17 +19,16 @@ SAT_Formula* parse_cnf(const char* filename) {
     bool header_found = false;
 
     while (fgets(line, sizeof(line), file)) {
-        // Ignorer les commentaires et lignes vides
+        // ignorer les commentaires et lignes vides
         if (line[0] == 'c' || line[0] == '\n' || line[0] == '\r') continue;
 
         if (line[0] == 'p') {
             sscanf(line, "p cnf %d %d", &formula->num_vars, &formula->num_clauses);
             
-            // Allocation en respectant ton indexation (1 à num_vars)
+            // Allocation en respectant l'indexation (1 à num_vars)
             formula->mask_pos = malloc((formula->num_vars + 1) * sizeof(Bitset*));
             formula->mask_neg = malloc((formula->num_vars + 1) * sizeof(Bitset*));
             
-            // Utilisation de TON utilitaire existant
             for (int i = 0; i <= formula->num_vars; i++) {
                 formula->mask_pos[i] = create_bitset(formula->num_clauses);
                 formula->mask_neg[i] = create_bitset(formula->num_clauses);
@@ -67,7 +66,7 @@ SAT_Formula* parse_cnf(const char* filename) {
 
 void free_formula(SAT_Formula* f) {
     if (f) {
-        // Libération en utilisant TON utilitaire existant
+        // Libération
         for (int i = 0; i <= f->num_vars; i++) {
             free_bitset(f->mask_pos[i]);
             free_bitset(f->mask_neg[i]);
