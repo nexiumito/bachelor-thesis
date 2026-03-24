@@ -29,6 +29,7 @@ Node* create_leaf_node(NodeType type, int index, int num_clauses);
 Node* create_internal_node(Node* left, Node* right, int num_clauses);
 Node* generate_random_tree(SAT_Formula* f);
 Node* generate_linear_tree(SAT_Formula* f);
+Node* generate_greedy_linear_tree(SAT_Formula* f);
 void free_tree(Node* root);
 int calculate_tree_ps_width(Node* node);
 int calculate_tree_ps_prime_barre_width(Node* node);

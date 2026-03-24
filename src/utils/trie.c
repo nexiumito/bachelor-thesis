@@ -3,7 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Alloue un nouveau noeud dans le pool (gère automatiquement le redimensionnement du pool si la capacité est atteinte)
+/**
+ * Alloue un nouveau noeud dans le pool du trie.
+ *
+ * Gère automatiquement le redimensionnement (doublement de capacité)
+ * si le pool est plein. Le nouveau noeud est initialisé sans enfants
+ * (left = right = -1) et sans identifiant (ps_id = -1).
+ *
+ * @param trie  Le trie binaire contenant le pool de noeuds.
+ * @return      Index du noeud nouvellement alloué dans le tableau nodes[].
+ */
 static int allocate_trie_node(BinaryTrie* trie) {
     if (trie->next_free >= trie->capacity) {
         trie->capacity *= 2;
@@ -23,7 +32,24 @@ static int allocate_trie_node(BinaryTrie* trie) {
 }
 
 
-// Initialise le binary trie. initial_capacity : nombre de noeuds pré-alloués pour éviter les realloc fréquents (par défaut 1024)
+/**
+ * Crée et initialise un trie binaire pour la déduplication des PS-sets.
+ *
+ * Le trie sert à gérer les PS-sets comme décrit en
+ * Section 3 (page 68) du papier : "We use a binary trie datastructure.
+ * We can add and retrieve a PS-set to and from a trie in O(|cla(F)|) time."
+ *
+ * Chaque PS-set est un chemin de la racine à une feuille à profondeur
+ * num_clauses, où chaque bit du bitset détermine si on va à gauche (0)
+ * ou à droite (1). Les feuilles stockent un identifiant unique (ps_id).
+ *
+ * Le seen_array permet la déduplication O(1) dans add_to_node_ps_set :
+ * seen_array[ps_id] = node_id indique que le noeud node_id a déjà vu
+ * ce PS-set.
+ *
+ * @param initial_capacity  Nombre de noeuds pré-alloués (défaut recommandé : 1024+).
+ * @return                  Pointeur vers le trie initialisé.
+ */
 BinaryTrie* create_trie(int initial_capacity) {
     BinaryTrie* trie = malloc(sizeof(BinaryTrie));
     trie->capacity = initial_capacity > 0 ? initial_capacity : 1024;
@@ -45,18 +71,33 @@ BinaryTrie* create_trie(int initial_capacity) {
 }
 
 
-// Libère proprement tout le Trie 
+/**
+ * Libère toute la mémoire du trie binaire.
+ *
+ * @param trie  Pointeur vers le trie à libérer (peut être NULL).
+ */
 void free_trie(BinaryTrie* trie) {
     if (trie) { 
         if (trie->nodes) free(trie->nodes);
-        if (trie->seen_array) free(trie->seen_array); // NOUVEAU
+        if (trie->seen_array) free(trie->seen_array); 
         free(trie);
     }
 }
 
-/*
- * Insère un PS-set (Bitset) dans le Trie ou le retrouve s'il existe déjà.
- * Retourne son identifiant unique (ps_id). 
+/**
+ * Insère un PS-set dans le trie ou retrouve son identifiant s'il existe déjà.
+ *
+ * Parcourt le bitset bit par bit (clause par clause) : bit 0 --> enfant gauche,
+ * bit 1 --> enfant droit. À la feuille (profondeur = num_clauses), si aucun
+ * ps_id n'est attribué, on en crée un nouveau. Garantit l'unicité : deux
+ * bitsets identiques reçoivent toujours le même ps_id.
+ *
+ * Complexité : O(num_clauses) = O(|cla(F)|) par insertion/recherche.
+ *
+ * @param trie         Le trie binaire.
+ * @param ps_set       Le bitset représentant le PS-set à insérer/chercher.
+ * @param num_clauses  Nombre total de clauses (profondeur du trie).
+ * @return             Identifiant unique (ps_id) du PS-set.
  */
 int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
     int current_node = 0; // commence à la racine (index 0)
@@ -92,7 +133,7 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
         // anti seg-fault
         if (trie->num_ps_sets >= trie->seen_capacity) {
             int old_cap = trie->seen_capacity;
-            trie->seen_capacity *= 2; // On double la taille !
+            trie->seen_capacity *= 2; // double la taille 
             trie->seen_array = realloc(trie->seen_array, trie->seen_capacity * sizeof(int));
             
             // realloc n'initialise pas à zéro, il faut le faire manuellement

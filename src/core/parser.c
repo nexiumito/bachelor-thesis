@@ -6,6 +6,22 @@
 #include <string.h>
 #include <stdbool.h>
 
+/*
+ * Parse un fichier au format DIMACS CNF et construit une SAT_Formula.
+ *
+ * Le format DIMACS encode une formule en CNF :
+ *   - Lignes 'c' : commentaires (ignorées)
+ *   - Ligne 'p cnf n m' : en-tête avec n variables et m clauses
+ *   - Lignes de littéraux terminées par 0 : chaque ligne décrit une clause
+ *
+ * La formule est représentée par deux tableaux de bitsets indexés par variable
+ * (1..n) : mask_pos[v] indique dans quelles clauses la variable v apparaît
+ * positivement, mask_neg[v] pour les occurrences négatives. Cela correspond
+ * au graphe d'incidence I(F) du papier (Section 2, footnote 1).
+ *
+ * @param filename  Chemin vers le fichier DIMACS CNF.
+ * @return          Pointeur vers la formule allouée, ou NULL en cas d'erreur.
+ */
 SAT_Formula* parse_cnf(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
@@ -19,16 +35,17 @@ SAT_Formula* parse_cnf(const char* filename) {
     bool header_found = false;
 
     while (fgets(line, sizeof(line), file)) {
-        // ignorer les commentaires et lignes vides
+        // Ignorer les commentaires et lignes vides
         if (line[0] == 'c' || line[0] == '\n' || line[0] == '\r') continue;
 
         if (line[0] == 'p') {
             sscanf(line, "p cnf %d %d", &formula->num_vars, &formula->num_clauses);
             
-            // Allocation en respectant l'indexation (1 à num_vars)
+            // Allocation en respectant ton indexation (1 à num_vars)
             formula->mask_pos = malloc((formula->num_vars + 1) * sizeof(Bitset*));
             formula->mask_neg = malloc((formula->num_vars + 1) * sizeof(Bitset*));
             
+            // Utilisation de TON utilitaire existant
             for (int i = 0; i <= formula->num_vars; i++) {
                 formula->mask_pos[i] = create_bitset(formula->num_clauses);
                 formula->mask_neg[i] = create_bitset(formula->num_clauses);
@@ -64,9 +81,17 @@ SAT_Formula* parse_cnf(const char* filename) {
     return formula;
 }
 
+/**
+ * Libère toute la mémoire associée à une formule SAT.
+ *
+ * Libère les bitsets mask_pos et mask_neg pour chaque variable (0..n),
+ * les tableaux de pointeurs, puis la structure elle-même.
+ *
+ * @param f  Pointeur vers la formule à libérer (peut être NULL).
+ */
 void free_formula(SAT_Formula* f) {
     if (f) {
-        // Libération
+        // Libération en utilisant TON utilitaire existant
         for (int i = 0; i <= f->num_vars; i++) {
             free_bitset(f->mask_pos[i]);
             free_bitset(f->mask_neg[i]);

@@ -6,6 +6,23 @@
 // PROCEDURE 1 : GENERATION DE PS'(F_v)
 // ============================================================================
 
+/**
+ * Calcule PS'(Fv) pour un noeud feuille v (cas de base de la Procédure 1).
+ *
+ * Pour une feuille variable x :
+ *   - Deux affectations possibles (x=0, x=1), chacune produisant un
+ *     PS-set C = sat'(Fv, T) = clauses satisfaites par T dans cla(F)\delta(v) (T une assignation).
+ *   - C_true = mask_pos[x] ET cla(Fv), C_false = mask_neg[x] ET cla(Fv).
+ *
+ * Pour une feuille clause c :
+ *   - Aucune variable dans le sous-arbre --> PS'(Fv) = {vide}.
+ *
+ * @param leaf     Noeud feuille (variable ou clause).
+ * @param f        La formule SAT.
+ * @param mask_Fv  Masque cla(Fv) = cla(F) \ delta(v).
+ * @param trie     Le trie binaire pour la déduplication des PS-sets.
+ * @return         PS_Set contenant les éléments de PS'(Fv).
+ */
 PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, BinaryTrie* trie) {
     PS_Set* ps_v = create_ps_set(2);
 
@@ -38,6 +55,24 @@ PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, Binar
     return ps_v;
 }
 
+/**
+ * Calcule PS'(Fv) pour tous les noeuds de l'arbre par parcours bottom-up.
+ *
+ * Implémentation de la Procédure 1 du papier (page 69) :
+ *   Pour un noeud interne v avec enfants c1, c2 :
+ *     PS'(Fv) = { (C1 OU C2) ET cla(Fv) : C1 appartient à PS'(Fc1), C2 appartient à PS'(Fc2) }
+ *
+ * Le résultat est stocké dans node->ps_prime_v pour chaque noeud.
+ * Les doublons sont éliminés via le trie binaire.
+ *
+ * Complexité totale : O(k^2 * m * (m+n)) (Théorème 1).
+ *
+ * @param node             Noeud courant (racine du sous-arbre à traiter).
+ * @param f                La formule SAT.
+ * @param all_clauses_mask Bitset avec tous les bits clause activés.
+ * @param trie             Le trie binaire pour la déduplication.
+ * @return                 PS_Set contenant PS'(Fv) pour ce noeud.
+ */
 PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTrie* trie) {
     // mask_Fv = cla(F) \ delta(v)
     Bitset* mask_Fv = create_bitset(f->num_clauses);
@@ -60,7 +95,7 @@ PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, Bitset* all_claus
     // ensemble L pour le noeud courant
     PS_Set* ps_v = create_ps_set(16);
 
-    // (C1 U C2) ∩ cla(Fv)
+    // produit cartéesien (C1 OU C2) ET cla(Fv)
     for (int i = 0; i < ps_c1->size; i++) {
         for (int j = 0; j < ps_c2->size; j++) {
             Bitset* C1 = ps_c1->sets[i];

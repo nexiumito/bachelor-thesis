@@ -5,10 +5,13 @@ SRCS = main.c \
        utils/bitset.c \
        utils/ps_set.c \
        utils/trie.c \
+       utils/dp_table.c \
+       utils/reverse_maps.c \
        core/parser.c \
        core/decomposition_tree.c \
        algo/procedure1.c \
-       algo/procedure2.c
+       algo/procedure2.c \
+       algo/procedure3.c
 
 OBJS = $(SRCS:.c=.o)
 
