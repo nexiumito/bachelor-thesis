@@ -15,7 +15,7 @@
  * Pour une feuille variable x (delta(v) = {x}, aucune clause) :
  *   - MaxSAT : 0 partout (rien à satisfaire localement dans delta(v))
  *   - #SAT : 2 si les deux affectations (x=0, x=1) produisent le même PS-set
- *            (|PS'(Fv)| = 1), 1 sinon (|PS'(Fv)| = 2)
+ *            (|PS'(Fv)| = 1), 1 sinon (|PS'(Fv)| = 2) car deux assignations différentes satisfonts les mêmes clauses
  *
  * Pour une feuille clause c (delta(v) = {c}, aucune variable locale) :
  *   - Tab(vide, C') = 1 si c appartient à C' (clause satisfaite par l'extérieur), 0 sinon
@@ -49,15 +49,15 @@ static DPTable* compute_leaf_table(Node* leaf) {
         // delta(v) = {clause c}, aucune variable locale
         // L'affectation vide est la seule possible
         // Tab(vide, C') = 1 si c appartient à C' (clause satisfaite par l'extérieur), 0 sinon
-        int clause_idx = leaf->index;
-        int word_idx = clause_idx / 64;
-        int bit_idx = clause_idx % 64;
+        int clause_idx = leaf->index;   
+        int word_idx = clause_idx / 64; // mot de 64 bit qui contient ce bit
+        int bit_idx = clause_idx % 64; // index de la clause c dans le mot
 
         for (int j = 0; j < ps_v_bar->size; j++) {
-            int c_in_set = (ps_v_bar->sets[j]->words[word_idx] >> bit_idx) & 1;
+            int c_in_set = (ps_v_bar->sets[j]->words[word_idx] >> bit_idx) & 1; // extrait bit correspondant à c dans le bitset de C'
             // i = 0 car PS'(Fv) = {vide} (une seule ligne)
-            tab->maxsat[j] = c_in_set;
-            tab->sharpsat[j] = c_in_set;
+            tab->maxsat[j] = c_in_set; // c appartient à C' : 1, 0 sinon
+            tab->sharpsat[j] = c_in_set; // pareil (affectation vide valide car satisfaite par l'extérieur)
         }
     }
 
@@ -92,9 +92,7 @@ static DPTable* compute_leaf_table(Node* leaf) {
  * @param temp3  Bitset temporaire pré-alloué.
  * @return       Table DP du noeud, à libérer par l'appelant.
  */
-static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
-                                    BinaryTrie* trie, ReverseMaps* rmaps,
-                                    Bitset* temp1, Bitset* temp2, Bitset* temp3) {
+static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f, BinaryTrie* trie, ReverseMaps* rmaps, Bitset* temp1, Bitset* temp2, Bitset* temp3) {
     // Cas de base : feuille 
     if (node->type != NODE_INTERNAL) {
         return compute_leaf_table(node);
@@ -128,6 +126,8 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
 
     // Boucle principale : triplets (C_c1, C_c2, C'_v) 
     // Complexité : O(|PS'(Fc1)| × |PS'(Fc2)| × |PS'(Fv_barre)|) = O(k^3)
+    
+    // on itère sur PS'(Fc1) (index i1) et PS'(Fc2) (index i2)
     for (int i1 = 0; i1 < ps_c1->size; i1++) {
         Bitset* bs_c1 = ps_c1->sets[i1];
 
@@ -141,7 +141,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
             }
             int id_Cv = insert_or_get_ps_set(trie, temp3, num_clauses);
             int idx_v = (id_Cv < map_size) ? rmaps->map_v[id_Cv] : -1;
-            if (idx_v == -1) continue; // C_v appartient pas à PS'(Fv), combinaison invalide
+            if (idx_v == -1) continue; // C_v appartient pas à PS'(Fv), combinaison (C_c1, C_c2) invalide
 
             for (int jv = 0; jv < ps_v_bar->size; jv++) {
                 Bitset* bs_v_bar = ps_v_bar->sets[jv];
@@ -153,7 +153,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
                 }
                 int id_c1b = insert_or_get_ps_set(trie, temp1, num_clauses);
                 int idx_c1b = (id_c1b < map_size) ? rmaps->map_c1_bar[id_c1b] : -1;
-                if (idx_c1b == -1) continue; // C'_c1 appartient pas à PS'(Fc1_barre)
+                if (idx_c1b == -1) continue; // C'_c1 appartient pas à PS'(Fc1_barre), combinaison (C_c2, C'_v) invalide
 
                 // C'_c2 = (C_c1 OU C'_v) ET delta(c2)
                 for (int w = 0; w < num_words; w++) {
@@ -162,7 +162,8 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
                 }
                 int id_c2b = insert_or_get_ps_set(trie, temp2, num_clauses);
                 int idx_c2b = (id_c2b < map_size) ? rmaps->map_c2_bar[id_c2b] : -1;
-                if (idx_c2b == -1) continue; // C'_c2 appartient pas à PS'(Fc2_barre)
+                if (idx_c2b == -1) continue; // C'_c2 appartient pas à PS'(Fc2_barre), combinaison (C_c1, C'_v) invalide
+
 
                 // Indices dans les tables
                 int cell_v  = idx_v * tab_v->num_cols  + jv;
@@ -170,7 +171,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
                 int cell_c2 = i2    * tab_c2->num_cols + idx_c2b;
 
                 // MaxSAT 
-                // t = Tab_c1(C_c1, C'_c1) + Tab_c2(C_c2, C'_c2)
+                // t = Tab_c1(C_c1, C'_c1) + Tab_c2(C_c2, C'_c2) (addition car delta(c1) et delta(c2) sont disjoints donc pas de double comptage)
                 // Mise à jour seulement si les deux cellules enfants sont valides
                 if (tab_c1->maxsat[cell_c1] >= 0 && tab_c2->maxsat[cell_c2] >= 0) {
                     long long t = tab_c1->maxsat[cell_c1] + tab_c2->maxsat[cell_c2];
@@ -180,7 +181,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f,
                 }
 
                 // #SAT 
-                // Tab_v(C_v, C'_v) += Tab_c1(C_c1, C'_c1) * Tab_c2(C_c2, C'_c2)
+                // Tab_v(C_v, C'_v) += Tab_c1(C_c1, C'_c1) * Tab_c2(C_c2, C'_c2) (multiplie car les affectations de c1 et c2 sont indépendantes)
                 tab_v->sharpsat[cell_v] += tab_c1->sharpsat[cell_c1]
                                          * tab_c2->sharpsat[cell_c2];
             }

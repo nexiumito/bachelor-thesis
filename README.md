@@ -60,7 +60,7 @@ Toutes les implémentations en C et les scripts liés à ce projet se trouvent d
 
 1. **Cloner le dépôt** : 
    ```bash
-   git clone [https://github.com/nexiumito/bachelor-thesis.git](https://github.com/nexiumito/bachelor-thesis.git)
+   git clone https://github.com/nexiumito/bachelor-thesis.git
    cd bachelor-thesis/src
    ```
 

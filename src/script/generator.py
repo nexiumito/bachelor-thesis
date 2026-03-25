@@ -112,10 +112,10 @@ def generate_type1_interval(n, m, permute=True):
     total_steps = 2 * (n + m)
     var_intervals = {}       # var_id -> [left, right]
     clause_intervals = {}    # clause_id -> [left, right]
-    live_vars = []
-    live_clauses = []
-    vars_started = 0
-    clauses_started = 0
+    live_vars = [] # intervalles variables ouvert
+    live_clauses = [] # intervalles clauses ouvert
+    vars_started = 0 # nombre de variables dont l'intervalle a déjà été ouvert jusqu'à ce step
+    clauses_started = 0 # nombre de clauses dont l'intervalle a déjà été ouvert jusqu'à ce step
 
     for step in range(1, total_steps + 1):
         steps_remaining = total_steps - step + 1
@@ -154,6 +154,7 @@ def generate_type1_interval(n, m, permute=True):
             clause_intervals[c_id][1] = step
 
     # Renumeroter les variables par right endpoint croissant (interval ordering)
+    # Variable qui finit en premier reçoit l'id 1, la suivante l'id 2, etc..
     sorted_vars = sorted(var_intervals.keys(),
                          key=lambda v: var_intervals[v][1])
     # old_id -> new_id (1-indexed)
