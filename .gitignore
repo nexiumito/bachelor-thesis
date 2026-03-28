@@ -45,8 +45,6 @@ coverage.xml
 *.snm
 *.lof
 
-# projet de Bachelor de Loic Bardi qui pourrait m'être utile par la suite
-projetBachelorLoicBardi
 
 # objet + executable
 *.o
