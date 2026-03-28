@@ -45,11 +45,16 @@ coverage.xml
 *.snm
 *.lof
 
-# Dossier contenant le projet de Bachelor de Loic Bardi qui pourrait m'être utile par la suite...
+# projet de Bachelor de Loic Bardi qui pourrait m'être utile par la suite
 projetBachelorLoicBardi
 
-# objet
+# objet + executable
 *.o
 sat_solver
 
+# notes
 checkpoint/
+
+# self-doc
+.claude/
+docs/IMPLEMENTATION_NOTES.md

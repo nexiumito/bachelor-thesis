@@ -98,12 +98,6 @@ Node* generate_random_tree(SAT_Formula* f) {
     Node** pool = malloc(total_leaves * sizeof(Node*)); // tableau contenant des pointeurs vers tout les noeuds qui n'ont pas de parent
     
     // initialisation des feuilles
-
-    // prendre formule aléatoire / loic et essayer de construire arbre linéaire
-    // fixer les variables qui posent problèmes jusqu'à ce qu'on ait un bon arbre ordre linéaire
-
-
-
     int pool_size = 0;
     for (int i = 1; i <= f->num_vars; i++) {
         pool[pool_size++] = create_leaf_node(NODE_LEAF_VAR, i, f->num_clauses);
