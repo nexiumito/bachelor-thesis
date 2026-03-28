@@ -158,10 +158,25 @@ static void run_benchmark(void) {
         {"type3_n60_t3_s2.cnf",     TREE_LINEAR},
         {"type3_n100_t3_s2.cnf",    TREE_LINEAR},
 
-        // Random k-SAT (greedy) 
+        // Random k-SAT (greedy)
         {"random_k3_v8_c20.cnf",    TREE_GREEDY},
         {"random_k3_v10_c50.cnf",   TREE_GREEDY},
         {"random_k3_v12_c50.cnf",   TREE_GREEDY},
+
+        // Formules difficiles : 3-SAT aleatoire sans structure d'interval bigraph
+        // -> ps-width grande, DP inefficace : baseline avant implementation backdoor
+        // Ratio critique ~ 4.26 (transition de phase)
+        {"random_k3_v15_c64_difficile.cnf",   TREE_GREEDY},
+        {"random_k3_v20_c85_difficile.cnf",   TREE_GREEDY},
+        {"random_k3_v30_c128_difficile.cnf",  TREE_GREEDY},
+        {"random_k3_v50_c213_difficile.cnf",  TREE_GREEDY},
+        {"random_k3_v100_c426_difficile.cnf", TREE_GREEDY},
+        // Ratio faible ~ 2.0 (SAT quasi-certain, pas de structure)
+        {"random_k3_v30_c60_difficile.cnf",   TREE_GREEDY},
+        {"random_k3_v50_c100_difficile.cnf",  TREE_GREEDY},
+        // Ratio eleve ~ 8.0 (UNSAT quasi-certain, MaxSAT interessant)
+        {"random_k3_v30_c240_difficile.cnf",  TREE_GREEDY},
+        {"random_k3_v50_c400_difficile.cnf",  TREE_GREEDY},
     };
 
     int num_entries = sizeof(entries) / sizeof(entries[0]);

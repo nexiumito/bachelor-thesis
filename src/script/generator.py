@@ -501,4 +501,59 @@ if __name__ == "__main__":
         print(f"  [OK] random_k{k}_v{num_vars}_c{num_clauses}.cnf "
               f"({num_vars} vars, {len(cls)} clauses)")
 
+    # ------------------------------------------------------------------
+    #  Formules difficiles pour notre DP
+    #
+    #  Ces formules sont difficiles car leur graphe d'incidence I(F) est
+    #  aleatoire, sans structure d'interval bigraph. La ps-width explose
+    #  avec la taille, rendant l'algorithme DP inefficace.
+    #
+    #  Critere de difficulte pour notre DP (different du critere DPLL) :
+    #    - Pas de structure d'intervalle dans I(F) -> pas de petite ps-width
+    #    - Ratio m/n ~ 4.26 = transition de phase pour 3-SAT (le plus dur
+    #      pour les solveurs DPLL, car la formule est SAT/UNSAT en equilibre)
+    #    - Ratio m/n ~ 2.0 = formule presque surement SAT (nombreuses solutions),
+    #      mais toujours sans structure -> ps-width grande
+    #    - Ratio m/n ~ 8.0 = formule presque surement UNSAT (#SAT=0),
+    #      MaxSAT reste un probleme difficile a optimiser
+    #
+    #  Ces instances servent de baseline pour comparer les performances
+    #  avant et apres implementation des backdoors.
+    # ------------------------------------------------------------------
+    print("\n--- Formules difficiles (3-SAT aleatoire sans structure) ---")
+    print("    [Critere : ps-width grande car I(F) non-interval-bigraph]")
+
+    difficile_configs = [
+        # (num_vars, num_clauses, k, label_ratio)
+        #
+        # Transition de phase (ratio ~ 4.26) :
+        # formules les plus dures pour DPLL et sans structure pour notre DP
+        (15,  64,  3, "critique"),   # ratio 4.27 - faisable, verification possible
+        (20,  85,  3, "critique"),   # ratio 4.25 - faisable
+        (30,  128, 3, "critique"),   # ratio 4.27 - DP commence a peiner
+        (50,  213, 3, "critique"),   # ratio 4.26 - DP probablement trop lent
+        (100, 426, 3, "critique"),   # ratio 4.26 - necessite backdoor
+        (200, 852, 3, "critique"),   # ratio 4.26 - DP inutilisable sans backdoor
+        #
+        # Ratio faible (ratio ~ 2.0) : presque surement SAT, mais sans structure
+        (30,  60,  3, "sparse"),     # ratio 2.0
+        (50,  100, 3, "sparse"),     # ratio 2.0
+        (100, 200, 3, "sparse"),     # ratio 2.0
+        #
+        # Ratio eleve (ratio ~ 8.0) : presque surement UNSAT, MaxSAT interessant
+        (30,  240, 3, "dense"),      # ratio 8.0
+        (50,  400, 3, "dense"),      # ratio 8.0
+    ]
+
+    for num_vars, num_clauses, k, label in difficile_configs:
+        ratio = num_clauses / num_vars
+        fname = os.path.join(output_dir,
+                             f"random_k{k}_v{num_vars}_c{num_clauses}_difficile.cnf")
+        cls = generate_random_ksat(num_vars, num_clauses, k)
+        write_dimacs(num_vars, cls, fname,
+                     f"Difficile ({label}): random {k}-SAT sans structure, "
+                     f"n={num_vars}, m={num_clauses}, ratio={ratio:.2f}")
+        print(f"  [OK] random_k{k}_v{num_vars}_c{num_clauses}_difficile.cnf "
+              f"({num_vars} vars, {num_clauses} clauses, ratio={ratio:.2f}, {label})")
+
     print("\n==========================================")
