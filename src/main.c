@@ -119,64 +119,65 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
  * avec variables, clauses, ps-width, MaxSAT et temps d'exécution.
  */
 static void run_benchmark(void) {
-    const char* dir = "script/instances_test/";
+    // Racine du repertoire de donnees (relative au cwd src/).
+    const char* data_root = "../data/";
 
-    typedef struct { const char* file; int mode; } BenchEntry;
+    typedef struct { const char* subdir; const char* file; int mode; } BenchEntry;
 
     BenchEntry entries[] = {
-        // Type 3 t=3 s=2 (greedy) : psw attendue = 8 
-        {"type3_n30_t3_s2.cnf",     TREE_GREEDY},
-        {"type3_n60_t3_s2.cnf",     TREE_GREEDY},
-        {"type3_n100_t3_s2.cnf",    TREE_GREEDY},
-        {"type3_n200_t3_s2.cnf",    TREE_GREEDY},
-        {"type3_n1000_t3_s2.cnf",   TREE_GREEDY},
-        {"type3_n5000_t3_s2.cnf",   TREE_GREEDY},
-        {"type3_n10000_t3_s2.cnf",  TREE_GREEDY},
+        // Type 3 t=3 s=2 (greedy) : psw attendue = 8
+        {"type3/", "type3_n30_t3_s2.cnf",     TREE_GREEDY},
+        {"type3/", "type3_n60_t3_s2.cnf",     TREE_GREEDY},
+        {"type3/", "type3_n100_t3_s2.cnf",    TREE_GREEDY},
+        {"type3/", "type3_n200_t3_s2.cnf",    TREE_GREEDY},
+        {"type3/", "type3_n1000_t3_s2.cnf",   TREE_GREEDY},
+        {"type3/", "type3_n5000_t3_s2.cnf",   TREE_GREEDY},
+        {"type3/", "type3_n10000_t3_s2.cnf",  TREE_GREEDY},
 
         // Type 3 t=5 s=3 (greedy) : psw attendue ~ 60
-        {"type3_n60_t5_s3.cnf",     TREE_GREEDY},
-        {"type3_n90_t5_s3.cnf",     TREE_GREEDY},
-        {"type3_n120_t5_s3.cnf",    TREE_GREEDY},
-        {"type3_n150_t5_s3.cnf",    TREE_GREEDY},
-        {"type3_n1000_t5_s3.cnf",   TREE_GREEDY},
+        {"type3/", "type3_n60_t5_s3.cnf",     TREE_GREEDY},
+        {"type3/", "type3_n90_t5_s3.cnf",     TREE_GREEDY},
+        {"type3/", "type3_n120_t5_s3.cnf",    TREE_GREEDY},
+        {"type3/", "type3_n150_t5_s3.cnf",    TREE_GREEDY},
+        {"type3/", "type3_n1000_t5_s3.cnf",   TREE_GREEDY},
 
-        // Type 2 t=3 (greedy) : psw attendue ~ 32 
-        {"type2_v25_c100_t3.cnf",   TREE_GREEDY},
-        {"type2_v50_c200_t3.cnf",   TREE_GREEDY},
-        {"type2_v100_c400_t3.cnf",  TREE_GREEDY},
-        {"type2_v200_c800_t3.cnf",  TREE_GREEDY},
-        {"type2_v500_c2000_t3.cnf", TREE_GREEDY},
-        {"type2_v1000_c4000_t3.cnf",TREE_GREEDY},
+        // Type 2 t=3 (greedy) : psw attendue ~ 32
+        {"type2/", "type2_v25_c100_t3.cnf",   TREE_GREEDY},
+        {"type2/", "type2_v50_c200_t3.cnf",   TREE_GREEDY},
+        {"type2/", "type2_v100_c400_t3.cnf",  TREE_GREEDY},
+        {"type2/", "type2_v200_c800_t3.cnf",  TREE_GREEDY},
+        {"type2/", "type2_v500_c2000_t3.cnf", TREE_GREEDY},
+        {"type2/", "type2_v1000_c4000_t3.cnf",TREE_GREEDY},
 
-        // Type 1 (greedy) 
-        {"type1_v50_c60.cnf",       TREE_GREEDY},
-        {"type1_v80_c100.cnf",      TREE_GREEDY},
-        {"type1_v150_c180.cnf",     TREE_GREEDY},
+        // Type 1 (greedy)
+        {"type1/", "type1_v50_c60.cnf",       TREE_GREEDY},
+        {"type1/", "type1_v80_c100.cnf",      TREE_GREEDY},
+        {"type1/", "type1_v150_c180.cnf",     TREE_GREEDY},
 
         // Comparaison linear vs greedy sur une meme formule
-        {"type2_v50_c200_t3.cnf",   TREE_LINEAR},
-        {"type3_n60_t3_s2.cnf",     TREE_LINEAR},
-        {"type3_n100_t3_s2.cnf",    TREE_LINEAR},
+        {"type2/", "type2_v50_c200_t3.cnf",   TREE_LINEAR},
+        {"type3/", "type3_n60_t3_s2.cnf",     TREE_LINEAR},
+        {"type3/", "type3_n100_t3_s2.cnf",    TREE_LINEAR},
 
         // Random k-SAT (greedy)
-        {"random_k3_v8_c20.cnf",    TREE_GREEDY},
-        {"random_k3_v10_c50.cnf",   TREE_GREEDY},
-        {"random_k3_v12_c50.cnf",   TREE_GREEDY},
+        {"random/", "random_k3_v8_c20.cnf",    TREE_GREEDY},
+        {"random/", "random_k3_v10_c50.cnf",   TREE_GREEDY},
+        {"random/", "random_k3_v12_c50.cnf",   TREE_GREEDY},
 
         // Formules difficiles : 3-SAT aleatoire sans structure d'interval bigraph
-        // -> ps-width grande, DP inefficace : baseline avant implementation backdoor
+        // -> ps-width grande, DP inefficace : baseline de reference
         // Ratio critique ~ 4.26 (transition de phase)
-        {"random_k3_v15_c64_difficile.cnf",   TREE_GREEDY},
-        {"random_k3_v20_c85_difficile.cnf",   TREE_GREEDY},
-        {"random_k3_v30_c128_difficile.cnf",  TREE_GREEDY},
-        {"random_k3_v50_c213_difficile.cnf",  TREE_GREEDY},
-        {"random_k3_v100_c426_difficile.cnf", TREE_GREEDY},
+        {"random/", "random_k3_v15_c64_difficile.cnf",   TREE_GREEDY},
+        {"random/", "random_k3_v20_c85_difficile.cnf",   TREE_GREEDY},
+        {"random/", "random_k3_v30_c128_difficile.cnf",  TREE_GREEDY},
+        {"random/", "random_k3_v50_c213_difficile.cnf",  TREE_GREEDY},
+        {"random/", "random_k3_v100_c426_difficile.cnf", TREE_GREEDY},
         // Ratio faible ~ 2.0 (SAT quasi-certain, pas de structure)
-        {"random_k3_v30_c60_difficile.cnf",   TREE_GREEDY},
-        {"random_k3_v50_c100_difficile.cnf",  TREE_GREEDY},
+        {"random/", "random_k3_v30_c60_difficile.cnf",   TREE_GREEDY},
+        {"random/", "random_k3_v50_c100_difficile.cnf",  TREE_GREEDY},
         // Ratio eleve ~ 8.0 (UNSAT quasi-certain, MaxSAT interessant)
-        {"random_k3_v30_c240_difficile.cnf",  TREE_GREEDY},
-        {"random_k3_v50_c400_difficile.cnf",  TREE_GREEDY},
+        {"random/", "random_k3_v30_c240_difficile.cnf",  TREE_GREEDY},
+        {"random/", "random_k3_v50_c400_difficile.cnf",  TREE_GREEDY},
     };
 
     int num_entries = sizeof(entries) / sizeof(entries[0]);
@@ -190,7 +191,8 @@ static void run_benchmark(void) {
 
     char path[512];
     for (int i = 0; i < num_entries; i++) {
-        snprintf(path, sizeof(path), "%s%s", dir, entries[i].file);
+        snprintf(path, sizeof(path), "%s%s%s",
+                 data_root, entries[i].subdir, entries[i].file);
         // Verifier que le fichier existe
         FILE* test = fopen(path, "r");
         if (!test) {
@@ -222,7 +224,7 @@ int main(int argc, char *argv[]) {
         printf("  linear : Linear Branch Decomposition (ordre par numero de variable)\n");
         printf("  greedy : GreedyOrder (heuristique du papier, Section 6, page 76)\n");
         printf("  benchmark : Execute toutes les instances de test\n\n");
-        printf("Exemple : %s script/instances_test/type2_v50_c200_t3.cnf greedy\n", argv[0]);
+        printf("Exemple : %s ../data/type2/type2_v50_c200_t3.cnf greedy\n", argv[0]);
         return 1;
     }
 

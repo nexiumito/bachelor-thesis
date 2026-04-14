@@ -1,8 +1,0 @@
-{
-  "experiment_name": "test10_simplifie",
-  "type": "complexity",
-  "k_values": 10,
-  "nb_mults": 5,
-  "simplifie": true,
-  "bloat": false
-}
