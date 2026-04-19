@@ -263,7 +263,7 @@ de décision.
 Le problème MaxSAT cherche une affectation qui maximise le nombre de clauses
 satisfaites, même si la formule est globalement insatisfaisable. Il est
 NP-difficile et modélise des problèmes d'optimisation à contraintes souples
---- ordonnancement, configuration, bioinformatique. Des variantes importantes
+- ordonnancement, configuration, bioinformatique. Des variantes importantes
 incluent le \emph{Partial MaxSAT} (clauses dures obligatoires + clauses
 souples à maximiser) et le \emph{Weighted MaxSAT} (poids par clause).
 
@@ -477,62 +477,62 @@ solveurs CDCL \cite{saether2015}.
 
 \subsection{Définition}
 
-La notion de backdoor, introduite par Williams, Gomes et Selman
-\cite{williams2003}, identifie des sous-ensembles de variables dont la
-fixation ramène le problème dans une classe tractable. Formellement, un
-sous-ensemble $B \subseteq \mathit{var}(F)$ est un \emph{backdoor fort}
-vers une classe $\mathcal{C}$ si, pour toute affectation $\tau : B
-\to \{0,1\}$, la formule résiduelle $F[\tau]$ appartient à $\mathcal{C}$.
-Un \emph{backdoor faible} exige seulement l'existence d'une affectation
-satisfaisante de $B$ telle que $F[\tau] \in \mathcal{C}$.
-
-Dans notre contexte, la classe cible est celle des formules à ps-width
-bornée : si pour tout $\tau$, la ps-width de $F[\tau]$ est au plus $k'$,
-alors l'algorithme DP peut être appliqué sur chaque sous-problème. Le
-nombre total d'affectations est $\#\mathit{SAT}(F) = \sum_\tau \#\mathit{SAT}(F[\tau])$,
-et $\mathit{MaxSAT}(F) = \max_\tau \bigl[\mathit{sat}(\tau) + \mathit{MaxSAT}(F'[\tau])\bigr]$,
-où $\mathit{sat}(\tau)$ est le nombre de clauses satisfaites directement par $\tau$.
+%La notion de backdoor, introduite par Williams, Gomes et Selman
+%\cite{williams2003}, identifie des sous-ensembles de variables dont la
+%fixation ramène le problème dans une classe tractable. Formellement, un
+%sous-ensemble $B \subseteq \mathit{var}(F)$ est un \emph{backdoor fort}
+%vers une classe $\mathcal{C}$ si, pour toute affectation $\tau : B
+%\to \{0,1\}$, la formule résiduelle $F[\tau]$ appartient à $\mathcal{C}$.
+%Un \emph{backdoor faible} exige seulement l'existence d'une affectation
+%satisfaisante de $B$ telle que $F[\tau] \in \mathcal{C}$.
+%
+%Dans notre contexte, la classe cible est celle des formules à ps-width
+%bornée : si pour tout $\tau$, la ps-width de $F[\tau]$ est au plus $k'$,
+%alors l'algorithme DP peut être appliqué sur chaque sous-problème. Le
+%nombre total d'affectations est $\#\mathit{SAT}(F) = \sum_\tau \#\mathit{SAT}(F[\tau])$,
+%et $\mathit{MaxSAT}(F) = \max_\tau \bigl[\mathit{sat}(\tau) + \mathit{MaxSAT}(F'[\tau])\bigr]$,
+%où $\mathit{sat}(\tau)$ est le nombre de clauses satisfaites directement par $\tau$.
 
 \subsection{Détection et heuristiques}
 
-Trouver le plus petit backdoor est NP-difficile. Nishimura, Ragde et Szeider
-\cite{nishimura2004} ont établi que la détection d'un backdoor de taille $\leq k$
-vers Horn et 2-CNF est FPT. Gaspers et Szeider \cite{gaspers2013} ont étendu
-ce résultat aux backdoors vers la treewidth bornée. Ganian, Ramanujan et Szeider
-\cite{ganian2017} ont introduit la notion de \emph{backdoor treewidth}, exploitant
-la structure interne du backdoor plutôt que sa seule taille.
-
-En pratique, la heuristique VSIDS fournit une sélection efficace : le score
-$\mathit{score}(v) = |C^+(v)| \times |C^-(v)|$ identifie les variables les
-plus « charnières », celles qui apparaissent équilibrément dans les deux
-polarités. Dilkina, Gomes et Sabharwal \cite{dilkina2009} ont montré que
-les backdoors exploitant l'activité CDCL (\emph{learning-sensitive backdoors})
-peuvent être exponentiellement plus petits que les backdoors statiques.
-Semenov et al.\ \cite{semenov2018} ont appliqué ces idées à la cryptanalyse
-SAT, utilisant les bits de retenue des circuits arithmétiques comme candidats
-naturels au backdoor.
+%Trouver le plus petit backdoor est NP-difficile. Nishimura, Ragde et Szeider
+%\cite{nishimura2004} ont établi que la détection d'un backdoor de taille $\leq k$
+%vers Horn et 2-CNF est FPT. Gaspers et Szeider \cite{gaspers2013} ont étendu
+%ce résultat aux backdoors vers la treewidth bornée. Ganian, Ramanujan et Szeider
+%\cite{ganian2017} ont introduit la notion de \emph{backdoor treewidth}, exploitant
+%la structure interne du backdoor plutôt que sa seule taille.
+%
+%En pratique, la heuristique VSIDS fournit une sélection efficace : le score
+%$\mathit{score}(v) = |C^+(v)| \times |C^-(v)|$ identifie les variables les
+%plus « charnières », celles qui apparaissent équilibrément dans les deux
+%polarités. Dilkina, Gomes et Sabharwal \cite{dilkina2009} ont montré que
+%les backdoors exploitant l'activité CDCL (\emph{learning-sensitive backdoors})
+%peuvent être exponentiellement plus petits que les backdoors statiques.
+%Semenov et al.\ \cite{semenov2018} ont appliqué ces idées à la cryptanalyse
+%SAT, utilisant les bits de retenue des circuits arithmétiques comme candidats
+%naturels au backdoor.
 
 % ---------------------------------------------------------------------------
 \section{Circuits de multiplication et transformation de Tseytin}
 \label{sec:tseytin}
 % ---------------------------------------------------------------------------
 
-La transformation de Tseytin \cite{tseytin1968} convertit un circuit logique
-en une formule CNF équisatisfaisable en temps linéaire, en introduisant une
-variable auxiliaire pour la sortie de chaque porte. Cette transformation
-préserve la structure topologique du circuit dans le graphe d'incidence de
-la formule.
-
-Pour un multiplicateur $k \times k$ bits (array multiplier), la formule
-Tseytin résultante comporte $O(k^2)$ variables et clauses. La structure en
-grille de l'additionneur génère un graphe d'incidence de mim-width $\Theta(k)$
-\cite{vatshelle2012}, ce qui entraîne une ps-width exponentiellement grande
-en $k$. Pour $k \geq 4$, cette explosion rend l'algorithme DP pur intractable,
-ce qui motive l'approche par backdoor : les bits de retenue (carry bits),
-responsables des dépendances longue portée, constituent des candidats naturels
-au backdoor. Leur fixation par propagation unitaire propage en cascade les
-valeurs des portes adjacentes, effondrant la formule résiduelle en un
-sous-problème de ps-width nulle ou bornée.
+%La transformation de Tseytin \cite{tseytin1968} convertit un circuit logique
+%en une formule CNF équisatisfaisable en temps linéaire, en introduisant une
+%variable auxiliaire pour la sortie de chaque porte. Cette transformation
+%préserve la structure topologique du circuit dans le graphe d'incidence de
+%la formule.
+%
+%Pour un multiplicateur $k \times k$ bits (array multiplier), la formule
+%Tseytin résultante comporte $O(k^2)$ variables et clauses. La structure en
+%grille de l'additionneur génère un graphe d'incidence de mim-width $\Theta(k)$
+%\cite{vatshelle2012}, ce qui entraîne une ps-width exponentiellement grande
+%en $k$. Pour $k \geq 4$, cette explosion rend l'algorithme DP pur intractable,
+%ce qui motive l'approche par backdoor : les bits de retenue (carry bits),
+%responsables des dépendances longue portée, constituent des candidats naturels
+%au backdoor. Leur fixation par propagation unitaire propage en cascade les
+%valeurs des portes adjacentes, effondrant la formule résiduelle en un
+%sous-problème de ps-width nulle ou bornée.
 
 \chapter{Cadre théorique}
 \label{chap:theorie}

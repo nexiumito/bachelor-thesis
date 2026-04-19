@@ -61,28 +61,28 @@ def parse_dimacs(path):
 # ---------------------------------------------------------------------------
 
 def z3_maxsat(n_vars, clauses, timeout_s):
-    V = [Bool(f"x{i+1}") for i in range(n_vars)]
+    V = [Bool(f"x{i+1}") for i in range(n_vars)] # n_vars variables booléenne
     opt = Optimize()
     opt.set("timeout", int(timeout_s * 1000))
     for c in clauses:
-        lits = [V[abs(l) - 1] if l > 0 else Not(V[abs(l) - 1]) for l in c]
-        opt.add_soft(Or(lits))
+        lits = [V[abs(l) - 1] if l > 0 else Not(V[abs(l) - 1]) for l in c] # pour chaque clause, construit son expression Z3 correspondante
+        opt.add_soft(Or(lits)) #soft constraint sur les disjonctions de littéraux (les clauses) (devrait être satisfaite --> Z3 va maximumser ça)
     t0 = time.perf_counter()
     try:
-        opt.check()
-    except Exception as e:
+        opt.check() #retourne sat (assignation tq toutes clauses satisfaites), jamais unsat car soft constraint
+    except Exception as e: 
         return f"ERR:{e}", time.perf_counter() - t0
     elapsed = time.perf_counter() - t0
     m = opt.model()
     # On compte manuellement le nombre de clauses satisfaites par le modèle.
     satisfied = 0
-    for c in clauses:
+    for c in clauses: # récpère le modèle, i.e. l'assignation concrète trouvée
         for l in c:
             v = V[abs(l) - 1]
-            val = m.evaluate(v, model_completion=True)
+            val = m.evaluate(v, model_completion=True) # variable n'apparait dans aucune clause
             if (l > 0 and bool(val)) or (l < 0 and not bool(val)):
-                satisfied += 1
-                break
+                satisfied += 1 # un littéral vrai -> clause suivante
+                break 
     return satisfied, elapsed
 
 
@@ -126,7 +126,7 @@ def main():
                     help="mode de l'arbre DP (défaut greedy)")
     args = ap.parse_args()
 
-    # Collecter les fichiers à traiter
+    # Collecter les fichiers à traiter (si on passe un dossier, on liste tout les .cnf/.dimacs, sinon on a juste un fichier unique)
     if os.path.isdir(args.target):
         files = sorted(
             os.path.join(args.target, f)
@@ -143,7 +143,7 @@ def main():
         print("Aucun fichier .cnf/.dimacs trouvé.", file=sys.stderr)
         sys.exit(1)
 
-    # En-tête du tableau
+    # En-tête du tableau (construit dynamiquement selon si on donne --dp ou pas)
     header = (f"{'Fichier':<40} {'n':>5} {'m':>6} "
               f"{'Z3_MaxSAT':>10} {'Z3_t(s)':>9}")
     if args.dp:
@@ -151,7 +151,7 @@ def main():
     print(header)
     print("-" * len(header))
 
-    for cnf in files:
+    for cnf in files: # pour chaque dimacs --> parser, z3_maxsat, run_dp_solver si --dp
         name = os.path.basename(cnf)
         try:
             n, m, clauses = parse_dimacs(cnf)
