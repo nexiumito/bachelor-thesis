@@ -205,9 +205,7 @@ par la transformation de Tseytin. Ces expérimentations visent à mesurer l'impa
 de la ps-width sur les performances, à comparer l'algorithme DP avec d'autres
 approches (solveurs CDCL, Z3, compilation de connaissances), et à identifier les
 conditions dans lesquelles la décomposition structurelle apporte un avantage
-décisif. Nous explorons également la notion de \emph{backdoor fort}, un petit
-ensemble de variables dont la fixation ramène la formule résiduelle à une ps-width
-gérable, pour étendre la portée pratique de l'algorithme DP.
+décisif.
 
 % =============================================================
 % ===========================================================================
@@ -219,8 +217,8 @@ Ce chapitre positionne notre travail dans la littérature. Nous présentons
 successivement les problèmes SAT, \#SAT et MaxSAT, les principales familles
 d'algorithmes de résolution, les paramètres de décomposition structurelle
 qui gouvernent leur complexité, l'algorithme de Sæther, Telle et Vatshelle
-qui constitue le socle de notre implémentation, et enfin la notion de
-backdoor qui en étend la portée.
+qui constitue le socle de notre implémentation, et la compilation de
+connaissances CNF $\to$ d-DNNF qui en constitue l'extension naturelle.
 
 % ---------------------------------------------------------------------------
 \section{SAT, \#SAT et MaxSAT}
@@ -318,7 +316,7 @@ SAT (extraction de noyaux) et un solveur ILP (calcul du \emph{hitting set}
 minimal) pour converger vers la solution optimale avec des garanties de
 correction.
 
-\subsection{SMT et compilation de connaissances}
+\subsection{Solveurs SMT}
 
 Les solveurs SMT (satisfaisabilité modulo théories), dont \texttt{Z3}
 \cite{moura2008}, étendent le cadre SAT en intégrant des théories
@@ -326,16 +324,11 @@ arithmétiques (arithmétique linéaire entière/réelle, fonctions non
 interprétées, vecteurs de bits). L'architecture DPLL(T) délègue la
 vérification de cohérence sémantique à des \emph{T-solveurs} spécialisés.
 Sur des instances purement propositionnelles, les solveurs SAT dédiés restent
-nettement plus rapides du fait de la surcharge des structures SMT.
-
-La \emph{compilation de connaissances} \cite{darwiche2002} adopte une
-perspective différente : la formule est transformée hors-ligne vers une
-représentation canonique (d-DNNF, SDD \cite{darwiche2011}) sur laquelle les
-requêtes \#SAT s'exécutent en temps linéaire. Cette approche est efficace
-quand la base de connaissances est statique et interrogée fréquemment.
-Darwiche et Marquis ont formalisé une hiérarchie de ces langages en termes
-de succinctitude et de requêtes supportées en temps polynomial
-\cite{darwiche2002}.
+nettement plus rapides du fait de la surcharge des structures SMT. La
+\emph{compilation de connaissances}, qui transforme la CNF hors-ligne en
+une représentation permettant des requêtes polynomiales, fait l'objet de la
+section~\ref{sec:kc} où elle est mise en regard de l'algorithme DP central
+de ce mémoire.
 
 % ---------------------------------------------------------------------------
 \section{Décompositions arborescentes et paramètres de largeur}
@@ -460,7 +453,7 @@ Puisque minimiser la ps-width est intractable en général, les auteurs
 proposent l'heuristique \emph{GreedyOrder} : à chaque étape, le sommet du
 graphe d'incidence $I(F)$ ayant le plus grand degré de connexion aux sommets
 déjà sélectionnés est choisi en premier (avec tie-break sur le degré total).
-Cette heuristique glouonne produit des décompositions linéaires de bonne
+Cette heuristique gloutonne produit des décompositions linéaires de bonne
 qualité en pratique.
 
 Pour valider l'algorithme, trois familles d'instances synthétiques sont
@@ -471,46 +464,138 @@ Sur ces instances, le DP paramétré par la ps-width surpasse nettement les
 solveurs CDCL \cite{saether2015}.
 
 % ---------------------------------------------------------------------------
-\section{Backdoors pour SAT}
-\label{sec:backdoors}
+\section{Compilation de connaissances CNF \texorpdfstring{$\to$}{vers} d-DNNF}
+\label{sec:kc}
 % ---------------------------------------------------------------------------
 
-\subsection{Définition}
+La \emph{compilation de connaissances} (\emph{knowledge compilation}, KC)
+transforme une formule CNF hors-ligne en une représentation structurée,
+typiquement un DAG, sur laquelle certaines requêtes (comptage,
+conditionnement, projection partielle) deviennent polynomiales. Le coût
+de compilation est amorti dès qu'une même base est interrogée de multiples
+fois, et les progrès de la décennie ont placé la compilation au centre de
+l'inférence probabiliste exacte et de la vérification quantitative.
+Cette section résume la hiérarchie des langages cibles, les compilateurs
+contemporains, puis détaille le résultat de Bova, Capelli, Mengel et
+Slivovsky (BCMS 2016) qui constitue le fondement théorique de l'extension
+KC de notre implémentation.
 
-%La notion de backdoor, introduite par Williams, Gomes et Selman
-%\cite{williams2003}, identifie des sous-ensembles de variables dont la
-%fixation ramène le problème dans une classe tractable. Formellement, un
-%sous-ensemble $B \subseteq \mathit{var}(F)$ est un \emph{backdoor fort}
-%vers une classe $\mathcal{C}$ si, pour toute affectation $\tau : B
-%\to \{0,1\}$, la formule résiduelle $F[\tau]$ appartient à $\mathcal{C}$.
-%Un \emph{backdoor faible} exige seulement l'existence d'une affectation
-%satisfaisante de $B$ telle que $F[\tau] \in \mathcal{C}$.
-%
-%Dans notre contexte, la classe cible est celle des formules à ps-width
-%bornée : si pour tout $\tau$, la ps-width de $F[\tau]$ est au plus $k'$,
-%alors l'algorithme DP peut être appliqué sur chaque sous-problème. Le
-%nombre total d'affectations est $\#\mathit{SAT}(F) = \sum_\tau \#\mathit{SAT}(F[\tau])$,
-%et $\mathit{MaxSAT}(F) = \max_\tau \bigl[\mathit{sat}(\tau) + \mathit{MaxSAT}(F'[\tau])\bigr]$,
-%où $\mathit{sat}(\tau)$ est le nombre de clauses satisfaites directement par $\tau$.
+\subsection{Langages cibles}
 
-\subsection{Détection et heuristiques}
+Darwiche et Marquis \cite{darwiche2002} ont dressé la \emph{carte de
+compilation} qui classe les représentations selon deux axes : la
+\emph{succinctitude} (taille relative) et la \emph{tractabilité} des
+requêtes supportées en temps polynomial. Les langages fondamentaux sont :
 
-%Trouver le plus petit backdoor est NP-difficile. Nishimura, Ragde et Szeider
-%\cite{nishimura2004} ont établi que la détection d'un backdoor de taille $\leq k$
-%vers Horn et 2-CNF est FPT. Gaspers et Szeider \cite{gaspers2013} ont étendu
-%ce résultat aux backdoors vers la treewidth bornée. Ganian, Ramanujan et Szeider
-%\cite{ganian2017} ont introduit la notion de \emph{backdoor treewidth}, exploitant
-%la structure interne du backdoor plutôt que sa seule taille.
-%
-%En pratique, la heuristique VSIDS fournit une sélection efficace : le score
-%$\mathit{score}(v) = |C^+(v)| \times |C^-(v)|$ identifie les variables les
-%plus « charnières », celles qui apparaissent équilibrément dans les deux
-%polarités. Dilkina, Gomes et Sabharwal \cite{dilkina2009} ont montré que
-%les backdoors exploitant l'activité CDCL (\emph{learning-sensitive backdoors})
-%peuvent être exponentiellement plus petits que les backdoors statiques.
-%Semenov et al.\ \cite{semenov2018} ont appliqué ces idées à la cryptanalyse
-%SAT, utilisant les bits de retenue des circuits arithmétiques comme candidats
-%naturels au backdoor.
+\begin{itemize}
+  \item \textbf{NNF} (\emph{Negation Normal Form}) : DAG dont les feuilles
+    sont des littéraux et les nœuds internes des ET et OU.
+  \item \textbf{DNNF} (\emph{Decomposable NNF}) : NNF où tout nœud ET a
+    des enfants à portées disjointes (\emph{décomposabilité}).
+  \item \textbf{d-DNNF} (\emph{Deterministic DNNF}) : DNNF où les enfants
+    de tout nœud OU représentent des ensembles de modèles disjoints
+    (\emph{déterminisme}). Cette propriété rend le comptage \#SAT
+    polynomial par un parcours post-ordre qui remplace OU par somme et
+    ET par produit.
+  \item \textbf{SDD} (\emph{Sentential Decision Diagram}) : d-DNNF dont
+    la topologie est contrainte par un \emph{vtree} (arbre binaire sur
+    les variables), et qui admet une forme canonique \cite{darwiche2011}.
+  \item \textbf{OBDD} (\emph{Ordered Binary Decision Diagram}) :
+    précurseur historique \cite{bryant1986}, le plus restrictif, mais
+    clos sous l'ensemble des connecteurs booléens en temps polynomial.
+\end{itemize}
+
+Vinall-Smeeth \cite{vinallSmeeth2024} a récemment clos une question
+ouverte en démontrant que le d-DNNF structuré n'est pas clos sous la
+négation ni sous la quantification existentielle, établissant une
+séparation de compacité exponentielle avec le SDD.
+
+\subsection{Compilateurs de l'état de l'art}
+
+\paragraph{Approches top-down fondées sur DPLL/CDCL.}
+Le compilateur \texttt{c2d} \cite{darwiche2004} a été le premier à
+produire un Decision-DNNF à partir d'une trace DPLL instrumentée : les
+branchements deviennent des nœuds OU, la décomposition en composants
+disjoints des nœuds ET. Son successeur \texttt{D4} \cite{lagniez2017},
+développé en C++, combine CDCL, analyse dynamique de composants et
+techniques d'apprentissage pour s'imposer comme l'état de l'art de la
+compilation top-down pure. \texttt{miniC2D} \cite{oztok2015} contraint
+la recherche DPLL par un \emph{vtree} statique afin de produire
+directement un Decision-SDD. \texttt{Ganak} \cite{sharma2019} remplace
+le cache de composants exact par un hachage universel probabiliste,
+réduisant drastiquement l'empreinte mémoire.
+
+\paragraph{Approches pilotées par la structure.}
+L'écosystème \texttt{DPMC} / \texttt{ADDMC}
+\cite{dudek2020dpmc} rompt avec DPLL : une phase de planification
+construit un \emph{project-join tree} dérivé d'une décomposition
+arborescente, évalué bottom-up via des diagrammes algébriques (ADDs).
+\texttt{sharpSAT-TD} \cite{korhonen2021}, vainqueur successif de la
+\emph{Model Counting Competition} 2021-2023, adopte une architecture
+hybride : le moteur CDCL est conservé, mais son heuristique de
+branchement est biaisée pour suivre la hiérarchie d'une décomposition
+arborescente calculée en prétraitement par \texttt{FlowCutter}
+\cite{strasser2017}. Cette hybridation \emph{dynamique} (CDCL) et
+\emph{structurelle} (treewidth) illustre la tendance dominante des
+compétitions récentes.
+
+\subsection{Compilation explicite pilotée par la ps-width : BCMS 2016}
+\label{subsec:bcms}
+
+Bova, Capelli, Mengel et Slivovsky \cite{bova2016} ont étendu
+l'algorithme de Sæther, Telle et Vatshelle en montrant que toute formule
+CNF $F$ dotée d'une branch decomposition de ps-width $k$ peut être
+compilée en un d-DNNF structuré de taille
+\[
+  |D| \leq 7 \cdot k^3 \cdot (n + m),
+\]
+en temps également polynomial en $n + m$. L'algorithme s'obtient comme
+une \emph{instrumentation} de la Procédure 3 de \cite{saether2015} :
+chaque cellule $\mathit{Tab}_v(C, C')$ se voit associer un pointeur
+$\varphi_v(C, C')$ vers un nœud du DAG (Lemme~4), les produits et sommes
+de la DP deviennent des ET et OU dans le circuit (Lemmes~5 et~6), et la
+borne $7 k^3 (n+m)$ découle du dénombrement des triplets générateurs
+(Lemme~7).
+
+Ce résultat est remarquable sur deux plans. D'une part, il fournit une
+voie de compilation \emph{paramétrée} polynomiale en $n+m$ dès que la
+ps-width est bornée, sans recourir à la recherche DPLL. D'autre part,
+il établit une équivalence structurelle entre la DP structurelle et la
+compilation d-DNNF : parcourir le DAG obtenu en substituant $\lor$ par
+$+$ et $\land$ par $\times$ redonne exactement le nombre de modèles
+calculé par la DP.
+
+\paragraph{État des implémentations.} Malgré l'importance théorique de
+BCMS 2016, aucune implémentation publique n'exécute strictement
+l'algorithme bottom-up piloté par la ps-width pour produire un DAG
+d-DNNF. Les outils contemporains (\texttt{sharpSAT-TD}, \texttt{D4},
+\texttt{DPMC}) suivent des voies distinctes : trace CDCL dont la taille
+est implicitement bornée \emph{a posteriori} par la treewidth, ou bien
+programmation dynamique sur la treewidth d'incidence plutôt que sur la
+ps-width. Une partie de la contribution de ce mémoire consiste
+précisément à combler ce vide pratique en fournissant une implémentation
+explicite de BCMS 2016 en C.
+
+\subsection{Évaluation et vérification}
+
+La \emph{Model Counting Competition} (MCC), établie en 2020
+\cite{fichte2025}, fédère l'évaluation empirique des compilateurs et
+compteurs. Elle comprend quatre pistes : comptage simple (MC), pondéré
+(WMC), projeté (PMC) et combiné (PWMC). Les instances couvrent des
+réseaux bayésiens, des circuits ISCAS, des modèles de configuration
+logicielle (Linux KConfig, BusyBox) et des formules synthétiques. Depuis
+2021, \texttt{sharpSAT-TD} domine les pistes principales, confirmant
+empiriquement la primauté de la décomposition structurelle sur les
+instances à topologie exploitable.
+
+La validation d'un compilateur dépasse aujourd'hui la seule comparaison
+des comptes avec un oracle. Bryant, Nawrocki, Avigad et Heule
+\cite{bryant2023} ont proposé le framework \emph{CPOG}
+(\emph{Partitioned-Operation Graph}) qui produit, parallèlement au DAG
+d-DNNF, une preuve certifiable mécaniquement par l'assistant Lean~4 de
+l'équivalence logique entre le circuit et la CNF source. Cette approche
+définit le nouveau standard de vérification formelle en compilation de
+connaissances.
 
 % ---------------------------------------------------------------------------
 \section{Circuits de multiplication et transformation de Tseytin}
@@ -527,12 +612,9 @@ solveurs CDCL \cite{saether2015}.
 %Tseytin résultante comporte $O(k^2)$ variables et clauses. La structure en
 %grille de l'additionneur génère un graphe d'incidence de mim-width $\Theta(k)$
 %\cite{vatshelle2012}, ce qui entraîne une ps-width exponentiellement grande
-%en $k$. Pour $k \geq 4$, cette explosion rend l'algorithme DP pur intractable,
-%ce qui motive l'approche par backdoor : les bits de retenue (carry bits),
-%responsables des dépendances longue portée, constituent des candidats naturels
-%au backdoor. Leur fixation par propagation unitaire propage en cascade les
-%valeurs des portes adjacentes, effondrant la formule résiduelle en un
-%sous-problème de ps-width nulle ou bornée.
+%en $k$. Pour $k \geq 4$, cette explosion rend l'algorithme DP pur intractable
+%et fait de ces instances un cas limite intéressant pour évaluer les
+%frontières pratiques de la décomposition structurelle.
 
 \chapter{Cadre théorique}
 \label{chap:theorie}
@@ -654,40 +736,57 @@ solveurs CDCL \cite{saether2015}.
   \newblock In \emph{Proc.\ 52nd International Colloquium on Automata, Languages, and Programming (ICALP 2025)}, LIPIcs, 2025.
   \newblock DOI: 10.4230/LIPIcs.ICALP.2025.25.
 
+\bibitem{bova2016}
+  S.~Bova, F.~Capelli, S.~Mengel, and F.~Slivovsky.
+  \newblock On compiling CNFs into structured deterministic DNNFs.
+  \newblock In \emph{Proc.\ 19th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 9710, pp.~199--214. Springer, 2016.
+
+\bibitem{bryant2023}
+  R.~E. Bryant, W.~Nawrocki, J.~Avigad, and M.~J.~H. Heule.
+  \newblock Certified knowledge compilation with application to formally verified model counting.
+  \newblock In \emph{Proc.\ 26th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LIPIcs, 2023.
+  \newblock DOI: 10.4230/LIPIcs.SAT.2023.6.
+
+\bibitem{dudek2020dpmc}
+  J.~M. Dudek, V.~H.~N. Phan, and M.~Y. Vardi.
+  \newblock DPMC: Weighted model counting by dynamic programming on project-join trees.
+  \newblock In \emph{Proc.\ 26th International Conference on Principles and Practice of Constraint Programming (CP)}, LIPIcs 181, pp.~211--230, 2020.
+
+\bibitem{fichte2025}
+  J.~Fichte and M.~Hecher.
+  \newblock The model counting competitions 2021-2023.
+  \newblock \emph{arXiv preprint} arXiv:2504.13842, 2025.
+
+\bibitem{korhonen2021}
+  T.~Korhonen and M.~Järvisalo.
+  \newblock Integrating tree decompositions into decision heuristics of propositional model counters.
+  \newblock In \emph{Proc.\ 27th International Conference on Principles and Practice of Constraint Programming (CP)}, LIPIcs 210, 2021.
+  \newblock DOI: 10.4230/LIPIcs.CP.2021.8.
+
+\bibitem{oztok2015}
+  U.~Oztok and A.~Darwiche.
+  \newblock A top-down compiler for sentential decision diagrams.
+  \newblock In \emph{Proc.\ 24th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~3141--3148, 2015.
+
+\bibitem{sharma2019}
+  S.~Sharma, S.~Roy, M.~Soos, and K.~S. Meel.
+  \newblock GANAK: A scalable probabilistic exact model counter.
+  \newblock In \emph{Proc.\ 28th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~1169--1176, 2019.
+
+\bibitem{strasser2017}
+  B.~Strasser.
+  \newblock Computing tree decompositions with FlowCutter: PACE 2017 submission.
+  \newblock \emph{arXiv preprint} arXiv:1709.08949, 2017.
+
+\bibitem{vinallSmeeth2024}
+  H.~Vinall-Smeeth.
+  \newblock Structured d-DNNF is not closed under negation.
+  \newblock In \emph{Proc.\ 33rd International Joint Conference on Artificial Intelligence (IJCAI)}, 2024.
+
 \bibitem{saether2015}
   S.~H. Sæther, J.~A. Telle, and M.~Vatshelle.
   \newblock Solving \#SAT and MaxSAT by dynamic programming.
   \newblock \emph{Journal of Artificial Intelligence Research (JAIR)}, 54:59--82, 2015.
-
-\bibitem{williams2003}
-  R.~Williams, C.~P. Gomes, and B.~Selman.
-  \newblock Backdoors to typical case complexity.
-  \newblock In \emph{Proc.\ 18th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~1173--1178, 2003.
-
-\bibitem{nishimura2004}
-  N.~Nishimura, P.~Ragde, and S.~Szeider.
-  \newblock Detecting backdoor sets with respect to Horn and binary clauses.
-  \newblock In \emph{Proc.\ 7th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, pp.~96--103, 2004.
-
-\bibitem{gaspers2013}
-  S.~Gaspers and S.~Szeider.
-  \newblock Strong backdoors to bounded treewidth SAT.
-  \newblock In \emph{Proc.\ 54th Annual IEEE Symposium on Foundations of Computer Science (FOCS)}, pp.~489--498, 2013.
-
-\bibitem{ganian2017}
-  R.~Ganian, M.~S. Ramanujan, and S.~Szeider.
-  \newblock Backdoor treewidth for SAT.
-  \newblock In \emph{Proc.\ 20th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 10491, pp.~20--37. Springer, 2017.
-
-\bibitem{dilkina2009}
-  B.~Dilkina, C.~P. Gomes, and A.~Sabharwal.
-  \newblock Backdoors in the context of learning.
-  \newblock In \emph{Proc.\ 12th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 5584, pp.~73--79. Springer, 2009.
-
-\bibitem{semenov2018}
-  A.~Semenov, O.~Zaikin, I.~Otpuschennikov, S.~Kochemazov, and A.~Ignatiev.
-  \newblock On cryptographic attacks using backdoors for SAT.
-  \newblock In \emph{Proc.\ 32nd AAAI Conference on Artificial Intelligence (AAAI)}, pp.~6641--6648, 2018.
 
 \bibitem{tseytin1968}
   G.~S. Tseytin.

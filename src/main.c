@@ -9,6 +9,7 @@
 #include "core/parser.h"
 #include "core/decomposition_tree.h"
 #include "utils/bitset.h"
+#include "utils/dnnf.h"
 #include "utils/ps_set.h"
 #include "utils/trie.h"
 #include "algo/procedure1.h"
@@ -185,8 +186,8 @@ static void run_benchmark(void) {
     printf("================================================================================\n");
     printf("  BENCHMARK COMPLET : %d instances\n", num_entries);
     printf("================================================================================\n");
-    printf("%-40s %6s %7s %7s %10s %12s %12s %10s\n",
-           "Fichier", "Mode", "Vars", "Cls", "ps-width", "MaxSAT", "#SAT", "Temps(s)");
+    printf("%-40s %6s %7s %7s %10s %12s %12s %12s %10s\n",
+           "Fichier", "Mode", "Vars", "Cls", "ps-width", "MaxSAT", "#SAT", "DAG", "Temps(s)");
     printf("--------------------------------------------------------------------------------\n");
 
     char path[512];
@@ -401,15 +402,33 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
         printf("[Temps] Execution Procedure 2 : %f secondes\n\n", time_used_proc2);
     }
 
-    // PROCEDURE 3 (DP) : Resolution de #SAT et MaxSAT 
+    // PROCEDURE 3 (DP) : Resolution de #SAT et MaxSAT + construction du DAG d-DNNF
     if (!compact) printf(">>> EXECUTION : PROCEDURE 3 (Programmation Dynamique #SAT & MaxSAT) <<<\n");
+    // Pool proprietaire du DAG, alloue juste avant l'appel (Phase 1 KC).
+    DNNFPool* dnnf_pool = create_dnnf_pool(1024);
     start_time = clock();
-    DPResult dp_result = solve_dp(root, &f, all_clauses_mask, trie);
+    DPResult dp_result = solve_dp(root, &f, all_clauses_mask, trie, dnnf_pool);
     end_time = clock();
     time_used_proc3 = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     if (!compact) {
         printf("[Proc 3] Termine.\n");
         printf("[Temps] Execution Procedure 3 : %f secondes\n\n", time_used_proc3);
+    }
+
+    // Verification #SAT == dnnf_count(root) (Phase 1, critere central)
+    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+
+    // Export NNF optionnel via la variable d'environnement DNNF_DUMP.
+    const char* dnnf_dump = getenv("DNNF_DUMP");
+    if (dnnf_dump && dnnf_dump[0]) {
+        FILE* fp = fopen(dnnf_dump, "w");
+        if (fp) {
+            dnnf_export_nnf(dp_result.dnnf_root, f.num_vars, dnnf_pool, fp);
+            fclose(fp);
+            if (!compact) printf("[DNNF] Export ecrit dans %s\n\n", dnnf_dump);
+        } else if (!compact) {
+            fprintf(stderr, "[DNNF] Impossible d'ouvrir %s en ecriture.\n", dnnf_dump);
+        }
     }
 
     // RESUME
@@ -424,9 +443,14 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
         // Extraire le nom de fichier sans le chemin
         const char* basename = strrchr(filename, '/');
         basename = basename ? basename + 1 : filename;
-        printf("%-40s %6s %7d %7d %10d %12lld %12lld %10.3f\n",
+        printf("%-40s %6s %7d %7d %10d %12lld %12lld %12lld %10.3f\n",
                basename, mode_str, f.num_vars, f.num_clauses,
-               ps_width, dp_result.maxsat_value, dp_result.sharpsat_count, total_time);
+               ps_width, dp_result.maxsat_value, dp_result.sharpsat_count,
+               dp_result.dnnf_num_edges, total_time);
+        if (dnnf_cnt != dp_result.sharpsat_count) {
+            fprintf(stderr, "[MISMATCH] %s : dnnf_count=%lld sharpsat=%lld\n",
+                    basename, dnnf_cnt, dp_result.sharpsat_count);
+        }
     } else {
         int max_p_prime = calculate_tree_ps_width(root);
         int max_p_prime_barre = calculate_tree_ps_prime_barre_width(root);
@@ -439,6 +463,11 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
         printf("\n--- Resultats Procedure 3 ---\n");
         printf("MaxSAT  : %lld clauses satisfaisables\n", dp_result.maxsat_value);
         printf("#SAT    : %lld affectations satisfaisant toutes les clauses\n", dp_result.sharpsat_count);
+        printf("Taille du d-DNNF : %d noeuds, %lld aretes.\n",
+               dnnf_pool->num_nodes, dp_result.dnnf_num_edges);
+        printf("#SAT (via dnnf_count) : %lld %s\n",
+               dnnf_cnt,
+               (dnnf_cnt == dp_result.sharpsat_count) ? "[OK]" : "[MISMATCH]");
         printf("\nTemps total de resolution : %f secondes\n", total_time);
 
         if (execution_mode == TREE_MANUAL) {
@@ -451,6 +480,10 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
     }
 
     // NETTOYAGE
+    // Le pool DNNF doit etre libere apres tout acces a dp_result.dnnf_root ;
+    // l'ordre entre pool / trie / tree / formula est sinon indifferent
+    // (ressources independantes). On met le pool en tete par propriete.
+    free_dnnf_pool(dnnf_pool);
     free_formula(f_ptr);
     free_trie(trie);
     free_tree(root);

@@ -7,6 +7,7 @@ SRCS = main.c \
        utils/trie.c \
        utils/dp_table.c \
        utils/reverse_maps.c \
+       utils/dnnf.c \
        core/parser.c \
        core/decomposition_tree.c \
        algo/procedure1.c \
@@ -30,4 +31,10 @@ clean:
 
 rebuild: clean all
 
-.PHONY: all clean rebuild
+# Compilation avec AddressSanitizer pour la verification memoire (Phase 1 KC).
+# Usage : make asan (puis ./sat_solver benchmark 2>&1 | grep -i sanitizer).
+asan:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="-Wall -Wextra -O1 -g -fsanitize=address -fno-omit-frame-pointer" all
+
+.PHONY: all clean rebuild asan
