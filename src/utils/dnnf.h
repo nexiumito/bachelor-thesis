@@ -16,6 +16,8 @@
 //
 // Le DAG est possede par un DNNFPool unique (arena allocator). Aucun autre
 // conteneur (DPTable, DPResult) n'appelle free() sur les DNNFNode pointes.
+//
+// REQUETES (CO, VA, CT, ME) : voir utils/query/.
 // ============================================================================
 
 /**
@@ -46,13 +48,6 @@ typedef enum {
  *   3. AND : portees d'enfants disjointes (garantie structurellement par la
  *      branch decomposition, pas verifiee dynamiquement).
  *   4. TRUE / FALSE sont singletons par pool.
- *
- * Note : l'invariant "children[k]->id < self.id" n'est PAS tenu pour les OR construits paresseusement :
- * un OR est alloue au 1er triplet valide, puis des enfants crees APRES lui
- * sont ajoutes via dnnf_or_add_child. L'ordre topologique est re-derive
- * par DFS dans dnnf_export_nnf (les local_id respectent, eux, l'ordre).
- * Consequence : les fonctions dnnf_count / dnnf_size / dnnf_export_nnf
- * doivent connaitre le pool pour borner leurs tableaux de memoisation.
  */
 typedef struct dnnf_node {
     int                 id;             // identifiant global, strictement croissant
@@ -72,13 +67,16 @@ typedef struct dnnf_node {
  *   3. Tous les DNNFNode* retournes par l'API pointent dans ce pool.
  */
 typedef struct {
-    DNNFNode**  nodes;          // pool : tous les DNNFNode alloues
-    int         num_nodes;
-    int         capacity;
-    DNNFNode*   node_true;      // singleton Top
-    DNNFNode*   node_false;     // singleton Bot
+    DNNFNode**      nodes;          // pool : tous les DNNFNode alloues
+    int             num_nodes;
+    int             capacity;
+    DNNFNode*       node_true;      // singleton Top
+    DNNFNode*       node_false;     // singleton Bot
 } DNNFPool;
 
+// ============================================================================
+// construction du DAG
+// ============================================================================
 
 /**
  * Cree un pool initialise avec les deux singletons TRUE (id=0) et FALSE (id=1).
@@ -96,7 +94,7 @@ void free_dnnf_pool(DNNFPool* pool);
 
 /**
  * Cree une feuille litterale x_var (positive si positive==1, negative sinon).
- * Precondition : var >= 1, positive in {0,1}. Pas de deduplication en Phase 1.
+ * Precondition : var >= 1, positive in {0,1}.
  */
 DNNFNode* dnnf_make_literal(DNNFPool* pool, int var, int positive);
 
@@ -131,16 +129,9 @@ DNNFNode* dnnf_make_or(DNNFPool* pool, int initial_capacity);
  */
 void dnnf_or_add_child(DNNFNode* or_node, DNNFNode* child);
 
-/**
- * Nombre de modeles du DAG via parcours DFS post-ordre avec memoisation.
- * Regles : TRUE=1, FALSE=0, LIT=1, AND=produit, OR=somme.
- * Retourne 0 si root == NULL. Complexite O(|D|).
- *
- * @param pool  Proprietaire du DAG ; pool->num_nodes borne les ids accessibles
- *              (necessaire car l'invariant enfant.id<parent.id ne tient pas
- *              pour les OR paresseux -- cf. note sur DNNFNode).
- */
-long long dnnf_count(DNNFNode* root, DNNFPool* pool);
+// ============================================================================
+// Utilitaires structurels
+// ============================================================================
 
 /**
  * Taille |D| = nombre d'aretes accessibles depuis root (somme des

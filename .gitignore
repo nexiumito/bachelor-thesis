@@ -53,6 +53,5 @@ sat_solver
 # notes
 checkpoint/
 
-# self-doc
+# self-docs
 .claude/
-docs/IMPLEMENTATION_NOTES.md

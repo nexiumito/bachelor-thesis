@@ -12,6 +12,10 @@
 #include "utils/dnnf.h"
 #include "utils/ps_set.h"
 #include "utils/trie.h"
+#include "utils/query/count.h"
+#include "utils/query/consistency.h"
+#include "utils/query/validity.h"
+#include "utils/query/find_model.h"
 #include "algo/procedure1.h"
 #include "algo/procedure2.h"
 #include "algo/procedure3.h"
@@ -101,12 +105,20 @@ void print_node_ps_barre_set(Node* node, SAT_Formula* f, const char* node_name) 
 #define TREE_GREEDY 3
 #define TREE_BENCHMARK 4
 
+// Description d'une requete optionnelle a executer apres la construction
+// du DAG d-DNNF. Si name == NULL, aucune requete n'est lancee.
+typedef struct {
+    const char* name;       // nom de la requete (consistency, validity, find_model)
+} QuerySpec;
+
 // ============================================================================
 // FONCTION DE RESOLUTION UNIQUE
 // Resout une formule avec un mode d'arbre donne.
 // Si compact=true, affiche une seule ligne de resume (mode benchmark).
+// query peut etre NULL : aucune requete supplementaire dans ce cas.
 // ============================================================================
-static int solve_formula(const char* filename, int execution_mode, bool compact);
+static int solve_formula(const char* filename, int execution_mode,
+                         bool compact, const QuerySpec* query);
 
 // ============================================================================
 // BENCHMARK : execute le solveur sur une batterie d'instances
@@ -201,7 +213,7 @@ static void run_benchmark(void) {
             continue;
         }
         fclose(test);
-        solve_formula(path, entries[i].mode, true);
+        solve_formula(path, entries[i].mode, true, NULL);
     }
 
     printf("================================================================================\n");
@@ -214,18 +226,25 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // vérif du nombre d'arguments
-    if (argc != 3) {
+    if (argc < 3 || argc > 4) {
         printf("Erreur : Mauvais nombre d'arguments.\n\n");
-        printf("Utilisation : %s <chemin_vers_fichier.cnf> <mode_arbre>\n", argv[0]);
-        printf("       ou   : %s benchmark\n", argv[0]);
+        printf("Utilisation : %s <fichier.cnf> <mode> [requete]\n", argv[0]);
+        printf("       ou   : %s benchmark\n\n", argv[0]);
         printf("Modes disponibles :\n");
         printf("  manual : Arbre manuel (Figure 2, page 67 du papier)\n");
         printf("  random : Arbre aleatoire pur\n");
         printf("  linear : Linear Branch Decomposition (ordre par numero de variable)\n");
         printf("  greedy : GreedyOrder (heuristique du papier, Section 6, page 76)\n");
         printf("  benchmark : Execute toutes les instances de test\n\n");
-        printf("Exemple : %s ../data/type2/type2_v50_c200_t3.cnf greedy\n", argv[0]);
+        printf("Requetes optionnelles (sur le DAG d-DNNF compile) :\n");
+        printf("  consistency : F est-elle satisfaisable ?\n");
+        printf("  validity    : F est-elle une tautologie ?\n");
+        printf("  find_model  : Donne une affectation satisfaisante (ou UNSAT)\n\n");
+        printf("Exemples :\n");
+        printf("  %s ../data/exemple1.cnf manual\n", argv[0]);
+        printf("  %s ../data/exemple1.cnf manual consistency\n", argv[0]);
+        printf("  %s ../data/exemple1.cnf manual validity\n", argv[0]);
+        printf("  %s ../data/exemple1.cnf manual find_model\n", argv[0]);
         return 1;
     }
 
@@ -249,7 +268,20 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    return solve_formula(filename, execution_mode, false);
+    // Decodage de la requete optionnelle (argv[3])
+    QuerySpec query = { .name = NULL };
+    if (argc == 4) {
+        query.name = argv[3];
+        if (strcmp(query.name, "consistency") != 0
+            && strcmp(query.name, "validity") != 0
+            && strcmp(query.name, "find_model") != 0) {
+            printf("Erreur : Requete '%s' inconnue.\n", query.name);
+            printf("Choix : consistency, validity, find_model.\n");
+            return 1;
+        }
+    }
+
+    return solve_formula(filename, execution_mode, false, &query);
 }
 
 /**
@@ -262,13 +294,17 @@ int main(int argc, char *argv[]) {
  *   4. Procédure 3 : programmation dynamique pour résoudre #SAT et MaxSAT
  *      (Théorème 2 : O(k^3.m.(m+n)))
  *
+ * Si query != NULL, exécute en plus une requête sur le DAG d-DNNF compilé.
+ *
  * @param filename        Chemin vers le fichier DIMACS CNF.
  * @param execution_mode  Mode de construction de l'arbre (TREE_MANUAL,
  *                        TREE_RANDOM, TREE_LINEAR, TREE_GREEDY).
  * @param compact         Si true, affiche une seule ligne résumé (mode benchmark).
+ * @param query           Requête optionnelle ou NULL pour aucune.
  * @return                0 en cas de succès, 1 en cas d'erreur.
  */
-static int solve_formula(const char* filename, int execution_mode, bool compact) {
+static int solve_formula(const char* filename, int execution_mode,
+                         bool compact, const QuerySpec* query) {
     // lecture de la formule dynamique
     if (!compact) printf("Lecture de la formule depuis le fichier CNF : %s\n", filename);
     SAT_Formula* f_ptr = parse_cnf(filename);
@@ -475,6 +511,58 @@ static int solve_formula(const char* filename, int execution_mode, bool compact)
             if (root->left) {
                 print_node_ps_set(root->left, &f, "v");
                 print_node_ps_barre_set(root->left, &f, "v");
+            }
+        }
+
+        // REQUETES OPTIONNELLES sur le DAG d-DNNF compile
+        if (query && query->name) {
+            if (strcmp(query->name, "consistency") == 0) {
+                printf("\n=== Requete : consistency (CO) ===\n");
+                int co = dnnf_consistency(dp_result.dnnf_root, dnnf_pool);
+                long long c = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+                printf("F est %s (#SAT = %lld).\n",
+                       co ? "SAT (consistante)" : "UNSAT (insatisfaisable)",
+                       c);
+            }
+            else if (strcmp(query->name, "validity") == 0) {
+                printf("\n=== Requete : validity (VA) ===\n");
+                long long count_v = 0, max_models = 0;
+                int va = dnnf_validity(dp_result.dnnf_root, dnnf_pool,
+                                       f.num_vars, &count_v, &max_models);
+                switch (va) {
+                    case DNNF_VALIDITY_UNSAT:
+                        printf("F est NON-VALIDE (UNSAT).\n");
+                        break;
+                    case DNNF_VALIDITY_OVERFLOW:
+                        printf("Trop de variables (n=%d) pour evaluer 2^n en entier 64 bits.\n",
+                               f.num_vars);
+                        break;
+                    default:
+                        printf("F est %s (#SAT = %lld, 2^%d = %lld).\n",
+                               (va == DNNF_VALIDITY_VALID) ? "VALIDE (tautologie)" : "NON-VALIDE",
+                               count_v, f.num_vars, max_models);
+                        break;
+                }
+            }
+            else if (strcmp(query->name, "find_model") == 0) {
+                printf("\n=== Requete : find_model (ME, 1 modele) ===\n");
+                if (!dp_result.dnnf_root || dp_result.sharpsat_count == 0) {
+                    printf("Formule insatisfiable, aucun modele.\n");
+                } else {
+                    int* model = calloc(f.num_vars + 1, sizeof(int));
+                    int rc = dnnf_find_model(dp_result.dnnf_root, dnnf_pool,
+                                             f.num_vars, model);
+                    if (rc == 1) {
+                        printf("Affectation (x1..x%d) : ", f.num_vars);
+                        for (int v = 1; v <= f.num_vars; v++) {
+                            putchar(model[v] ? '1' : '0');
+                        }
+                        putchar('\n');
+                    } else {
+                        printf("Erreur interne lors de la recherche d'un modele.\n");
+                    }
+                    free(model);
+                }
             }
         }
     }

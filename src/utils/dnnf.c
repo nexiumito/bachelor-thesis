@@ -75,6 +75,7 @@ DNNFPool* create_dnnf_pool(int initial_capacity) {
 
 void free_dnnf_pool(DNNFPool* pool) {
     if (!pool) return;
+
     for (int k = 0; k < pool->num_nodes; k++) {
         DNNFNode* n = pool->nodes[k];
         if (n->children) free(n->children);
@@ -111,8 +112,8 @@ DNNFNode* dnnf_make_and(DNNFPool* pool, DNNFNode* left, DNNFNode* right) {
     assert(left && right);
 
     // Simplifications locales : comparaison sur les singletons du pool.
-    // On ne compare PAS sur le type seul : les TRUE/FALSE sont uniques par
-    // pool, donc l'egalite de pointeur est le bon invariant (piege §10.4).
+    // Les TRUE/FALSE sont uniques par pool, donc l'egalite de pointeur est
+    // le bon invariant.
     if (left == pool->node_false || right == pool->node_false) {
         return pool->node_false;
     }
@@ -154,60 +155,16 @@ void dnnf_or_add_child(DNNFNode* or_node, DNNFNode* child) {
 
 
 // ============================================================================
-// SECTION 3 : REQUETES (dnnf_count, dnnf_size)
+// SECTION 3 : UTILITAIRES STRUCTURELS (taille et export NNF)
 // ============================================================================
 //
-// Les deux fonctions visitent le DAG via l'id de chaque noeud comme cle de
-// memoisation. L'invariant "enfant.id < parent.id" n'est PAS maintenu (un OR
-// construit paresseusement recoit des enfants crees apres lui, cf. §5.3
-// SPEC), donc l'id max accessible peut depasser root->id. On borne les
-// tableaux de memoisation par pool->num_nodes : tout DNNFNode accessible a un
-// id dans [0, pool->num_nodes-1] par construction du pool.
+// Visitent le DAG via l'id de chaque noeud comme cle de memoisation.
+// L'invariant "enfant.id < parent.id" n'est PAS maintenu (un OR construit
+// paresseusement recoit des enfants crees apres lui), donc l'id max
+// accessible peut depasser root->id. On borne les tableaux de memoisation
+// par pool->num_nodes : tout DNNFNode accessible a un id dans
+// [0, pool->num_nodes-1] par construction du pool.
 // ============================================================================
-
-/**
- * DFS post-ordre : calcule le nombre de modeles memoise dans counts[id].
- * counted[id] != 0 indique que counts[id] est valide.
- */
-static long long count_rec(DNNFNode* n, long long* counts, char* counted) {
-    if (counted[n->id]) return counts[n->id];
-    long long v;
-    switch (n->type) {
-        case DNNF_TRUE:     v = 1; break;
-        case DNNF_FALSE:    v = 0; break;
-        case DNNF_LIT_POS:
-        case DNNF_LIT_NEG:  v = 1; break;
-        case DNNF_AND: {
-            v = 1;
-            for (int k = 0; k < n->num_children; k++) {
-                v *= count_rec(n->children[k], counts, counted);
-            }
-            break;
-        }
-        case DNNF_OR: {
-            v = 0;
-            for (int k = 0; k < n->num_children; k++) {
-                v += count_rec(n->children[k], counts, counted);
-            }
-            break;
-        }
-        default: v = 0; break;
-    }
-    counts[n->id] = v;
-    counted[n->id] = 1;
-    return v;
-}
-
-long long dnnf_count(DNNFNode* root, DNNFPool* pool) {
-    if (!root || !pool) return 0;
-    int n_entries = pool->num_nodes;
-    long long* counts = malloc(n_entries * sizeof(long long));
-    char* counted = calloc(n_entries, sizeof(char));
-    long long result = count_rec(root, counts, counted);
-    free(counts);
-    free(counted);
-    return result;
-}
 
 /**
  * DFS post-ordre : compte les aretes accessibles (somme des num_children
@@ -234,7 +191,7 @@ long long dnnf_size(DNNFNode* root, DNNFPool* pool) {
 
 
 // ============================================================================
-// SECTION 4 : EXPORT AU FORMAT NNF (DARWICHE)
+// EXPORT AU FORMAT NNF (DARWICHE)
 // ============================================================================
 //
 // Syntaxe :
@@ -304,7 +261,7 @@ void dnnf_export_nnf(DNNFNode* root, int num_vars, DNNFPool* pool, FILE* out) {
                 break;
             }
             case DNNF_OR: {
-                // Variable de decision inconnue en Phase 1 --> 0.
+                // Variable de decision inconnue --> 0.
                 fprintf(out, "O 0 %d", n->num_children);
                 for (int j = 0; j < n->num_children; j++) {
                     fprintf(out, " %d", local_id[n->children[j]->id]);

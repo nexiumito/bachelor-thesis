@@ -21,8 +21,9 @@ L'objectif principal est d'étudier et d'implémenter des approches modernes pou
 
 ### Objectifs
 * Comprendre et implémenter les algorithmes décrits dans la [littérature scientifique récente](doc/Solving_SharpSAT_and_MaxSAT_Dynamic_Programming.pdf).
-* Étudier les différentes approches (modernes) de ces problèmes 
-     >par ex. [*Counting, Knowledge Compilation and Application, Stefan Mengel, 2021*](doc/Counting_Knowledge_Compilation_and_Application_Stefan_Mengel.pdf)
+* Étudier les différentes approches (modernes) de ces problèmes, en particulier la **compilation de connaissances** (Knowledge Compilation) :
+     > [*On Compiling CNFs into Structured Deterministic DNNFs*, Bova, Capelli, Mengel, Slivovsky, 2016](doc/cnf-to-ddnnf-upper-bound.pdf) <br>
+     > [*A Knowledge Compilation Map*, Darwiche, Marquis, 2002](doc/1106.1819v1-1.pdf)
 
 ---
 
@@ -32,6 +33,12 @@ Le travail se base notamment sur les recherches suivantes :
 
 > [**Solving #SAT and MAXSAT by dynamic programming**](doc/Solving_SharpSAT_and_MaxSAT_Dynamic_Programming.pdf) <br>
 > *S.H. Saether, J.A. Telle, M. Vatshelle*
+
+> [**On Compiling CNFs into Structured Deterministic DNNFs**](doc/cnf-to-ddnnf-upper-bound.pdf) <br>
+> *S. Bova, F. Capelli, S. Mengel, F. Slivovsky*
+
+> [**A Knowledge Compilation Map**](doc/1106.1819v1-1.pdf) <br>
+> *A. Darwiche, P. Marquis*
 
 ---
 
@@ -79,19 +86,60 @@ make
 
 4. **Syntaxe** :
 
-Le solveur prend deux arguments obligatoires : le chemin vers le fichier .cnf à résoudre, et le mode de décomposition en arbre souhaité.
+Le solveur prend deux arguments obligatoires : le chemin vers le fichier `.cnf` à résoudre, et le mode de décomposition en arbre souhaité.
 
 ```bash
 ./sat_solver <chemin_vers_fichier.cnf> <mode>
 ```
 
 Modes disponibles :
-- **manual** : Utilise l'arbre de décomposition manuel (issu de la Figure 2 du papier).
+- **manual** : Utilise l'arbre de décomposition manuel (issu de la Figure 2 du papier ; ne fonctionne que sur la formule à 5 variables / 4 clauses).
 - **random** : Génère un arbre de décomposition de manière purement aléatoire.
-- **linear** : Génère une décomposition linéaire (Linear Branch Decomposition), optimisée en se basant sur la topologie des variables.
+- **linear** : Génère une décomposition linéaire (Linear Branch Decomposition), basée sur l'ordre des variables.
+- **greedy** : GreedyOrder, l'heuristique décrite dans la Section 6 du papier — recommandée par défaut.
 
-**Exemple d'exécution** :
+Mode spécial pour exécuter une batterie d'instances et afficher un tableau récapitulatif :
 
 ```bash
-./sat_solver script/instances_test/type3_k3_v40_c100_b20.cnf linear
+./sat_solver benchmark
+```
+
+**Exemples d'exécution** :
+
+```bash
+./sat_solver data/exemple1.cnf manual
+./sat_solver data/type3/type3_n100_t3_s2.cnf greedy
+./sat_solver benchmark
+```
+
+Sortie standard : nombre de modèles (`#SAT`), valeur MaxSAT, taille du DAG d-DNNF compilé, ps-width et temps d'exécution par phase.
+
+5. **Requêtes sur le DAG compilé** (optionnel) :
+
+Une fois la formule compilée en d-DNNF (*Knowledge Compilation*), on peut interroger ce DAG en temps polynomial en sa taille. Le solveur expose les 3 requêtes suivantes (cf. *A Knowledge Compilation Map*, Darwiche & Marquis 2002, Table 5) :
+
+| Requête CLI | Sigle (Darwiche-Marquis) | Effet |
+| :--- | :---: | :--- |
+| `consistency` | **CO** | F est-elle satisfaisable ? |
+| `validity` | **VA** | F est-elle une tautologie ? |
+| `find_model` | (variante de **ME**) | Affiche une affectation satisfaisante (ou indique UNSAT). |
+
+Le model counting (**CT**, `#SAT`) est inclus de base dans la sortie standard du solveur, sans option à activer.
+
+**Exemples** :
+
+```bash
+./sat_solver data/exemple1.cnf manual consistency   # SAT ?
+./sat_solver data/exemple1.cnf manual validity      # tautologie ?
+./sat_solver data/exemple1.cnf manual find_model    # un modèle
+```
+
+Si aucune requête n'est passée, le solveur affiche uniquement le résumé standard (#SAT, MaxSAT, taille du DAG).
+
+6. **Aide en ligne de commande** :
+
+Toute exécution sans argument valide imprime la liste complète des modes et requêtes :
+
+```bash
+./sat_solver
 ```

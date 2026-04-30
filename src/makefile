@@ -8,6 +8,10 @@ SRCS = main.c \
        utils/dp_table.c \
        utils/reverse_maps.c \
        utils/dnnf.c \
+       utils/query/count.c \
+       utils/query/consistency.c \
+       utils/query/validity.c \
+       utils/query/find_model.c \
        core/parser.c \
        core/decomposition_tree.c \
        algo/procedure1.c \

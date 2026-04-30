@@ -45,7 +45,7 @@ DPTable* create_dp_table(int rows, int cols) {
 /**
  * Libere la memoire d'une table DP.
  *
- * tab->dnnf[k] est un pointeur emprunte au DNNFPool. Ne jamais
+ * Regle d'or : tab->dnnf[k] est un pointeur emprunte au DNNFPool. Ne JAMAIS
  * appeler free() dessus. Le tableau lui-meme, oui (juste les pointeurs).
  *
  * @param tab  Pointeur vers la table a liberer (peut etre NULL).

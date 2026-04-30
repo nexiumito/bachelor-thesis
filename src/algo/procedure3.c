@@ -90,7 +90,7 @@ static DPTable* compute_leaf_table(Node* leaf, SAT_Formula* f, DNNFPool* pool) {
                 }
             } else if (ps_v->size == 1) {
                 // Les deux assignations produisent le meme PS-set. Le DAG
-                // doit tout de meme compter 2 : on emet (x v NONx).
+                // doit tout de meme compter 2 : on emet (x v ~x).
                 DNNFNode* or_node = dnnf_make_or(pool, 2);
                 dnnf_or_add_child(or_node, dnnf_make_literal(pool, x, 1));
                 dnnf_or_add_child(or_node, dnnf_make_literal(pool, x, 0));
@@ -261,7 +261,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f, BinaryTrie* trie,
                 tab_v->sharpsat[cell_v] += tab_c1->sharpsat[cell_c1]
                                          * tab_c2->sharpsat[cell_c2];
 
-                // DAG (Phase 1) : emission d'un AND(phi_c1, phi_c2)
+                // DAG : emission d'un AND(phi_c1, phi_c2)
                 // accumule dans le OR de la shape (idx_v, jv). Le OR est
                 // alloue paresseusement au premier triplet valide. Une cellule
                 // qui reste NULL a la fin correspond a sharpsat == 0, ce qui
