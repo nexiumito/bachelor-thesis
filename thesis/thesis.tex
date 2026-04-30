@@ -130,9 +130,10 @@ Bla bla abstract
 \section{Contexte et motivation}
 
 La satisfaisabilité propositionnelle (SAT) occupe une place centrale en informatique
-théorique et appliquée depuis les travaux de Cook \cite{cook1971} et Karp \cite{karp1972},
-qui ont établi sa NP-complétude et en ont fait le problème de référence de la théorie
-de la complexité. Malgré cette intractabilité théorique dans le cas général, les
+théorique et appliquée depuis Cook \cite{cook1971}, qui en a établi la
+NP-complétude, et Karp \cite{karp1972}, qui a tiré de cette propriété une vaste
+famille de réductions polynomiales et fait de SAT le problème de référence de la
+théorie de la complexité. Malgré cette intractabilité théorique dans le cas général, les
 solveurs modernes parviennent à traiter des instances industrielles comportant des
 millions de variables et de clauses, grâce notamment à l'algorithme d'apprentissage
 de clauses guidé par les conflits (CDCL) \cite{marques1999,een2003}, à la propagation
@@ -144,38 +145,48 @@ synthèse de programmes et la cryptanalyse.
 Ce succès a naturellement suscité un intérêt croissant pour des variantes plus
 expressives : le \emph{comptage de modèles} (\#SAT) et la \emph{maximisation de
 clauses satisfaites} (MaxSAT). Le problème \#SAT consiste à déterminer le nombre
-exact d'affectations des variables qui satisfont une formule CNF donnée. Il
-généralise la décision de satisfaisabilité en quantifiant la densité de l'espace
-de solutions, et intervient naturellement dans le raisonnement probabiliste,
-l'évaluation de réseaux bayésiens et la vérification de probabilités
+exact d'affectations satisfaisant une formule CNF donnée. Il généralise la
+décision de satisfaisabilité en quantifiant la cardinalité de l'ensemble des
+modèles, et intervient naturellement dans le raisonnement probabiliste,
+l'inférence dans les réseaux bayésiens et la vérification probabiliste
 \cite{darwiche2002}. Le problème MaxSAT, quant à lui, cherche une affectation
 qui satisfait le plus grand nombre possible de clauses, même lorsque la formule
 est globalement insatisfaisable. Il modélise des problèmes d'optimisation
 combinatoire à contraintes souples (ordonnancement, configuration, bioinformatique)
 et constitue un cadre unifiant pour de nombreux problèmes NP-difficiles.
 
-Ces deux variantes sont rigoureusement plus difficiles que SAT : \#SAT est
+Ces deux variantes sont strictement plus difficiles que SAT : \#SAT est
 \#P-complet \cite{valiant1979} et MaxSAT est NP-difficile. Cette complexité
 accrue justifie le développement d'approches algorithmiques spécialisées.
+
+Une stratégie complémentaire à la résolution directe consiste à transformer
+hors-ligne la formule en une représentation structurée, typiquement un graphe
+orienté acyclique de type d-DNNF, sur laquelle un large éventail de requêtes
+(comptage, satisfaisabilité, équivalence) deviennent polynomiales. Cette
+\emph{compilation de connaissances} \cite{darwiche2002} amortit le coût
+hors-ligne sur de multiples interrogations ultérieures, et est devenue le
+standard pour l'inférence probabiliste exacte et la vérification quantitative.
+Elle constitue le second axe abordé dans ce mémoire, aux côtés de la
+résolution paramétrée par la structure de la formule.
 
 \section{Approche structurelle et décomposition arborescente}
 
 Plusieurs familles d'algorithmes ont émergé pour résoudre \#SAT et MaxSAT :
 solveurs généraux fondés sur DPLL et CDCL, outils SMT comme \texttt{Z3}
 \cite{moura2008}, solveurs de comptage avec cache de composantes comme
-\texttt{sharpSAT} \cite{thurley2006}, ou encore la \emph{compilation de
-connaissances} \cite{darwiche2002} qui traduit la formule hors-ligne en une
-représentation canonique (d-DNNF, SDD) permettant ensuite des requêtes
-\#SAT en temps polynomial. Ce travail se concentre principalement sur une
-perspective différente, issue de la complexité paramétrée : l'exploitation
-de la \emph{structure} de la formule.
+\texttt{sharpSAT} \cite{thurley2006}, ou encore la compilation de connaissances
+déjà évoquée. Ce travail combine deux perspectives complémentaires : la
+\emph{complexité paramétrée structurelle}, qui exploite la structure du graphe
+d'incidence pour résoudre \#SAT et MaxSAT en temps polynomial dès que le
+paramètre est borné ; et la \emph{compilation de connaissances}, qui transforme
+cette même structure en un objet polynomialement interrogeable.
 
 L'idée fondatrice est que la difficulté d'une instance ne dépend pas uniquement
 de sa taille $n + m$ (variables et clauses), mais de paramètres structurels
 liés à la façon dont variables et clauses interagissent. Si ces paramètres
 sont petits, des algorithmes par \emph{programmation dynamique sur décomposition
-arborescente} résolvent \#SAT et MaxSAT en temps polynomial en $n + m$, mais
-exponentiel uniquement en le paramètre structurel.
+arborescente} résolvent \#SAT et MaxSAT en temps polynomial en $n + m$,
+l'explosion exponentielle étant confinée à ce seul paramètre.
 
 Parmi ces paramètres, la \emph{treewidth} du graphe d'incidence de la formule
 est le plus étudié \cite{samer2010,slivovsky2020}. Des résultats plus récents,
@@ -183,8 +194,11 @@ fondés sur la \emph{mim-width} \cite{vatshelle2012} et la \emph{ps-width}
 \cite{saether2015}, étendent la tractabilité à des classes de formules
 strictement plus larges. L'algorithme de Sæther, Telle et Vatshelle
 \cite{saether2015} résout simultanément \#SAT et MaxSAT en temps
-$O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width de la décomposition,
-et constitue l'algorithme central de ce travail.
+$O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width de la décomposition.
+Il constitue le premier pilier de ce mémoire. Son extension par Bova, Capelli,
+Mengel et Slivovsky \cite{bova2016} en forme le second : ces auteurs
+l'instrumentent pour produire en parallèle un DAG d-DNNF, faisant ainsi le pont
+avec la compilation de connaissances.
 
 \section{Objectifs de ce travail}
 
@@ -192,20 +206,28 @@ Ce mémoire de bachelor poursuit deux objectifs complémentaires.
 
 Le premier est l'\textbf{implémentation complète} de l'algorithme de Sæther,
 Telle et Vatshelle \cite{saether2015} en langage C. Cette implémentation comprend
-le parseur de formules DIMACS CNF, quatre stratégies de construction de l'arbre
+le parseur de formules DIMACS CNF, trois stratégies de construction de l'arbre
 de décomposition (dont l'heuristique GreedyOrder décrite dans le papier), les
 trois procédures de l'algorithme (calcul bottom-up des PS-sets, propagation
 top-down, programmation dynamique), ainsi que les structures de données
 sous-jacentes (bitsets 64-bit, trie binaire, tables DP).
 
-Le second objectif est l'\textbf{évaluation empirique} sur une variété de
-formules : instances synthétiques conçues pour contrôler la ps-width, formules
-aléatoires $k$-SAT, et formules CNF issues de circuits de multiplication encodés
-par la transformation de Tseytin. Ces expérimentations visent à mesurer l'impact
-de la ps-width sur les performances, à comparer l'algorithme DP avec d'autres
-approches (solveurs CDCL, Z3, compilation de connaissances), et à identifier les
-conditions dans lesquelles la décomposition structurelle apporte un avantage
-décisif.
+Le second objectif est l'\textbf{extension à la compilation de connaissances}
+fondée sur le résultat de Bova, Capelli, Mengel et Slivovsky
+\cite{bova2016}. Leur algorithme s'obtient comme une instrumentation de la
+programmation dynamique précédente et produit, à coût marginal, un DAG
+d-DNNF de taille polynomiale en la ps-width et la taille de la formule. À
+notre connaissance, aucune implémentation publique ne suit aujourd'hui
+cette voie de compilation pilotée par la ps-width. Sur le DAG produit,
+l'ensemble des requêtes que la carte de compilation de Darwiche et Marquis
+\cite{darwiche2002} rend polynomiales sur d-DNNF est implémenté.
+
+Une \textbf{évaluation empirique} accompagne ces deux volets, sur des
+instances synthétiques conçues pour contrôler la ps-width, des formules
+aléatoires $k$-SAT et des circuits de multiplication encodés par la
+transformation de Tseytin. Ces tests mesurent l'impact de la ps-width sur
+les performances et délimitent les régimes dans lesquels la décomposition
+structurelle apporte un avantage décisif.
 
 % =============================================================
 % ===========================================================================
@@ -218,7 +240,7 @@ successivement les problèmes SAT, \#SAT et MaxSAT, les principales familles
 d'algorithmes de résolution, les paramètres de décomposition structurelle
 qui gouvernent leur complexité, l'algorithme de Sæther, Telle et Vatshelle
 qui constitue le socle de notre implémentation, et la compilation de
-connaissances CNF $\to$ d-DNNF qui en constitue l'extension naturelle.
+connaissances CNF $\to$ d-DNNF qui constitue le second axe de ce mémoire.
 
 % ---------------------------------------------------------------------------
 \section{SAT, \#SAT et MaxSAT}
@@ -270,197 +292,120 @@ souples à maximiser) et le \emph{Weighted MaxSAT} (poids par clause).
 \label{sec:algos}
 % ---------------------------------------------------------------------------
 
-\subsection{DPLL et propagation unitaire}
+\subsection{DPLL et CDCL}
 \label{sec:cdcl}
 
 L'algorithme DPLL (Davis-Putnam-Logemann-Loveland) constitue le fondement
 historique de la résolution SAT : il parcourt en profondeur l'espace des
-affectations partielles en s'appuyant sur deux règles d'inférence principales.
-La \emph{propagation unitaire} (BCP, pour \emph{Boolean Constraint Propagation}) force
-la valeur d'un littéral dès qu'il est le dernier non falsifié d'une clause.
-La \emph{règle du littéral pur} affecte d'emblée les variables n'apparaissant
-que sous une polarité. BCP est \emph{confluent} : quel que soit l'ordre de
-traitement des clauses unitaires, le point fixe final est identique.
+affectations partielles en s'appuyant sur deux règles d'inférence, la
+\emph{propagation unitaire} (BCP), qui force la valeur d'un littéral dès
+qu'il est le dernier non falsifié d'une clause, et la \emph{règle du
+littéral pur}. L'architecture CDCL (Conflict-Driven Clause Learning),
+popularisée par zChaff \cite{moskewicz2001} puis MiniSAT \cite{een2003},
+étend DPLL par l'\emph{apprentissage de clauses} : à chaque conflit, le
+solveur extrait une nouvelle clause résumant la cause de l'échec, et
+peut ensuite effectuer un \emph{backjumping} non chronologique. Couplée
+à des heuristiques de branchement orientées par l'activité des conflits
+(notamment VSIDS \cite{moskewicz2001}), CDCL est aujourd'hui le standard
+industriel et traite couramment des instances de plusieurs millions de
+variables.
 
-\subsection{CDCL : apprentissage de clauses guidé par les conflits}
+\subsection{Extensions pour \#SAT et MaxSAT}
 
-L'architecture CDCL, popularisée par zChaff \cite{moskewicz2001} puis
-MiniSAT \cite{een2003}, étend DPLL par l'apprentissage de clauses.
-Lors d'un conflit, le solveur analyse le graphe des implications causales
-pour extraire une \emph{clause apprise} résumant la cause profonde de l'échec.
-Cette clause est ajoutée à la base et permet un \emph{backjumping} non
-chronologique, éliminant des pans entiers de l'espace de recherche. La
-heuristique VSIDS (\emph{Variable State Independent Decaying Sum})
-\cite{moskewicz2001} maintient un score d'activité par variable et oriente
-le branchement vers les variables impliquées dans les conflits récents.
+Pour le comptage de modèles, les solveurs étendent DPLL par le \emph{cache
+de composantes} : lorsque l'affectation partielle déconnecte le graphe
+d'incidence, les comptes des composantes disjointes sont calculés
+indépendamment puis multipliés. Ce mécanisme, popularisé par
+\texttt{sharpSAT} \cite{thurley2006}, est combiné dans \texttt{D4}
+\cite{lagniez2017} avec la compilation vers d-DNNF, rendant les requêtes
+ultérieures polynomiales. Pour la maximisation, les solveurs MaxSAT
+modernes (\texttt{MaxHS}, \texttt{RC2}, \texttt{Open-WBO}) abandonnent
+le \emph{branch-and-bound} traditionnel au profit d'approches
+\emph{core-guided}, qui résolvent itérativement des noyaux insatisfaisables
+au lieu d'explorer naïvement l'espace des affectations.
 
-\subsection{Solveurs \#SAT}
+\subsection{SMT et compilation de connaissances}
 
-Les solveurs \#SAT étendent DPLL par le \emph{cache de composantes} : lorsque
-l'affectation partielle déconnecte le graphe d'incidence en composantes
-disjointes, leurs comptes sont calculés indépendamment et multipliés. Le
-solveur \texttt{sharpSAT} \cite{thurley2006} exploite cette propriété avec
-un encodage compact des composantes pour maximiser les réutilisations de
-cache, atteignant des performances sans commune mesure avec une exploration
-exhaustive naïve. Des solveurs plus récents comme \texttt{D4}
-\cite{lagniez2017} combinent ce cache avec la compilation vers des circuits
-d-DNNF, rendant les requêtes ultérieures polynomiales.
-
-\subsection{Solveurs MaxSAT}
-
-Les solveurs MaxSAT modernes (\texttt{MaxHS}, \texttt{RC2},
-\texttt{Open-WBO}) abandonnent le \emph{branch-and-bound} traditionnel au
-profit d'approches guidées par les noyaux insatisfaisables
-(\emph{core-guided}). \texttt{MaxHS} orchestre un dialogue entre un solveur
-SAT (extraction de noyaux) et un solveur ILP (calcul du \emph{hitting set}
-minimal) pour converger vers la solution optimale avec des garanties de
-correction.
-
-\subsection{Solveurs SMT}
-
-Les solveurs SMT (satisfaisabilité modulo théories), dont \texttt{Z3}
-\cite{moura2008}, étendent le cadre SAT en intégrant des théories
-arithmétiques (arithmétique linéaire entière/réelle, fonctions non
-interprétées, vecteurs de bits). L'architecture DPLL(T) délègue la
-vérification de cohérence sémantique à des \emph{T-solveurs} spécialisés.
-Sur des instances purement propositionnelles, les solveurs SAT dédiés restent
-nettement plus rapides du fait de la surcharge des structures SMT. La
-\emph{compilation de connaissances}, qui transforme la CNF hors-ligne en
-une représentation permettant des requêtes polynomiales, fait l'objet de la
-section~\ref{sec:kc} où elle est mise en regard de l'algorithme DP central
-de ce mémoire.
+Les solveurs SMT (\emph{satisfiability modulo theories}), dont \texttt{Z3}
+\cite{moura2008}, étendent CDCL en intégrant des théories arithmétiques via
+l'architecture DPLL(T) ; sur des instances purement propositionnelles, les
+solveurs SAT dédiés restent toutefois plus rapides. Une approche
+alternative, la \emph{compilation de connaissances}, transforme hors-ligne
+la formule en une représentation polynomialement interrogeable ; elle fait
+l'objet de la section~\ref{sec:kc}, où elle est articulée avec l'algorithme
+de Sæther via l'extension de Bova et al.~\cite{bova2016}.
 
 % ---------------------------------------------------------------------------
 \section{Décompositions arborescentes et paramètres de largeur}
 \label{sec:decomp}
 % ---------------------------------------------------------------------------
 
-\subsection{Treewidth}
+Pour les formules issues du monde réel, la difficulté pratique dépend
+moins de la taille brute que de la structure de connectivité du graphe
+d'incidence. Plusieurs paramètres ont été proposés pour quantifier cette
+structure et fournir des algorithmes de programmation dynamique tractables
+quand le paramètre est borné.
 
-Pour des formules issues du monde réel (vérification de circuits, planification),
-la difficulté pratique dépend moins de la taille brute que de la structure
-de connectivité. La \emph{treewidth} (largeur d'arbre), introduite par
-Robertson et Seymour dans leur théorie des mineurs de graphes, mesure à quel
-point un graphe ressemble à un arbre.
+Le plus étudié est la \emph{treewidth}, introduite par Robertson et
+Seymour dans leur théorie des mineurs de graphes : on représente le
+graphe par une famille de petits sous-ensembles de sommets (\emph{sacs})
+connectés en arbre, et la largeur est la taille du plus grand sac.
+Samer et Szeider \cite{samer2010} puis Slivovsky et Szeider
+\cite{slivovsky2020} ont obtenu des algorithmes de DP pour \#SAT
+paramétrés par la treewidth du graphe d'incidence. Toutefois, la
+treewidth n'est bornée que sur des graphes globalement clairsemés, ce
+qui en limite la portée sur les classes denses.
 
-Formellement, une \emph{décomposition arborescente} d'un graphe $G = (V, E)$
-est un couple $(X, T)$ où $T$ est un arbre dont chaque nœud $i$ est associé
-à un \emph{sac} $X_i \subseteq V$, vérifiant : (i) tout sommet de $V$
-appartient à au moins un sac ; (ii) toute arête $(u,v) \in E$ est couverte
-par un sac contenant les deux extrémités ; (iii) pour tout sommet $v$, les
-nœuds de $T$ dont les sacs contiennent $v$ forment un sous-arbre connexe.
-La \emph{largeur} de la décomposition est $\max_i |X_i| - 1$, et la treewidth
-$\mathit{tw}(G)$ est le minimum sur toutes les décompositions possibles.
-Bien que calculer la treewidth optimale soit NP-difficile en général, le
-problème est FPT pour $k$ fixé.
-
-\subsection{Algorithmes DP paramétrés par la treewidth}
-
-La treewidth du graphe d'incidence $I(F)$ d'une formule CNF (graphe biparti
-dont les sommets sont les variables et les clauses, reliés si la variable
-apparaît dans la clause) fournit un paramètre naturel pour des algorithmes
-DP. Samer et Szeider \cite{samer2010} ont proposé le premier algorithme DP
-correct pour \#SAT paramétré par la treewidth incidente, de complexité
-$O^*(4^k)$ où $k$ est la treewidth. Slivovsky et Szeider \cite{slivovsky2020}
-ont ensuite amélioré ce résultat à $O^*(2^k)$ en reformulant l'étape de
-jonction des tables comme un produit algébrique calculé par transformée de
-Zeta et inversion de Möbius, atteignant la borne inférieure imposée par
-la conjecture SETH.
-
-\subsection{Mim-width}
-
-La treewidth ne suffit pas pour les graphes denses. La \emph{mim-width}
-(\emph{maximum induced matching width}), introduite par Vatshelle dans sa
-thèse de doctorat \cite{vatshelle2012}, mesure pour chaque coupe d'une
-décomposition par branchement la taille maximale d'un couplage induit dans
-le sous-graphe biparti défini par cette coupe. La mim-width est plus générale
-que la treewidth et la clique-width : des graphes d'intervalles ou de
-permutation, à treewidth non bornée, ont une mim-width bornée.
-
-Cependant, Bergougnoux, Bonnet et Duron ont démontré en 2025 que calculer
-ou approximer la mim-width est un problème paraNP-complet
-\cite{bergougnoux2025}. En pratique, on recourt donc à des heuristiques
-pour construire des décompositions de bonne qualité.
+Pour dépasser cette limitation, des paramètres plus généraux ont été
+introduits, notamment la \emph{mim-width} (\emph{maximum induced
+matching width}) de Vatshelle \cite{vatshelle2012}, qui reste bornée
+sur des classes à treewidth non bornée (graphes d'intervalles ou de
+permutation, par exemple). En contrepartie, calculer la mim-width est
+intractable : Bergougnoux, Bonnet et Duron \cite{bergougnoux2025} ont
+récemment montré que le problème est paraNP-complet, ce qui impose
+le recours à des heuristiques dans toute mise en œuvre pratique.
 
 % ---------------------------------------------------------------------------
 \section{PS-width et l'algorithme de Sæther-Telle-Vatshelle}
 \label{sec:pswidth}
 % ---------------------------------------------------------------------------
 
-\subsection{Branch decomposition et PS-sets}
-
 Sæther, Telle et Vatshelle \cite{saether2015} introduisent un paramètre
-défini directement sur les formules CNF. Soit $F$ une formule CNF à $n$
-variables et $m$ clauses. Une \emph{branch decomposition} $(T, \delta)$ est
-un arbre binaire $T$ muni d'une bijection $\delta$ entre ses feuilles et les
-éléments de $\mathit{var}(F) \cup \mathit{cla}(F)$. Chaque nœud interne $v$
-partage $F$ en deux sous-formules $F_v$ (éléments dans son sous-arbre) et
-$F_{\bar{v}}$ (éléments à l'extérieur).
+défini directement sur les formules CNF, la \emph{ps-width}, fondé sur une
+\emph{branch decomposition} de $F$ : un arbre binaire dont les feuilles sont
+en bijection avec $\mathit{var}(F) \cup \mathit{cla}(F)$. À chaque nœud $v$
+de l'arbre, on observe les ensembles de clauses extérieures satisfaisables
+par les affectations partielles locales à $v$ ; la ps-width de la
+décomposition est la cardinalité maximale de ces ensembles, et la ps-width
+de $F$ le minimum sur toutes les décompositions possibles.
 
-Pour une affectation $\tau$ des variables de $F_v$, on note
-$\mathit{sat}'(F_v, \tau)$ l'ensemble des clauses de $F_{\bar{v}}$ satisfaites
-par $\tau$ (clauses dont au moins un littéral, dont la variable est dans $F_v$,
-est rendu vrai par $\tau$). L'ensemble de tous les sous-ensembles ainsi
-atteignables est :
-\[
-  \mathit{PS}(F_v) = \bigl\{ \mathit{sat}'(F_v, \tau) : \tau \text{ affectation de } \mathit{var}(F_v) \bigr\}.
-\]
-La \emph{ps-width} de la décomposition est le maximum de $|\mathit{PS}(F_v)|$
-et $|\mathit{PS}(F_{\bar{v}})|$ sur tous les nœuds internes $v$, et la ps-width
-de $F$ est le minimum sur toutes les décompositions.
+Ce paramètre domine la mim-width du graphe d'incidence : si la mim-width
+est bornée et les clauses de taille bornée, la ps-width est polynomiale
+en le nombre de clauses. Or une mim-width bornée n'implique pas une
+treewidth bornée ; la ps-width étend donc strictement les classes de
+formules tractables couvertes par les algorithmes paramétrés par la
+treewidth.
 
-\paragraph{Relation avec la mim-width.}
-Sæther et al.\ établissent le corollaire clé : si le graphe d'incidence
-$I(F)$ a une mim-width $w$ et si les clauses sont de taille au plus $t$,
-alors $\mathit{psw}(F) \leq \min(m^w + 1,\, 2^{tw})$. Une mim-width bornée
-garantit donc une ps-width polynomiale, et la ps-width domine la mim-width
-dans la hiérarchie des paramètres de décomposition.
+Les auteurs donnent un algorithme par programmation dynamique en trois
+procédures séquentielles le long de la décomposition (calcul bottom-up des
+PS-sets, propagation top-down, puis remplissage d'une table d'états
+combinant les enfants), résolvant simultanément \#SAT et MaxSAT en
+$O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width. Pour une
+décomposition linéaire (chaque nœud interne a au moins une feuille pour
+enfant), la complexité chute à $O(k^2 \cdot m \cdot (m+n))$. La
+construction détaillée des trois procédures, ainsi que la définition
+formelle de la ps-width et de ses relations avec les autres paramètres
+de largeur, fait l'objet du chapitre~\ref{chap:theorie} de ce rapport.
 
-\subsection{L'algorithme DP}
-
-L'algorithme de \cite{saether2015} calcule \#SAT et MaxSAT par programmation
-dynamique en trois procédures séquentielles sur la décomposition arborescente.
-
-\textbf{Procédure 1 (bottom-up).} Pour chaque nœud $v$ en ordre post-ordre,
-on calcule $\mathit{PS}'(F_v)$, une représentation comprimée de
-$\mathit{PS}(F_v)$, en combinant les PS-sets des deux enfants par une
-union filtrée : si $c_1, c_2$ sont les enfants de $v$, alors
-\[
-  \mathit{PS}'(F_v) = \bigl\{ (C_1 \cup C_2) \cap \mathit{cla}(F_{\bar{v}})
-    : C_1 \in \mathit{PS}'(F_{c_1}),\; C_2 \in \mathit{PS}'(F_{c_2}) \bigr\}.
-\]
-
-\textbf{Procédure 2 (top-down).} On calcule symétriquement
-$\mathit{PS}'(F_{\bar{v}})$ depuis la racine vers les feuilles, en
-combinant la contribution du frère de $v$ avec celle du parent.
-
-\textbf{Procédure 3 (DP).} Pour chaque nœud $v$, on maintient une table
-$\mathit{Tab}_v$ indexée par des paires $(C, C') \in \mathit{PS}'(F_v) \times
-\mathit{PS}'(F_{\bar{v}})$. $\mathit{Tab}_v(C, C')$ stocke le nombre maximal
-de clauses de $\delta(v)$ satisfaisables (MaxSAT) et le nombre d'affectations
-satisfaisantes ({\#SAT}) cohérentes avec la projection $(C, C')$. Les tables
-sont mises à jour par les combinaisons de triplets $(C_{c_1}, C_{c_2}, C'_v)$
-en temps $O(k^3)$ par nœud.
-
-La complexité totale est $O(k^3 \cdot m \cdot (m+n))$ où $k$ est la
-ps-width \cite{saether2015}. Pour un arbre linéaire (chaque nœud interne
-a au moins un enfant feuille), l'un des PS-sets est de taille $\leq 2$, ce
-qui réduit la complexité à $O(k^2 \cdot m \cdot (m+n))$.
-
-\subsection{Heuristique GreedyOrder et instances de référence}
-
-Puisque minimiser la ps-width est intractable en général, les auteurs
-proposent l'heuristique \emph{GreedyOrder} : à chaque étape, le sommet du
-graphe d'incidence $I(F)$ ayant le plus grand degré de connexion aux sommets
-déjà sélectionnés est choisi en premier (avec tie-break sur le degré total).
-Cette heuristique gloutonne produit des décompositions linéaires de bonne
-qualité en pratique.
-
-Pour valider l'algorithme, trois familles d'instances synthétiques sont
-utilisées : les formules \emph{Type 1} (graphes bipartis d'intervalles),
-\emph{Type 2} (mêmes structures avec clauses de petite taille) et
-\emph{Type 3} (fonctions XOR cycliques formant des graphes d'arcs circulaires).
-Sur ces instances, le DP paramétré par la ps-width surpasse nettement les
+Comme minimiser la ps-width est intractable en général, les auteurs
+proposent l'heuristique gloutonne \emph{GreedyOrder}, qui construit un
+ordre linéaire des sommets du graphe d'incidence en privilégiant à chaque
+étape ceux qui ont le plus grand nombre de voisins déjà choisis. Pour
+valider l'algorithme, ils introduisent trois familles d'instances
+synthétiques (\emph{Type~1}, graphes bipartis d'intervalles ;
+\emph{Type~2}, mêmes structures avec clauses courtes ; \emph{Type~3},
+fonctions XOR cycliques formant des graphes d'arcs circulaires) sur
+lesquelles le DP paramétré par la ps-width surpasse nettement les
 solveurs CDCL \cite{saether2015}.
 
 % ---------------------------------------------------------------------------
@@ -485,136 +430,75 @@ KC de notre implémentation.
 Darwiche et Marquis \cite{darwiche2002} ont dressé la \emph{carte de
 compilation} qui classe les représentations selon deux axes : la
 \emph{succinctitude} (taille relative) et la \emph{tractabilité} des
-requêtes supportées en temps polynomial. Les langages fondamentaux sont :
+requêtes supportées en temps polynomial. La hiérarchie pertinente pour
+notre travail va de la NNF (\emph{Negation Normal Form} : DAG dont les
+feuilles sont des littéraux et les nœuds internes des ET et OU) à la
+DNNF (\emph{Decomposable NNF} : enfants de tout ET à portées disjointes),
+puis au \textbf{d-DNNF} (\emph{Deterministic DNNF} : enfants de tout OU
+à ensembles de modèles disjoints). Cette dernière propriété rend le
+comptage \#SAT polynomial par un parcours qui remplace OU par somme et
+ET par produit, et fait du d-DNNF le langage cible de notre implémentation.
+D'autres variantes notables existent, notamment le SDD \cite{darwiche2011}
+(d-DNNF contraint par un \emph{vtree}) et l'OBDD \cite{bryant1986}
+(précurseur historique), plus restrictives mais non utilisées dans ce
+travail.
 
-\begin{itemize}
-  \item \textbf{NNF} (\emph{Negation Normal Form}) : DAG dont les feuilles
-    sont des littéraux et les nœuds internes des ET et OU.
-  \item \textbf{DNNF} (\emph{Decomposable NNF}) : NNF où tout nœud ET a
-    des enfants à portées disjointes (\emph{décomposabilité}).
-  \item \textbf{d-DNNF} (\emph{Deterministic DNNF}) : DNNF où les enfants
-    de tout nœud OU représentent des ensembles de modèles disjoints
-    (\emph{déterminisme}). Cette propriété rend le comptage \#SAT
-    polynomial par un parcours post-ordre qui remplace OU par somme et
-    ET par produit.
-  \item \textbf{SDD} (\emph{Sentential Decision Diagram}) : d-DNNF dont
-    la topologie est contrainte par un \emph{vtree} (arbre binaire sur
-    les variables), et qui admet une forme canonique \cite{darwiche2011}.
-  \item \textbf{OBDD} (\emph{Ordered Binary Decision Diagram}) :
-    précurseur historique \cite{bryant1986}, le plus restrictif, mais
-    clos sous l'ensemble des connecteurs booléens en temps polynomial.
-\end{itemize}
+\subsection{Requêtes tractables sur d-DNNF}
+\label{subsec:queries-ddnnf}
 
-Vinall-Smeeth \cite{vinallSmeeth2024} a récemment clos une question
-ouverte en démontrant que le d-DNNF structuré n'est pas clos sous la
-négation ni sous la quantification existentielle, établissant une
-séparation de compacité exponentielle avec le SDD.
+L'intérêt pratique d'un langage cible se mesure aux requêtes qu'il admet
+en temps polynomial dans la taille de la représentation. Darwiche et
+Marquis \cite{darwiche2002} établissent que la classe d-DNNF rend
+polynomiales six requêtes standard : \textbf{CO} (\emph{consistency},
+$F$ est-elle satisfaisable ?), \textbf{VA} (\emph{validity}, $F$
+est-elle une tautologie ?), \textbf{CE} (\emph{clausal entailment}, $F$
+implique-t-elle une clause donnée ?), \textbf{IM} (\emph{implicant
+check}, un terme est-il un implicant de $F$ ?), \textbf{CT}
+(\emph{model counting}, le \#SAT) et \textbf{ME} (\emph{model
+enumeration}, énumération des modèles avec un délai polynomial entre
+modèles consécutifs).
 
-\subsection{Compilateurs de l'état de l'art}
-
-\paragraph{Approches top-down fondées sur DPLL/CDCL.}
-Le compilateur \texttt{c2d} \cite{darwiche2004} a été le premier à
-produire un Decision-DNNF à partir d'une trace DPLL instrumentée : les
-branchements deviennent des nœuds OU, la décomposition en composants
-disjoints des nœuds ET. Son successeur \texttt{D4} \cite{lagniez2017},
-développé en C++, combine CDCL, analyse dynamique de composants et
-techniques d'apprentissage pour s'imposer comme l'état de l'art de la
-compilation top-down pure. \texttt{miniC2D} \cite{oztok2015} contraint
-la recherche DPLL par un \emph{vtree} statique afin de produire
-directement un Decision-SDD. \texttt{Ganak} \cite{sharma2019} remplace
-le cache de composants exact par un hachage universel probabiliste,
-réduisant drastiquement l'empreinte mémoire.
-
-\paragraph{Approches pilotées par la structure.}
-L'écosystème \texttt{DPMC} / \texttt{ADDMC}
-\cite{dudek2020dpmc} rompt avec DPLL : une phase de planification
-construit un \emph{project-join tree} dérivé d'une décomposition
-arborescente, évalué bottom-up via des diagrammes algébriques (ADDs).
-\texttt{sharpSAT-TD} \cite{korhonen2021}, vainqueur successif de la
-\emph{Model Counting Competition} 2021-2023, adopte une architecture
-hybride : le moteur CDCL est conservé, mais son heuristique de
-branchement est biaisée pour suivre la hiérarchie d'une décomposition
-arborescente calculée en prétraitement par \texttt{FlowCutter}
-\cite{strasser2017}. Cette hybridation \emph{dynamique} (CDCL) et
-\emph{structurelle} (treewidth) illustre la tendance dominante des
-compétitions récentes.
+Cette tractabilité tient à la combinaison de deux propriétés
+caractéristiques du langage, la \emph{décomposabilité} (sous-arbres
+disjoints sous chaque ET) et le \emph{déterminisme} (sous-arbres
+mutuellement exclusifs sous chaque OU) ; une troisième propriété, la
+\emph{lissité}, est requise spécifiquement pour CT et VA et peut
+s'obtenir en temps polynomial. Le DAG produit par la construction
+BCMS 2016 (section~\ref{subsec:bcms}) est lisse par construction, et
+ces six requêtes sont donc directement disponibles sur le résultat
+compilé. Leur algorithmique précise sur d-DNNF fait l'objet du
+chapitre~\ref{chap:theorie}.
 
 \subsection{Compilation explicite pilotée par la ps-width : BCMS 2016}
 \label{subsec:bcms}
 
-Bova, Capelli, Mengel et Slivovsky \cite{bova2016} ont étendu
+Bova, Capelli, Mengel et Slivovsky \cite{bova2016} prolongent
 l'algorithme de Sæther, Telle et Vatshelle en montrant que toute formule
 CNF $F$ dotée d'une branch decomposition de ps-width $k$ peut être
 compilée en un d-DNNF structuré de taille
 \[
   |D| \leq 7 \cdot k^3 \cdot (n + m),
 \]
-en temps également polynomial en $n + m$. L'algorithme s'obtient comme
-une \emph{instrumentation} de la Procédure 3 de \cite{saether2015} :
-chaque cellule $\mathit{Tab}_v(C, C')$ se voit associer un pointeur
-$\varphi_v(C, C')$ vers un nœud du DAG (Lemme~4), les produits et sommes
-de la DP deviennent des ET et OU dans le circuit (Lemmes~5 et~6), et la
-borne $7 k^3 (n+m)$ découle du dénombrement des triplets générateurs
-(Lemme~7).
-
-Ce résultat est remarquable sur deux plans. D'une part, il fournit une
-voie de compilation \emph{paramétrée} polynomiale en $n+m$ dès que la
-ps-width est bornée, sans recourir à la recherche DPLL. D'autre part,
-il établit une équivalence structurelle entre la DP structurelle et la
-compilation d-DNNF : parcourir le DAG obtenu en substituant $\lor$ par
-$+$ et $\land$ par $\times$ redonne exactement le nombre de modèles
-calculé par la DP.
-
-\paragraph{État des implémentations.} Malgré l'importance théorique de
-BCMS 2016, aucune implémentation publique n'exécute strictement
-l'algorithme bottom-up piloté par la ps-width pour produire un DAG
-d-DNNF. Les outils contemporains (\texttt{sharpSAT-TD}, \texttt{D4},
-\texttt{DPMC}) suivent des voies distinctes : trace CDCL dont la taille
-est implicitement bornée \emph{a posteriori} par la treewidth, ou bien
-programmation dynamique sur la treewidth d'incidence plutôt que sur la
-ps-width. Une partie de la contribution de ce mémoire consiste
-précisément à combler ce vide pratique en fournissant une implémentation
-explicite de BCMS 2016 en C.
+en temps polynomial en $n + m$. L'algorithme s'obtient comme une
+\emph{instrumentation} de la programmation dynamique de Sæther : les
+produits et sommes du DP deviennent respectivement des ET et OU dans le
+DAG, de sorte que parcourir ce dernier en substituant $\lor$ par $+$ et
+$\land$ par $\times$ redonne exactement le nombre de modèles calculé par
+la DP. Le résultat est une voie de compilation paramétrée polynomiale
+en $n+m$ dès que la ps-width est bornée, sans recourir à la recherche
+DPLL. La construction détaillée et les invariants structurels du DAG
+ainsi produit relèvent du cadre théorique (chapitre~\ref{chap:theorie}).
 
 \subsection{Évaluation et vérification}
 
-La \emph{Model Counting Competition} (MCC), établie en 2020
-\cite{fichte2025}, fédère l'évaluation empirique des compilateurs et
-compteurs. Elle comprend quatre pistes : comptage simple (MC), pondéré
-(WMC), projeté (PMC) et combiné (PWMC). Les instances couvrent des
-réseaux bayésiens, des circuits ISCAS, des modèles de configuration
-logicielle (Linux KConfig, BusyBox) et des formules synthétiques. Depuis
-2021, \texttt{sharpSAT-TD} domine les pistes principales, confirmant
-empiriquement la primauté de la décomposition structurelle sur les
-instances à topologie exploitable.
-
-La validation d'un compilateur dépasse aujourd'hui la seule comparaison
-des comptes avec un oracle. Bryant, Nawrocki, Avigad et Heule
-\cite{bryant2023} ont proposé le framework \emph{CPOG}
-(\emph{Partitioned-Operation Graph}) qui produit, parallèlement au DAG
-d-DNNF, une preuve certifiable mécaniquement par l'assistant Lean~4 de
-l'équivalence logique entre le circuit et la CNF source. Cette approche
-définit le nouveau standard de vérification formelle en compilation de
-connaissances.
-
-% ---------------------------------------------------------------------------
-\section{Circuits de multiplication et transformation de Tseytin}
-\label{sec:tseytin}
-% ---------------------------------------------------------------------------
-
-%La transformation de Tseytin \cite{tseytin1968} convertit un circuit logique
-%en une formule CNF équisatisfaisable en temps linéaire, en introduisant une
-%variable auxiliaire pour la sortie de chaque porte. Cette transformation
-%préserve la structure topologique du circuit dans le graphe d'incidence de
-%la formule.
-%
-%Pour un multiplicateur $k \times k$ bits (array multiplier), la formule
-%Tseytin résultante comporte $O(k^2)$ variables et clauses. La structure en
-%grille de l'additionneur génère un graphe d'incidence de mim-width $\Theta(k)$
-%\cite{vatshelle2012}, ce qui entraîne une ps-width exponentiellement grande
-%en $k$. Pour $k \geq 4$, cette explosion rend l'algorithme DP pur intractable
-%et fait de ces instances un cas limite intéressant pour évaluer les
-%frontières pratiques de la décomposition structurelle.
+L'évaluation empirique des compilateurs est fédérée par la \emph{Model
+Counting Competition} (MCC) \cite{fichte2025}, qui couvre depuis 2020 des
+instances issues de réseaux bayésiens, de circuits ISCAS et de modèles de
+configuration logicielle. Plus récemment, le framework \emph{CPOG} de
+Bryant et al.~\cite{bryant2023} introduit la vérification formelle des
+compilateurs, en produisant parallèlement au DAG d-DNNF une preuve
+certifiable mécaniquement par l'assistant Lean~4 de son équivalence avec
+la CNF source.
 
 \chapter{Cadre théorique}
 \label{chap:theorie}
@@ -700,11 +584,6 @@ connaissances.
   \newblock A knowledge compilation map.
   \newblock \emph{Journal of Artificial Intelligence Research (JAIR)}, 17:229--264, 2002.
 
-\bibitem{darwiche2004}
-  A.~Darwiche.
-  \newblock New advances in compiling CNF into decomposable negation normal form.
-  \newblock In \emph{Proc.\ 16th European Conference on Artificial Intelligence (ECAI)}, pp.~328--332, 2004.
-
 \bibitem{darwiche2011}
   A.~Darwiche.
   \newblock SDD: A new canonical representation of propositional knowledge bases.
@@ -747,51 +626,15 @@ connaissances.
   \newblock In \emph{Proc.\ 26th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LIPIcs, 2023.
   \newblock DOI: 10.4230/LIPIcs.SAT.2023.6.
 
-\bibitem{dudek2020dpmc}
-  J.~M. Dudek, V.~H.~N. Phan, and M.~Y. Vardi.
-  \newblock DPMC: Weighted model counting by dynamic programming on project-join trees.
-  \newblock In \emph{Proc.\ 26th International Conference on Principles and Practice of Constraint Programming (CP)}, LIPIcs 181, pp.~211--230, 2020.
-
 \bibitem{fichte2025}
   J.~Fichte and M.~Hecher.
   \newblock The model counting competitions 2021-2023.
   \newblock \emph{arXiv preprint} arXiv:2504.13842, 2025.
 
-\bibitem{korhonen2021}
-  T.~Korhonen and M.~Järvisalo.
-  \newblock Integrating tree decompositions into decision heuristics of propositional model counters.
-  \newblock In \emph{Proc.\ 27th International Conference on Principles and Practice of Constraint Programming (CP)}, LIPIcs 210, 2021.
-  \newblock DOI: 10.4230/LIPIcs.CP.2021.8.
-
-\bibitem{oztok2015}
-  U.~Oztok and A.~Darwiche.
-  \newblock A top-down compiler for sentential decision diagrams.
-  \newblock In \emph{Proc.\ 24th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~3141--3148, 2015.
-
-\bibitem{sharma2019}
-  S.~Sharma, S.~Roy, M.~Soos, and K.~S. Meel.
-  \newblock GANAK: A scalable probabilistic exact model counter.
-  \newblock In \emph{Proc.\ 28th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~1169--1176, 2019.
-
-\bibitem{strasser2017}
-  B.~Strasser.
-  \newblock Computing tree decompositions with FlowCutter: PACE 2017 submission.
-  \newblock \emph{arXiv preprint} arXiv:1709.08949, 2017.
-
-\bibitem{vinallSmeeth2024}
-  H.~Vinall-Smeeth.
-  \newblock Structured d-DNNF is not closed under negation.
-  \newblock In \emph{Proc.\ 33rd International Joint Conference on Artificial Intelligence (IJCAI)}, 2024.
-
 \bibitem{saether2015}
   S.~H. Sæther, J.~A. Telle, and M.~Vatshelle.
   \newblock Solving \#SAT and MaxSAT by dynamic programming.
   \newblock \emph{Journal of Artificial Intelligence Research (JAIR)}, 54:59--82, 2015.
-
-\bibitem{tseytin1968}
-  G.~S. Tseytin.
-  \newblock On the complexity of derivation in propositional calculus.
-  \newblock In \emph{Structures in Constructive Mathematics and Mathematical Logic, Part II}, pp.~115--125. Consultants Bureau, New York, 1968.
 
 \end{thebibliography}
 
