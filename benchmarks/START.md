@@ -1,11 +1,17 @@
 # Procédure de déploiement et de lancement du benchmark sur racer
 
+> Convention de paths utilisée dans ce document :
+> - **Sur racer** : `~/bachelor/bachelor-thesis/`
+> - **Sur la machine de dev locale** : `~/Documents/GitHub/bachelor/bachelor-thesis/`
+>
+> Si tu changes ces chemins, substitue-les partout dans les commandes ci-dessous.
+
 ## Étape A — Préparation initiale (une seule fois)
 
 ```bash
 # 1. SSH + clone
 ssh ebussod@racer
-cd ~
+mkdir -p ~/bachelor && cd ~/bachelor
 git clone <URL_DU_REPO_PUBLIC> bachelor-thesis
 cd bachelor-thesis
 
@@ -20,6 +26,13 @@ pip install -e benchmarks
 
 # 4. Vérifier que Z3 marche
 python3 -c "from z3 import Optimize, Bool, Or; print('Z3 OK')"
+```
+
+Sur ta **machine de dev locale**, installe `rsync` si absent (utilisé en
+étapes D.8 et G pour rapatrier les figures) :
+
+```bash
+sudo apt install rsync   # Debian / Ubuntu
 ```
 
 ---
@@ -87,7 +100,7 @@ Puis note les valeurs choisies dans
 
 ```bash
 ssh ebussod@racer
-cd ~/bachelor-thesis
+cd ~/bachelor/bachelor-thesis
 source .venv-bench/bin/activate
 
 cd src
@@ -99,18 +112,18 @@ cd ..
 ### D.2 — Vérification 0 fuite mémoire (ASan)
 
 ```bash
-cd ~/bachelor-thesis/src
+cd ~/bachelor/bachelor-thesis/src
 make asan
 ./sat_solver ../data/exemple1.cnf manual --json 2>&1 | grep -i sanitizer
 # Attendu : aucune ligne renvoyée (= 0 fuite)
 make rebuild   # rebuild en mode release pour le bench
-cd ..
+cd ~/bachelor/bachelor-thesis
 ```
 
 ### D.3 — Test Z3 stats keys après install
 
 ```bash
-cd ~/bachelor-thesis
+cd ~/bachelor/bachelor-thesis
 source .venv-bench/bin/activate
 PYTHONPATH=benchmarks python3 -c "
 from runners.run_z3 import run_z3_maxsat
@@ -131,7 +144,7 @@ print('z3_stats_keys =', r.get('z3_stats_keys_available')[:120])
 ### D.4 — Dry-run de l'orchestrateur
 
 ```bash
-cd ~/bachelor-thesis
+cd ~/bachelor/bachelor-thesis
 python3 benchmarks/orchestrator.py --dry-run
 # Attendu : affiche le nombre d'instances, de tâches passe A DP, passe A Z3.
 # Aucun sous-process lancé.
@@ -169,37 +182,57 @@ les instances `type3`.
 
 ### D.7 — Test Ctrl-C + reprise auto
 
+Important : `make bench-smoke` crée un **nouveau dossier timestampé à chaque
+appel** ; pour valider la reprise, il faut explicitement pointer vers le
+dossier du run interrompu via `--resume`.
+
 ```bash
 make -C benchmarks bench-smoke &
 BENCH_PID=$!
 sleep 5
 kill -INT $BENCH_PID
 wait $BENCH_PID 2>/dev/null
-echo "Exit code attendu : 130"
+echo "Exit code (echo, pas un vrai check) : 130"
 
 # Vérifier les CSV partiels
 LATEST=$(ls -t benchmarks/results/ | head -1)
 wc -l benchmarks/results/$LATEST/structure.csv
 
-# Relancer : doit skipper les tâches déjà faites
-make -C benchmarks bench-smoke
-# Attendu : logs du type "skip N déjà faites"
+# Relancer EN REPRENANT le run interrompu (sinon nouveau dossier vierge) :
+python3 benchmarks/orchestrator.py --resume benchmarks/results/$LATEST \
+    --instances type1_v20_c25,type3_n30_t3_s2,random_k3_v8_c20
+# Attendu : logs du type "skip N deja faites"
 ```
+
+Note : le smoke test étant très rapide (~7 s), le `sleep 5 + kill -INT`
+peut arriver après que la passe A soit déjà finie ; dans ce cas le test
+ne démontre pas réellement la coupure mid-run, mais il valide bien la
+reprise via `--resume` (ce qui est le scénario important pour le bench long).
 
 ### D.8 — Vérification visuelle des 8 plots
 
+**Sur racer** : lister puis régénérer les plots (la cible `plot` cible
+automatiquement le dernier run via `--resume`) :
+
 ```bash
+# Sur racer :
 LATEST=$(ls -t benchmarks/results/ | head -1)
 ls benchmarks/results/$LATEST/figures/
 
 # Régénération des plots seuls (sans relancer le bench)
 make -C benchmarks plot
+```
 
-# Récupération côté local pour ouvrir les PDF :
-# (depuis ta machine de dev, dans un autre terminal)
-LATEST=$(ssh ebussod@racer "ls -t bachelor-thesis/benchmarks/results/" | head -1)
-rsync -av ebussod@racer:bachelor-thesis/benchmarks/results/$LATEST/figures/ /tmp/figures/
-open /tmp/figures/*.pdf
+**Sur ta machine de dev locale** (PAS sur racer — ouvrir un nouveau terminal,
+sinon le `ssh` rebondit vers racer et les chemins ne correspondent pas) :
+
+```bash
+# Depuis n'importe quel dossier de la machine locale :
+LATEST=$(ssh ebussod@racer "ls -t bachelor/bachelor-thesis/benchmarks/results/" | head -1)
+echo "LATEST=$LATEST"
+mkdir -p /tmp/figures
+rsync -av ebussod@racer:bachelor/bachelor-thesis/benchmarks/results/$LATEST/figures/ /tmp/figures/
+xdg-open /tmp/figures/time_vs_pswidth.pdf   # ou n'importe quel viewer PDF
 ```
 
 Attendu : 8 PDF + 8 PNG dans `figures/`. Les PDF doivent être vectoriels
@@ -211,7 +244,7 @@ Attendu : 8 PDF + 8 PNG dans `figures/`. Les PDF doivent être vectoriels
 
 ```bash
 ssh ebussod@racer
-cd ~/bachelor-thesis
+cd ~/bachelor/bachelor-thesis
 git pull                          # toujours pull avant un bench long
 source .venv-bench/bin/activate
 
@@ -225,16 +258,32 @@ make -C benchmarks bench
 Tu reçois un message Discord au démarrage avec l'ETA. Puis un toutes les 30 min.
 Plus une alerte sur chaque FAIL hard. Plus le récap final.
 
+#### Reprise après interruption (Ctrl-C, SSH coupé, OOM…)
+
+`make bench` crée un nouveau dossier `results/<UTC>/` à chaque appel ;
+relancer `make bench` directement repart de zéro. Pour reprendre le run
+interrompu et skipper les tâches déjà faites, utiliser `--resume` :
+
+```bash
+ssh ebussod@racer
+cd ~/bachelor/bachelor-thesis
+source .venv-bench/bin/activate
+LATEST=$(ls -t benchmarks/results/ | head -1)
+echo "Reprise de : $LATEST"
+tmux new -s bench
+python3 benchmarks/orchestrator.py --resume benchmarks/results/$LATEST
+```
+
 ---
 
 ## Étape F — Surveillance pendant le run (depuis n'importe où)
 
 ```bash
 # Tail du heartbeat
-ssh ebussod@racer "tail -f bachelor-thesis/benchmarks/results/\$(ls -t bachelor-thesis/benchmarks/results/ | head -1)/progress.log"
+ssh ebussod@racer "tail -f bachelor/bachelor-thesis/benchmarks/results/\$(ls -t bachelor/bachelor-thesis/benchmarks/results/ | head -1)/progress.log"
 
 # Voir les CSV en cours
-ssh ebussod@racer "wc -l bachelor-thesis/benchmarks/results/\$(ls -t bachelor-thesis/benchmarks/results/ | head -1)/structure.csv"
+ssh ebussod@racer "wc -l bachelor/bachelor-thesis/benchmarks/results/\$(ls -t bachelor/bachelor-thesis/benchmarks/results/ | head -1)/structure.csv"
 
 # Récupérer la session tmux
 ssh ebussod@racer
@@ -245,12 +294,16 @@ tmux attach -t bench
 
 ## Étape G — Récupération des résultats (côté local, après le run)
 
+À exécuter **sur ta machine de dev locale**, dans un terminal hors session SSH :
+
 ```bash
-cd ~/UNIGE/Bachelor/L3/S2/bachelor/bachelor-thesis
-LATEST=$(ssh ebussod@racer "ls -t bachelor-thesis/benchmarks/results/" | head -1)
-rsync -av --progress ebussod@racer:bachelor-thesis/benchmarks/results/$LATEST/ \
+cd ~/Documents/GitHub/bachelor/bachelor-thesis
+LATEST=$(ssh ebussod@racer "ls -t bachelor/bachelor-thesis/benchmarks/results/" | head -1)
+echo "LATEST=$LATEST"
+mkdir -p benchmarks/results/$LATEST
+rsync -av --progress ebussod@racer:bachelor/bachelor-thesis/benchmarks/results/$LATEST/ \
                      benchmarks/results/$LATEST/
-open benchmarks/results/$LATEST/SUMMARY.md
+xdg-open benchmarks/results/$LATEST/SUMMARY.md
 ```
 
 ---
@@ -285,7 +338,7 @@ auto skippera les tâches déjà OK.
 |---|---|
 | Z3 timeout sur tout | Augmenter `z3.timeout_s` dans `benchmark.yaml`, ou relancer avec `--skip-z3` |
 | OOM sur grosse instance | Augmenter `memory_cap_gib_per_proc` dans `benchmark.yaml` |
-| Run interrompu (Ctrl-C, SSH coupé) | Relancer `make -C benchmarks bench` : reprise auto |
+| Run interrompu (Ctrl-C, SSH coupé) | `python3 benchmarks/orchestrator.py --resume benchmarks/results/$(ls -t benchmarks/results/ \| head -1)` (cf. section "Reprise après interruption" de l'étape E) |
 | Plot crash | `make -C benchmarks plot` régénère les plots à partir des CSV |
 | Invariants à re-vérifier | `make -C benchmarks verify` |
 | Summary à régénérer | `make -C benchmarks summary` |
