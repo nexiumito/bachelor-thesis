@@ -1,0 +1,134 @@
+# benchmark.yaml — parametres globaux du harness.
+#
+# Modifier ce fichier suffit pour changer le parallelisme, les timeouts par
+# defaut, le nombre de repetitions, etc. Pas de recompilation necessaire.
+#
+# Conventions :
+#   - les credentials externes (Discord/Telegram) sont lus en env var, jamais
+#     ici (cf. section notifications plus bas) ;
+#   - les valeurs par defaut sont taillees pour racer (EPYC 9654, 384 threads,
+#     755 GiB RAM) ; ajuster si la cible change.
+
+# ----------------------------------------------------------------------------
+# Comportement de la machine SSH (machine partagee du laboratoire)
+# ----------------------------------------------------------------------------
+machine:
+  passe_a_jobs: 64                       # ~17 % de racer (384 threads)
+  passe_b_taskset_cpus: [0, 8, 16, 24]   # 4 coeurs sur 4 CCDs distincts (EPYC)
+  nice_level: 19                         # priorite minimale, on cede toujours
+  memory_cap_gib_per_proc: 50            # setrlimit RLIMIT_AS, anti-OOM
+
+# ----------------------------------------------------------------------------
+# Solveur DP
+# ----------------------------------------------------------------------------
+dp:
+  binary: src/sat_solver                 # relatif au repo root
+  cwd: src                               # toujours lance depuis src/
+  build_cmd: ["make", "-C", "src", "rebuild"]
+  modes_arbre:                           # modes testes en passes A et B
+    - greedy
+    - linear
+  modes_arbre_random_sample:
+    - random
+
+# ----------------------------------------------------------------------------
+# Z3 (comparaison MaxSAT et SAT decision)
+# ----------------------------------------------------------------------------
+z3:
+  enabled: true
+  timeout_s: 600                         # 10 min par appel Z3
+  collect_stats:
+    - "sat conflicts"
+    - "sat decisions"
+    - "sat restarts"
+    - "sat propagations"
+    - "max-sat conflicts"
+    - "time"
+  maxsat_engine: "default"               # default | maxres | wmax
+  use_optimize: true                     # Z3 Optimize ou Solver classique
+
+# ----------------------------------------------------------------------------
+# Passe A : structure (parallele, 64 jobs, mesure psw + DAG + invariants)
+# ----------------------------------------------------------------------------
+passe_a:
+  enabled: true
+  default_timeout_s: 1800                # 30 min defaut
+  family_timeouts:
+    type1: 1800
+    type2: 1800
+    type3: 3600
+    random: 1800
+    tseytin: 3600
+    factorization: 3600
+    misc: 60
+  z3_in_passe_a: true                    # Z3 lance en parallele dans la passe A
+
+# ----------------------------------------------------------------------------
+# Passe B : timings purs (parallele 4 coeurs sur 4 CCDs, 3 repetitions)
+# ----------------------------------------------------------------------------
+passe_b:
+  enabled: true
+  repetitions: 3                         # mediane sur 3 runs
+  default_timeout_s: 1800
+  family_timeouts:
+    type1: 1800
+    type2: 1800
+    type3: 3600
+    random: 1800
+    tseytin: 3600
+    factorization: 3600
+    misc: 60
+  skip_if_passe_a_failed: true           # skip si passe A a deja timeout
+  z3_in_passe_b: true                    # mesure Z3 en mono-coeur isole
+
+# ----------------------------------------------------------------------------
+# Echantillonnage du mode arbre random
+# 5 instances * 3 seeds = 15 runs supplementaires en mode 'random'
+# ----------------------------------------------------------------------------
+random_sample:
+  enabled: true
+  seeds: [0, 1, 2]
+  instances:
+    - type3_n100_t3_s2
+    - type2_v100_c400_t3
+    - type1_v50_c60
+    - random_k3_v15_c64_difficile
+    - tseytin_3x3
+
+# ----------------------------------------------------------------------------
+# Plots
+# ----------------------------------------------------------------------------
+plots:
+  enabled: true
+  formats: [pdf, png]
+  dpi_png: 200
+  matplotlib_style: "seaborn-v0_8-whitegrid"
+  font_family: "serif"
+  font_size: 11
+  figure_width_in: 6.4
+  figure_height_in: 4.0
+  use_latex: false                       # passer a true si LaTeX dispo
+
+# ----------------------------------------------------------------------------
+# Logging et heartbeat (fichier progress.log)
+# ----------------------------------------------------------------------------
+logging:
+  heartbeat_interval_s: 300              # progress.log toutes les 5 min
+  csv_flush_each_row: true               # flush systematique pour reprise
+  log_level: INFO                        # DEBUG | INFO | WARNING | ERROR
+
+# ----------------------------------------------------------------------------
+# Notifications externes (Discord webhook ou Telegram bot)
+# ----------------------------------------------------------------------------
+# Les credentials sont lus en env, JAMAIS dans ce fichier :
+#   discord  -> DISCORD_WEBHOOK_URL
+#   telegram -> TELEGRAM_TOKEN + TELEGRAM_CHAT_ID
+# Si la variable d'env attendue est absente -> fallback silencieux (no-op).
+# ----------------------------------------------------------------------------
+notifications:
+  enabled: true
+  channel: discord                       # discord | telegram | none
+  heartbeat_interval_min: 30             # un message toutes les 30 min
+  notify_on_start: true
+  notify_on_hard_fail: true
+  notify_on_completion: true

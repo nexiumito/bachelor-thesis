@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "core/formula.h"
 #include "core/parser.h"
@@ -219,11 +220,78 @@ static void run_benchmark(void) {
     printf("================================================================================\n");
 }
 
+// ============================================================================
+// SORTIE JSON (mode --json)
+// Sérialisation manuelle, pas de dépendance externe.
+// Une seule ligne sur stdout, terminée par \n, puis exit.
+// ============================================================================
+
+static int solve_formula_json(const char* filename, int execution_mode);
+
+/**
+ * Écrit une ligne JSON minimale en cas d'erreur (avant ou après parsing).
+ * Échappe les caractères spéciaux les plus courants dans le chemin et le
+ * message (guillemets, backslashes) pour éviter de casser le parser Python.
+ */
+static void print_json_escaped(const char* s) {
+    // Échappement minimaliste : \" et \\ uniquement. Suffisant pour des chemins
+    // de fichiers standards et des messages d'erreur ASCII.
+    if (!s) return;
+    for (const char* p = s; *p; p++) {
+        if (*p == '"' || *p == '\\') {
+            putchar('\\');
+            putchar(*p);
+        } else if ((unsigned char)*p < 0x20) {
+            // Caractère de contrôle : on le saute pour rester sur une seule ligne.
+            continue;
+        } else {
+            putchar(*p);
+        }
+    }
+}
+
+static void print_json_error(const char* filename, const char* mode_str,
+                             const char* status, const char* msg) {
+    printf("{\"schema_version\":1,\"status\":\"%s\",\"error_message\":\"",
+           status);
+    print_json_escaped(msg ? msg : "");
+    printf("\",\"file\":\"");
+    print_json_escaped(filename ? filename : "");
+    printf("\",\"mode\":\"");
+    print_json_escaped(mode_str ? mode_str : "");
+    printf("\"}\n");
+    fflush(stdout);
+}
+
+/**
+ * Helper local : durée écoulée en millisecondes entre deux timespec
+ * obtenus via clock_gettime(CLOCK_MONOTONIC). Wall-time monotone.
+ */
+static inline double elapsed_ms_ts(struct timespec start, struct timespec end) {
+    return (end.tv_sec - start.tv_sec) * 1000.0
+         + (end.tv_nsec - start.tv_nsec) / 1e6;
+}
+
 int main(int argc, char *argv[]) {
     // Mode benchmark special
     if (argc == 2 && strcmp(argv[1], "benchmark") == 0) {
         run_benchmark();
         return 0;
+    }
+
+    // Mode --json : argc == 4 et argv[3] == "--json".
+    // Sortie : une seule ligne JSON sur stdout, exit 0 ou 1.
+    if (argc == 4 && strcmp(argv[3], "--json") == 0) {
+        int mode = -1;
+        if      (strcmp(argv[2], "manual") == 0) mode = TREE_MANUAL;
+        else if (strcmp(argv[2], "random") == 0) mode = TREE_RANDOM;
+        else if (strcmp(argv[2], "linear") == 0) mode = TREE_LINEAR;
+        else if (strcmp(argv[2], "greedy") == 0) mode = TREE_GREEDY;
+        else {
+            print_json_error(argv[1], argv[2], "error", "mode inconnu");
+            return 1;
+        }
+        return solve_formula_json(argv[1], mode);
     }
 
     if (argc < 3 || argc > 4) {
@@ -571,6 +639,237 @@ static int solve_formula(const char* filename, int execution_mode,
     // Le pool DNNF doit etre libere apres tout acces a dp_result.dnnf_root ;
     // l'ordre entre pool / trie / tree / formula est sinon indifferent
     // (ressources independantes). On met le pool en tete par propriete.
+    free_dnnf_pool(dnnf_pool);
+    free_formula(f_ptr);
+    free_trie(trie);
+    free_tree(root);
+    free_bitset(all_clauses_mask);
+
+    return 0;
+}
+
+/**
+ * Variante "JSON" de solve_formula : aucune sortie ASCII intermédiaire,
+ * mesures par clock_gettime(CLOCK_MONOTONIC), une seule ligne JSON finale.
+ *
+ * Les long long sont sérialisés en nombres décimaux ; si > 1e18, on bascule
+ * en string "overflow" avec un drapeau dédié pour rester dans la précision
+ * JSON (mantisse 53 bits).
+ *
+ * @param filename       Chemin DIMACS (passé tel quel dans le JSON).
+ * @param execution_mode TREE_MANUAL | TREE_RANDOM | TREE_LINEAR | TREE_GREEDY.
+ * @return 0 si "ok", 1 sinon.
+ */
+static int solve_formula_json(const char* filename, int execution_mode) {
+    const char* mode_str = (execution_mode == TREE_GREEDY) ? "greedy" :
+                           (execution_mode == TREE_LINEAR) ? "linear" :
+                           (execution_mode == TREE_RANDOM) ? "random" : "manual";
+
+    // Seed pour le mode random, lue dans l'environnement.
+    int seed = 0;
+    const char* seed_env = getenv("RANDOM_SEED");
+    if (seed_env && seed_env[0]) {
+        seed = atoi(seed_env);
+    }
+
+    struct timespec t0, t1;
+
+    // PARSING DIMACS (timer dedie).
+    double time_parsing_ms = 0.0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    SAT_Formula* f_ptr = parse_cnf(filename);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    time_parsing_ms = elapsed_ms_ts(t0, t1);
+
+    if (!f_ptr) {
+        print_json_error(filename, mode_str, "parse_error",
+                         "fichier introuvable ou DIMACS invalide");
+        return 1;
+    }
+
+    SAT_Formula f = *f_ptr;
+
+    // Garde-fou pour le mode manual.
+    if (execution_mode == TREE_MANUAL && (f.num_vars != 5 || f.num_clauses != 4)) {
+        free_formula(f_ptr);
+        print_json_error(filename, mode_str, "error",
+                         "manual mode requires exactement 5 vars et 4 clauses");
+        return 1;
+    }
+
+    // Initialisation des structures partagees (RAII manuel).
+    Bitset* all_clauses_mask = create_bitset(f.num_clauses);
+    if (!all_clauses_mask) {
+        free_formula(f_ptr);
+        print_json_error(filename, mode_str, "alloc_fail",
+                         "create_bitset(all_clauses_mask)");
+        return 1;
+    }
+    for (int i = 0; i < f.num_clauses; i++) {
+        set_bit(all_clauses_mask, i);
+    }
+
+    int initial_capacity = (f.num_clauses * f.num_clauses > 100000) ?
+                           (f.num_clauses * f.num_clauses * 2) : 100000;
+    BinaryTrie* trie = create_trie(initial_capacity);
+    if (!trie) {
+        free_formula(f_ptr);
+        free_bitset(all_clauses_mask);
+        print_json_error(filename, mode_str, "alloc_fail", "create_trie");
+        return 1;
+    }
+
+    // PHASE 0 : construction de l'arbre.
+    Node* root = NULL;
+    double time_phase0_ms = 0.0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    if (execution_mode == TREE_MANUAL) {
+        // Re-construire l'arbre manuel de la Figure 2 (5 vars, 4 clauses).
+        Node* leaf_x1 = create_leaf_node(NODE_LEAF_VAR, 1, f.num_clauses);
+        Node* leaf_x2 = create_leaf_node(NODE_LEAF_VAR, 2, f.num_clauses);
+        Node* A = create_internal_node(leaf_x1, leaf_x2, f.num_clauses);
+        Node* leaf_c1 = create_leaf_node(NODE_LEAF_CLAUSE, 0, f.num_clauses);
+        Node* leaf_c3 = create_leaf_node(NODE_LEAF_CLAUSE, 2, f.num_clauses);
+        Node* B = create_internal_node(leaf_c1, leaf_c3, f.num_clauses);
+        Node* v_node = create_internal_node(A, B, f.num_clauses);
+        Node* leaf_x3 = create_leaf_node(NODE_LEAF_VAR, 3, f.num_clauses);
+        Node* leaf_c4 = create_leaf_node(NODE_LEAF_CLAUSE, 3, f.num_clauses);
+        Node* C = create_internal_node(leaf_x3, leaf_c4, f.num_clauses);
+        Node* leaf_x5 = create_leaf_node(NODE_LEAF_VAR, 5, f.num_clauses);
+        Node* leaf_c2 = create_leaf_node(NODE_LEAF_CLAUSE, 1, f.num_clauses);
+        Node* D = create_internal_node(leaf_x5, leaf_c2, f.num_clauses);
+        Node* E = create_internal_node(C, D, f.num_clauses);
+        Node* leaf_x4 = create_leaf_node(NODE_LEAF_VAR, 4, f.num_clauses);
+        Node* F_node = create_internal_node(E, leaf_x4, f.num_clauses);
+        root = create_internal_node(v_node, F_node, f.num_clauses);
+    } else if (execution_mode == TREE_RANDOM) {
+        srand((unsigned int)seed);
+        root = generate_random_tree(&f);
+    } else if (execution_mode == TREE_LINEAR) {
+        root = generate_linear_tree(&f);
+    } else if (execution_mode == TREE_GREEDY) {
+        root = generate_greedy_linear_tree(&f);
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    time_phase0_ms = elapsed_ms_ts(t0, t1);
+
+    if (!root) {
+        free_formula(f_ptr);
+        free_trie(trie);
+        free_bitset(all_clauses_mask);
+        print_json_error(filename, mode_str, "alloc_fail",
+                         "construction de l'arbre");
+        return 1;
+    }
+
+    // PHASE 1 : Procedure 1 (bottom-up PS'(Fv)).
+    double time_phase1_ms = 0.0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    compute_ps_prime_bottom_up(root, &f, all_clauses_mask, trie);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    time_phase1_ms = elapsed_ms_ts(t0, t1);
+
+    // PHASE 2 : Procedure 2 (top-down PS'(F_v_barre)).
+    double time_phase2_ms = 0.0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    compute_ps_bar_top_down(root, &f, trie);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    time_phase2_ms = elapsed_ms_ts(t0, t1);
+
+    // PHASE 3 : Procedure 3 (DP + construction du DAG d-DNNF).
+    DNNFPool* dnnf_pool = create_dnnf_pool(1024);
+    if (!dnnf_pool) {
+        free_formula(f_ptr);
+        free_trie(trie);
+        free_tree(root);
+        free_bitset(all_clauses_mask);
+        print_json_error(filename, mode_str, "alloc_fail", "create_dnnf_pool");
+        return 1;
+    }
+    double time_phase3_ms = 0.0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    DPResult dp_result = solve_dp(root, &f, all_clauses_mask, trie, dnnf_pool);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    time_phase3_ms = elapsed_ms_ts(t0, t1);
+
+    // Verification interne : dnnf_count == sharpsat_count (Lemme 4 BCMS).
+    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+
+    // Mesures structurelles.
+    int ps_width      = calculate_tree_max_ps_width(root);
+    int ps_width_pv   = calculate_tree_ps_width(root);
+    int ps_width_pvb  = calculate_tree_ps_prime_barre_width(root);
+    int trie_num_ps_sets = trie->num_ps_sets;
+    int dnnf_nodes    = dnnf_pool->num_nodes;
+    long long dnnf_edges = dp_result.dnnf_num_edges;
+    long long maxsat  = dp_result.maxsat_value;
+    long long sharpsat = dp_result.sharpsat_count;
+    int dnnf_count_match = (dnnf_cnt == sharpsat) ? 1 : 0;
+
+    // Borne BCMS : 7 * k^3 * (n + m). On detecte l'overflow par calcul en
+    // long long : si ps_width^3 deborde, le drapeau correspondant est mis.
+    int bound_overflow = 0;
+    long long psw_ll  = (long long)ps_width;
+    long long psw_cube = psw_ll * psw_ll * psw_ll;
+    long long bound = 0;
+    if (ps_width > 0) {
+        // Detection overflow grossiere : si psw > 2642245, psw^3 deborde 2^63.
+        if (ps_width > 2642245) {
+            bound_overflow = 1;
+        } else {
+            bound = 7LL * psw_cube * ((long long)f.num_vars + (long long)f.num_clauses);
+        }
+    }
+
+    double total_ms = time_phase0_ms + time_phase1_ms + time_phase2_ms + time_phase3_ms;
+
+    // Detection overflow > 1e18 sur sharpsat / dnnf_cnt (precision JSON).
+    int sharpsat_overflow = (sharpsat > (long long)1e18 || sharpsat < -(long long)1e18) ? 1 : 0;
+    int dnnf_cnt_overflow = (dnnf_cnt > (long long)1e18 || dnnf_cnt < -(long long)1e18) ? 1 : 0;
+
+    // SERIALISATION JSON : une seule ligne, pas d'espaces inutiles.
+    printf("{");
+    printf("\"schema_version\":1,");
+    printf("\"status\":\"ok\",");
+    printf("\"error_message\":null,");
+    printf("\"file\":\""); print_json_escaped(filename); printf("\",");
+    printf("\"mode\":\"%s\",", mode_str);
+    printf("\"seed\":%d,", seed);
+    printf("\"n_vars\":%d,", f.num_vars);
+    printf("\"n_clauses\":%d,", f.num_clauses);
+    printf("\"ps_width\":%d,", ps_width);
+    printf("\"ps_width_pv\":%d,", ps_width_pv);
+    printf("\"ps_width_pvb\":%d,", ps_width_pvb);
+    printf("\"trie_num_ps_sets\":%d,", trie_num_ps_sets);
+    printf("\"time_parsing_ms\":%.3f,", time_parsing_ms);
+    printf("\"time_phase0_ms\":%.3f,", time_phase0_ms);
+    printf("\"time_phase1_ms\":%.3f,", time_phase1_ms);
+    printf("\"time_phase2_ms\":%.3f,", time_phase2_ms);
+    printf("\"time_phase3_ms\":%.3f,", time_phase3_ms);
+    printf("\"time_total_ms\":%.3f,", total_ms);
+    printf("\"maxsat\":%lld,", maxsat);
+    if (sharpsat_overflow) {
+        printf("\"sharpsat\":\"overflow\",\"sharpsat_overflow\":true,");
+    } else {
+        printf("\"sharpsat\":%lld,", sharpsat);
+    }
+    if (dnnf_cnt_overflow) {
+        printf("\"dnnf_count_recomputed\":\"overflow\",\"dnnf_count_overflow\":true,");
+    } else {
+        printf("\"dnnf_count_recomputed\":%lld,", dnnf_cnt);
+    }
+    printf("\"dnnf_count_match\":%s,", dnnf_count_match ? "true" : "false");
+    printf("\"dnnf_nodes\":%d,", dnnf_nodes);
+    printf("\"dnnf_edges\":%lld,", dnnf_edges);
+    if (bound_overflow) {
+        printf("\"dnnf_bound_7k3nm\":\"overflow\",\"bound_overflow\":true");
+    } else {
+        printf("\"dnnf_bound_7k3nm\":%lld", bound);
+    }
+    printf("}\n");
+    fflush(stdout);
+
+    // NETTOYAGE.
     free_dnnf_pool(dnnf_pool);
     free_formula(f_ptr);
     free_trie(trie);

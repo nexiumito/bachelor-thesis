@@ -1,0 +1,21 @@
+# Resultats : on garde le dossier mais pas les runs.
+results/*
+!results/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtualenv
+.venv*/
+venv*/
+
+# Caches divers
+.pytest_cache/
+.mypy_cache/
+
+# Secrets : aucun fichier d'env ne doit etre committe.
+*.env
+.env.*
+secrets.*
