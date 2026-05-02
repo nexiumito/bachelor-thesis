@@ -17,9 +17,17 @@
  * Regles : TRUE=1, FALSE=0, LIT=1, AND=produit, OR=somme.
  * Retourne 0 si root == NULL. Complexite O(|D|).
  *
- * @param pool  Proprietaire du DAG ; pool->num_nodes borne les ids accessibles.
+ * Detection d'overflow sticky via __builtin_*_overflow : si une multiplication
+ * ou une addition long long deborde quelque part dans le parcours, le drapeau
+ * pointe par overflow_out (s'il est non-NULL) est mis a 1. Sur overflow, la
+ * valeur retournee est saturee a LLONG_MAX (pas wrap-around vers du negatif).
+ *
+ * @param pool         Proprietaire du DAG ; pool->num_nodes borne les ids
+ *                     accessibles.
+ * @param overflow_out Pointeur sortant optionnel (NULL pour ignorer). Mis a 1
+ *                     si overflow detecte ; non touche sinon.
  */
-long long dnnf_count(DNNFNode* root, DNNFPool* pool);
+long long dnnf_count(DNNFNode* root, DNNFPool* pool, int* overflow_out);
 
 /**
  * Construit la table memoisee des comptes pour tous les noeuds accessibles

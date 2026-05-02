@@ -63,7 +63,10 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
     ax.set_title("Temps DP en fonction de la ps-width (mode greedy)")
     ax.legend(loc="upper left", framealpha=0.9)
 
-    # Reference y = c * x^3 ajustee en log-log (si assez de points).
+    # P1 : deux courbes distinctes, sans label trompeur.
+    # 1) la regression log-log empirique : y = c * x^slope_obs
+    # 2) la borne theorique x^3 (Theoreme 2 papier) calibree sur le point
+    #    le plus a gauche pour rendre la comparaison visuelle honnete.
     if len(merged) >= 5:
         try:
             x = np.log(merged["ps_width"].astype(float).values)
@@ -71,10 +74,26 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
             mask = np.isfinite(x) & np.isfinite(y)
             if mask.sum() >= 3:
                 slope, intercept = np.polyfit(x[mask], y[mask], 1)
-                xx = np.linspace(merged["ps_width"].min(), merged["ps_width"].max(), 100)
-                yy = np.exp(intercept) * xx ** 3.0
-                ax.plot(xx, yy, "--", color="gray", alpha=0.6,
-                        label=f"y=c.x^3 (slope obs.={slope:.2f})")
+                xmin = float(merged["ps_width"].min())
+                xmax = float(merged["ps_width"].max())
+                xx = np.linspace(xmin, xmax, 100)
+
+                # Courbe empirique : y = exp(intercept) * x^slope
+                yy_fit = np.exp(intercept) * xx ** slope
+                ax.plot(xx, yy_fit, "--", color="dimgray", alpha=0.7,
+                        linewidth=1.4,
+                        label=f"y = c.x^{slope:.2f} (regression log-log)")
+
+                # Courbe theorique x^3 calibree pour passer par le plus a
+                # gauche des points fittes (xmin, exp(intercept) * xmin^slope).
+                # On choisit c_theory tel que c_theory * xmin^3 = y_left.
+                y_left = np.exp(intercept) * xmin ** slope
+                if xmin > 0:
+                    c_theory = y_left / (xmin ** 3.0)
+                    yy_theory = c_theory * xx ** 3.0
+                    ax.plot(xx, yy_theory, "--", color="crimson", alpha=0.7,
+                            linewidth=1.4,
+                            label="y ∝ x³ (borne Theoreme 2 BCMS)")
                 ax.legend(loc="upper left", framealpha=0.9)
         except Exception as e:
             logger.debug("regression log-log: %s", e)

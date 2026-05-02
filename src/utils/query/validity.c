@@ -18,13 +18,19 @@ int dnnf_validity(DNNFNode* root, DNNFPool* pool, int num_vars,
         return DNNF_VALIDITY_UNSAT;
     }
     if (max_models < 0) {
-        if (count_out) *count_out = dnnf_count(root, pool);
+        if (count_out) *count_out = dnnf_count(root, pool, NULL);
         return DNNF_VALIDITY_OVERFLOW;
     }
 
-    long long c = dnnf_count(root, pool);
+    int overflow = 0;
+    long long c = dnnf_count(root, pool, &overflow);
     if (count_out) *count_out = c;
 
+    if (overflow) {
+        // Plus de modeles que 2^n est theoriquement impossible, donc si
+        // overflow on declare l'incertitude.
+        return DNNF_VALIDITY_OVERFLOW;
+    }
     return (c == max_models) ? DNNF_VALIDITY_VALID
                              : DNNF_VALIDITY_NOT_VALID;
 }

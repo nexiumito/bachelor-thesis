@@ -1,6 +1,7 @@
 #include "procedure3.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -257,9 +258,26 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f, BinaryTrie* trie,
                 }
 
                 // #SAT
-                // Tab_v(C_v, C'_v) += Tab_c1(C_c1, C'_c1) * Tab_c2(C_c2, C'_c2) (multiplie car les affectations de c1 et c2 sont indépendantes)
-                tab_v->sharpsat[cell_v] += tab_c1->sharpsat[cell_c1]
-                                         * tab_c2->sharpsat[cell_c2];
+                // Tab_v(C_v, C'_v) += Tab_c1(C_c1, C'_c1) * Tab_c2(C_c2, C'_c2)
+                // (multiplie car les affectations de c1 et c2 sont
+                // independantes). Detection sticky de l'overflow via
+                // __builtin_*_overflow : si une multiplication ou une addition
+                // long long deborde, on leve tab_v->overflow et on sature a
+                // LLONG_MAX pour eviter les valeurs negatives wrap-around qui
+                // contamineraient le reste du calcul (et donneraient le bug
+                // sharpsat=0 observe sur type3_n>=200 dans le run 1).
+                long long prod;
+                if (__builtin_mul_overflow(tab_c1->sharpsat[cell_c1],
+                                           tab_c2->sharpsat[cell_c2], &prod)) {
+                    tab_v->overflow = 1;
+                    prod = LLONG_MAX;
+                }
+                long long sum;
+                if (__builtin_add_overflow(tab_v->sharpsat[cell_v], prod, &sum)) {
+                    tab_v->overflow = 1;
+                    sum = LLONG_MAX;
+                }
+                tab_v->sharpsat[cell_v] = sum;
 
                 // DAG : emission d'un AND(phi_c1, phi_c2)
                 // accumule dans le OR de la shape (idx_v, jv). Le OR est
@@ -286,6 +304,11 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f, BinaryTrie* trie,
     clear_reverse_map(rmaps->map_v, map_size, ps_v);
     clear_reverse_map(rmaps->map_c1_bar, map_size, ps_c1_bar);
     clear_reverse_map(rmaps->map_c2_bar, map_size, ps_c2_bar);
+
+    // Propagation sticky du drapeau overflow : un enfant ayant deborde
+    // contamine forcement le parent (les valeurs sharpsat ont ete utilisees
+    // pour calculer celles de tab_v).
+    tab_v->overflow |= tab_c1->overflow | tab_c2->overflow;
 
     // Libérer les tables des enfants (plus nécessaires).
     // Les DNNFNode* referencees survivent via le DNNFPool (cf. dp_table.c).
@@ -320,7 +343,7 @@ static DPTable* solve_dp_recursive(Node* node, SAT_Formula* f, BinaryTrie* trie,
  *                         dnnf_root (dans pool), dnnf_num_edges.
  */
 DPResult solve_dp(Node* root, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTrie* trie, DNNFPool* pool) {
-    DPResult result = {-1, 0, NULL, 0};
+    DPResult result = {-1, 0, NULL, 0, 0, 0};
 
     if (!root || !root->ps_prime_v || !root->ps_prime_v_barre) {
         fprintf(stderr, "Erreur : PS-sets non calcules. Executer Proc 1 et 2 d'abord.\n");
@@ -341,6 +364,13 @@ DPResult solve_dp(Node* root, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTr
     // Calcul bottom-up récursif
     DPTable* tab_root = solve_dp_recursive(root, f, trie, rmaps, pool, temp1, temp2, temp3);
 
+    // Propagation alloc_failed depuis le trie et le DNNFPool. Le caller
+    // (main.c) doit verifier ce drapeau et router vers print_json_error
+    // sans s'appuyer sur les autres champs.
+    if (trie->alloc_failed || pool->alloc_failed) {
+        result.alloc_failed = 1;
+    }
+
     // À la racine : PS'(Fv) = {vide}, PS'(F_v_barre) = {vide}
     // Tab_r(vide, vide) donne directement les résultats
     if (tab_root && tab_root->num_rows > 0 && tab_root->num_cols > 0) {
@@ -348,6 +378,7 @@ DPResult solve_dp(Node* root, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTr
         result.sharpsat_count = tab_root->sharpsat[0];
         result.dnnf_root = tab_root->dnnf[0];
         result.dnnf_num_edges = dnnf_size(result.dnnf_root, pool);
+        result.sharpsat_overflow = tab_root->overflow;
     }
 
     // Nettoyage. Les DNNFNode* survivent via le DNNFPool (cf. dp_table.c).

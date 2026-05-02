@@ -49,6 +49,9 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         )
 
     ax.axhline(1.0, color="red", linestyle="--", alpha=0.6, label="borne theorique (=1)")
+    # P2 : log-x pour eviter qu'un outlier psw eleve ecrase tous les autres
+    # points (cas vu dans le run 1 : psw~32000 sur type2 vs psw=8 sur type3).
+    ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("ps-width")
     ax.set_ylabel(r"$|D| \,/\, 7 \cdot \mathrm{psw}^3 \cdot (n+m)$")

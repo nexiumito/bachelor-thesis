@@ -52,6 +52,15 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
             label=str(family), s=40, edgecolors="black", linewidths=0.4,
         )
 
+    # P5 : log-x systematique pour gerer les outliers (psw~32000 dans le run
+    # 1). Log-y aussi des que les valeurs s'etalent sur >2 decades, pour
+    # rester coherent avec time_vs_pswidth et dag_size_vs_bound.
+    # Filtre defensif sur ps_width > 0 (log(0) indefini).
+    merged = merged[merged["ps_width"] > 0].copy()
+    if merged.empty:
+        logger.warning("z3_conflicts_vs_pswidth: aucun point apres filtrage psw>0")
+        return
+    ax.set_xscale("log")
     if merged["z3_conflicts"].max() / max(merged["z3_conflicts"].min(), 1) > 100:
         ax.set_yscale("log")
 

@@ -18,13 +18,24 @@ typedef struct {
     int capacity;     // capacité totale actuelle du tableau
     int next_free;    // prochain index disponible (donc taille actuelle)
     int num_ps_sets;  // compteur global pour attribuer les ID uniques
-    
-    int* seen_array;   
+
+    int* seen_array;
     int seen_capacity;
+
+    // Drapeau sticky : passe a 1 des qu'une allocation interne a echoue
+    // (realloc des nodes ou du seen_array). Une fois leve, toutes les
+    // operations suivantes deviennent des no-op qui retournent 0 sans
+    // segfault. Le caller (solve_dp) doit verifier ce drapeau et router
+    // vers un chemin d'erreur JSON propre.
+    int alloc_failed;
 } BinaryTrie;
 
 
+// Retourne NULL si l'allocation initiale echoue.
 BinaryTrie* create_trie(int initial_capacity);
+// Sur echec d'allocation interne, leve trie->alloc_failed et retourne 0.
+// Les appelants doivent verifier `trie->alloc_failed` apres une serie
+// d'insertions (ou en sortie de boucle critique) pour propager l'erreur.
 int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses);
 void free_trie(BinaryTrie* trie);
 

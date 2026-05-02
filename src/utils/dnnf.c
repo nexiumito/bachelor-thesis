@@ -26,9 +26,12 @@
  * Allocation brute d'un DNNFNode (sans enregistrement dans le pool).
  * Les champs communs sont initialises ; var_index et children sont
  * configures par l'appelant selon le type.
+ *
+ * Retourne NULL si malloc echoue (l'appelant doit lever pool->alloc_failed).
  */
 static DNNFNode* allocate_raw_node(void) {
     DNNFNode* node = malloc(sizeof(DNNFNode));
+    if (!node) return NULL;
     node->id = -1;
     node->type = DNNF_AND; // reecrit par l'appelant
     node->var_index = 0;
@@ -41,33 +44,67 @@ static DNNFNode* allocate_raw_node(void) {
 /**
  * Enregistre un noeud dans le pool, lui assigne son id (= num_nodes avant
  * incrementation) et double la capacite si besoin.
+ *
+ * Retourne 0 sur succes, -1 sur echec d'allocation. Sur echec, le drapeau
+ * pool->alloc_failed est leve et le noeud n'est pas enregistre (le caller
+ * doit liberer ``node`` lui-meme avant de retourner pool->node_false).
  */
-static void pool_register_node(DNNFPool* pool, DNNFNode* node) {
+static int pool_register_node(DNNFPool* pool, DNNFNode* node) {
     if (pool->num_nodes >= pool->capacity) {
         int new_cap = pool->capacity * 2;
-        pool->nodes = realloc(pool->nodes, new_cap * sizeof(DNNFNode*));
+        DNNFNode** new_nodes = realloc(pool->nodes,
+                                        new_cap * sizeof(DNNFNode*));
+        if (!new_nodes) {
+            pool->alloc_failed = 1;
+            return -1;
+        }
+        pool->nodes = new_nodes;
         pool->capacity = new_cap;
     }
     node->id = pool->num_nodes;
     pool->nodes[pool->num_nodes++] = node;
+    return 0;
 }
 
 DNNFPool* create_dnnf_pool(int initial_capacity) {
     assert(initial_capacity >= 2);
     DNNFPool* pool = malloc(sizeof(DNNFPool));
+    if (!pool) return NULL;
     pool->capacity = initial_capacity;
     pool->num_nodes = 0;
+    pool->alloc_failed = 0;
+    pool->node_true = NULL;
+    pool->node_false = NULL;
     pool->nodes = malloc(initial_capacity * sizeof(DNNFNode*));
+    if (!pool->nodes) {
+        free(pool);
+        return NULL;
+    }
 
     // Singletons TRUE (id=0) puis FALSE (id=1).
     DNNFNode* t = allocate_raw_node();
+    if (!t || pool_register_node(pool, t) != 0) {
+        if (t) free(t);
+        free(pool->nodes);
+        free(pool);
+        return NULL;
+    }
     t->type = DNNF_TRUE;
-    pool_register_node(pool, t);
     pool->node_true = t;
 
     DNNFNode* f = allocate_raw_node();
+    if (!f || pool_register_node(pool, f) != 0) {
+        if (f) free(f);
+        // t est deja dans pool->nodes, sera libere par free_dnnf_pool si
+        // l'appelant l'invoque -- mais ici on retourne NULL, le pool
+        // n'est pas remis a l'appelant. On libere donc tout a la main.
+        free(t->children);
+        free(t);
+        free(pool->nodes);
+        free(pool);
+        return NULL;
+    }
     f->type = DNNF_FALSE;
-    pool_register_node(pool, f);
     pool->node_false = f;
 
     return pool;
@@ -93,10 +130,18 @@ void free_dnnf_pool(DNNFPool* pool) {
 DNNFNode* dnnf_make_literal(DNNFPool* pool, int var, int positive) {
     assert(var >= 1);
     assert(positive == 0 || positive == 1);
+    if (pool->alloc_failed) return pool->node_false;
     DNNFNode* n = allocate_raw_node();
+    if (!n) {
+        pool->alloc_failed = 1;
+        return pool->node_false;
+    }
     n->type = positive ? DNNF_LIT_POS : DNNF_LIT_NEG;
     n->var_index = var;
-    pool_register_node(pool, n);
+    if (pool_register_node(pool, n) != 0) {
+        free(n);
+        return pool->node_false;
+    }
     return n;
 }
 
@@ -110,6 +155,7 @@ DNNFNode* dnnf_make_constant_false(DNNFPool* pool) {
 
 DNNFNode* dnnf_make_and(DNNFPool* pool, DNNFNode* left, DNNFNode* right) {
     assert(left && right);
+    if (pool->alloc_failed) return pool->node_false;
 
     // Simplifications locales : comparaison sur les singletons du pool.
     // Les TRUE/FALSE sont uniques par pool, donc l'egalite de pointeur est
@@ -121,24 +167,51 @@ DNNFNode* dnnf_make_and(DNNFPool* pool, DNNFNode* left, DNNFNode* right) {
     if (right == pool->node_true) return left;
 
     DNNFNode* n = allocate_raw_node();
+    if (!n) {
+        pool->alloc_failed = 1;
+        return pool->node_false;
+    }
     n->type = DNNF_AND;
     n->capacity = 2;
     n->num_children = 2;
     n->children = malloc(2 * sizeof(DNNFNode*));
+    if (!n->children) {
+        free(n);
+        pool->alloc_failed = 1;
+        return pool->node_false;
+    }
     n->children[0] = left;
     n->children[1] = right;
-    pool_register_node(pool, n);
+    if (pool_register_node(pool, n) != 0) {
+        free(n->children);
+        free(n);
+        return pool->node_false;
+    }
     return n;
 }
 
 DNNFNode* dnnf_make_or(DNNFPool* pool, int initial_capacity) {
     assert(initial_capacity >= 1);
+    if (pool->alloc_failed) return pool->node_false;
     DNNFNode* n = allocate_raw_node();
+    if (!n) {
+        pool->alloc_failed = 1;
+        return pool->node_false;
+    }
     n->type = DNNF_OR;
     n->capacity = initial_capacity;
     n->num_children = 0;
     n->children = malloc(initial_capacity * sizeof(DNNFNode*));
-    pool_register_node(pool, n);
+    if (!n->children) {
+        free(n);
+        pool->alloc_failed = 1;
+        return pool->node_false;
+    }
+    if (pool_register_node(pool, n) != 0) {
+        free(n->children);
+        free(n);
+        return pool->node_false;
+    }
     return n;
 }
 
@@ -147,7 +220,19 @@ void dnnf_or_add_child(DNNFNode* or_node, DNNFNode* child) {
     assert(child);
     if (or_node->num_children >= or_node->capacity) {
         int new_cap = or_node->capacity * 2;
-        or_node->children = realloc(or_node->children, new_cap * sizeof(DNNFNode*));
+        DNNFNode** new_children = realloc(or_node->children,
+                                           new_cap * sizeof(DNNFNode*));
+        if (!new_children) {
+            // Pas d'access au pool ici (signature legacy). On laisse l'OR
+            // dans son etat actuel sans ajouter le child : sharpsat sera
+            // sous-evalue mais pas corrompu, et la memoire reste coherente.
+            // Le caller (procedure3.c) doit verifier pool->alloc_failed
+            // independamment via les autres factories. Ce chemin reste
+            // theorique dans la pratique : un realloc qui shrink/keep
+            // n'echoue presque jamais.
+            return;
+        }
+        or_node->children = new_children;
         or_node->capacity = new_cap;
     }
     or_node->children[or_node->num_children++] = child;

@@ -11,23 +11,28 @@
  * (left = right = -1) et sans identifiant (ps_id = -1).
  *
  * @param trie  Le trie binaire contenant le pool de noeuds.
- * @return      Index du noeud nouvellement alloué dans le tableau nodes[].
+ * @return      Index du noeud nouvellement alloué dans le tableau nodes[],
+ *              ou -1 si une allocation a echoue. Dans ce cas, le drapeau
+ *              ``trie->alloc_failed`` est leve et toutes les operations
+ *              suivantes deviennent des no-op (cf. insert_or_get_ps_set).
  */
 static int allocate_trie_node(BinaryTrie* trie) {
     if (trie->next_free >= trie->capacity) {
-        trie->capacity *= 2;
-        trie->nodes = realloc(trie->nodes, trie->capacity * sizeof(TrieNode));
-        if (!trie->nodes) { // adresse mémoire pour le tableau de nodes non valide
-            fprintf(stderr, "Erreur : Impossible d'allouer de la mémoire pour le Trie Binaire.\n");
-            exit(EXIT_FAILURE);
+        int new_cap = trie->capacity * 2;
+        TrieNode* new_nodes = realloc(trie->nodes, new_cap * sizeof(TrieNode));
+        if (!new_nodes) {
+            trie->alloc_failed = 1;
+            return -1;
         }
+        trie->nodes = new_nodes;
+        trie->capacity = new_cap;
     }
-    
+
     int node_index = trie->next_free++;
     trie->nodes[node_index].left = -1;
     trie->nodes[node_index].right = -1;
     trie->nodes[node_index].ps_id = -1;
-    
+
     return node_index;
 }
 
@@ -48,24 +53,38 @@ static int allocate_trie_node(BinaryTrie* trie) {
  * ce PS-set.
  *
  * @param initial_capacity  Nombre de noeuds pré-alloués (défaut recommandé : 1024+).
- * @return                  Pointeur vers le trie initialisé.
+ * @return                  Pointeur vers le trie initialisé, ou NULL si une
+ *                          allocation echoue (RLIMIT_AS, OOM).
  */
 BinaryTrie* create_trie(int initial_capacity) {
     BinaryTrie* trie = malloc(sizeof(BinaryTrie));
+    if (!trie) return NULL;
     trie->capacity = initial_capacity > 0 ? initial_capacity : 1024;
-    trie->nodes = malloc(trie->capacity * sizeof(TrieNode));
-    if (!trie->nodes) { // pas assez de mémoire
-        fprintf(stderr, "Erreur : Impossible d'allouer de la mémoire pour le Trie Binaire.\n");
-        exit(EXIT_FAILURE);
-    }
     trie->next_free = 0;
     trie->num_ps_sets = 0;
+    trie->alloc_failed = 0;
+
+    trie->nodes = malloc(trie->capacity * sizeof(TrieNode));
+    if (!trie->nodes) {
+        free(trie);
+        return NULL;
+    }
 
     trie->seen_capacity = trie->capacity;
     trie->seen_array = calloc(trie->seen_capacity, sizeof(int));
+    if (!trie->seen_array) {
+        free(trie->nodes);
+        free(trie);
+        return NULL;
+    }
 
     // noeud racine toujours à l'index 0
-    allocate_trie_node(trie);
+    if (allocate_trie_node(trie) < 0) {
+        free(trie->seen_array);
+        free(trie->nodes);
+        free(trie);
+        return NULL;
+    }
 
     return trie;
 }
@@ -77,9 +96,9 @@ BinaryTrie* create_trie(int initial_capacity) {
  * @param trie  Pointeur vers le trie à libérer (peut être NULL).
  */
 void free_trie(BinaryTrie* trie) {
-    if (trie) { 
+    if (trie) {
         if (trie->nodes) free(trie->nodes);
-        if (trie->seen_array) free(trie->seen_array); 
+        if (trie->seen_array) free(trie->seen_array);
         free(trie);
     }
 }
@@ -94,12 +113,22 @@ void free_trie(BinaryTrie* trie) {
  *
  * Complexité : O(num_clauses) = O(|cla(F)|) par insertion/recherche.
  *
+ * Sur echec d'allocation (interne ou prealable via le drapeau
+ * `trie->alloc_failed`), retourne 0 sans toucher la structure ; le caller
+ * doit verifier `trie->alloc_failed` pour distinguer cette degenerescence
+ * d'un vrai ps_id 0.
+ *
  * @param trie         Le trie binaire.
  * @param ps_set       Le bitset représentant le PS-set à insérer/chercher.
  * @param num_clauses  Nombre total de clauses (profondeur du trie).
- * @return             Identifiant unique (ps_id) du PS-set.
+ * @return             Identifiant unique (ps_id) du PS-set, ou 0 si
+ *                     `trie->alloc_failed` est leve.
  */
 int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
+    // Bail anticipe : si une allocation precedente a echoue, on ne fait plus
+    // rien (toute insertion deviendrait incoherente vis-a-vis du trie).
+    if (trie->alloc_failed) return 0;
+
     int current_node = 0; // commence à la racine (index 0)
 
     // parcourt chaque clause (chaque bit) du PS-set
@@ -112,17 +141,19 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
         if (bit == 0) {
             // clause pas dans l'ensemble : gauche
             if (trie->nodes[current_node].left == -1) {
-                int new_node_index = allocate_trie_node(trie); 
-                trie->nodes[current_node].left = new_node_index; 
+                int new_node_index = allocate_trie_node(trie);
+                if (new_node_index < 0) return 0;  // alloc_failed leve
+                trie->nodes[current_node].left = new_node_index;
             }
             current_node = trie->nodes[current_node].left;
-        } 
-        
+        }
+
         else {
             // clause est dans l'ensemble : droite
             if (trie->nodes[current_node].right == -1) {
-                int new_node_index = allocate_trie_node(trie); 
-                trie->nodes[current_node].right = new_node_index; 
+                int new_node_index = allocate_trie_node(trie);
+                if (new_node_index < 0) return 0;  // alloc_failed leve
+                trie->nodes[current_node].right = new_node_index;
             }
             current_node = trie->nodes[current_node].right;
         }
@@ -133,13 +164,19 @@ int insert_or_get_ps_set(BinaryTrie* trie, Bitset* ps_set, int num_clauses) {
         // anti seg-fault
         if (trie->num_ps_sets >= trie->seen_capacity) {
             int old_cap = trie->seen_capacity;
-            trie->seen_capacity *= 2; // double la taille 
-            trie->seen_array = realloc(trie->seen_array, trie->seen_capacity * sizeof(int));
-            
+            int new_cap = trie->seen_capacity * 2;
+            int* new_seen = realloc(trie->seen_array, new_cap * sizeof(int));
+            if (!new_seen) {
+                trie->alloc_failed = 1;
+                return 0;
+            }
+            trie->seen_array = new_seen;
+            trie->seen_capacity = new_cap;
+
             // realloc n'initialise pas à zéro, il faut le faire manuellement
             // pour que les nouvelles cases soient bien considérées comme "jamais vues"
             for (int i = old_cap; i < trie->seen_capacity; i++) {
-                trie->seen_array[i] = 0; 
+                trie->seen_array[i] = 0;
             }
         }
         // nouveau PS-set : attribution d'un identifiant unique

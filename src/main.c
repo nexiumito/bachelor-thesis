@@ -41,7 +41,7 @@ void print_binary(Bitset* b, int num_clauses) {
         int word_idx = i / 64;
         int bit_idx = i % 64;
         uint64_t bit = (b->words[word_idx] >> bit_idx) & 1ULL;
-        printf("%llu", bit);
+        printf("%lu", bit);
     }
 }
 
@@ -519,8 +519,11 @@ static int solve_formula(const char* filename, int execution_mode,
         printf("[Temps] Execution Procedure 3 : %f secondes\n\n", time_used_proc3);
     }
 
-    // Verification #SAT == dnnf_count(root) (Phase 1, critere central)
-    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+    // Verification #SAT == dnnf_count(root) (Phase 1, critere central).
+    // Le dernier parametre capture l'overflow eventuel du recompte.
+    int dnnf_cnt_overflow_local = 0;
+    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool,
+                                    &dnnf_cnt_overflow_local);
 
     // Export NNF optionnel via la variable d'environnement DNNF_DUMP.
     const char* dnnf_dump = getenv("DNNF_DUMP");
@@ -587,7 +590,7 @@ static int solve_formula(const char* filename, int execution_mode,
             if (strcmp(query->name, "consistency") == 0) {
                 printf("\n=== Requete : consistency (CO) ===\n");
                 int co = dnnf_consistency(dp_result.dnnf_root, dnnf_pool);
-                long long c = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+                long long c = dnnf_count(dp_result.dnnf_root, dnnf_pool, NULL);
                 printf("F est %s (#SAT = %lld).\n",
                        co ? "SAT (consistante)" : "UNSAT (insatisfaisable)",
                        c);
@@ -792,8 +795,26 @@ static int solve_formula_json(const char* filename, int execution_mode) {
     clock_gettime(CLOCK_MONOTONIC, &t1);
     time_phase3_ms = elapsed_ms_ts(t0, t1);
 
+    // Si une allocation interne a echoue dans le trie ou le DNNFPool pendant
+    // la DP, on ne peut pas faire confiance aux autres champs : on emet
+    // print_json_error puis on cleanup et exit. Match avec B3 : aucun chemin
+    // d'erreur ne sort de exit_code=1 sans JSON.
+    if (dp_result.alloc_failed) {
+        free_dnnf_pool(dnnf_pool);
+        free_formula(f_ptr);
+        free_trie(trie);
+        free_tree(root);
+        free_bitset(all_clauses_mask);
+        print_json_error(filename, mode_str, "alloc_fail",
+                         "trie ou DNNFPool a manque de memoire pendant la DP");
+        return 1;
+    }
+
     // Verification interne : dnnf_count == sharpsat_count (Lemme 4 BCMS).
-    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool);
+    // Le drapeau dnnf_cnt_overflow capture l'overflow eventuel du recompte.
+    int dnnf_cnt_overflow_local = 0;
+    long long dnnf_cnt = dnnf_count(dp_result.dnnf_root, dnnf_pool,
+                                    &dnnf_cnt_overflow_local);
 
     // Mesures structurelles.
     int ps_width      = calculate_tree_max_ps_width(root);
@@ -804,28 +825,47 @@ static int solve_formula_json(const char* filename, int execution_mode) {
     long long dnnf_edges = dp_result.dnnf_num_edges;
     long long maxsat  = dp_result.maxsat_value;
     long long sharpsat = dp_result.sharpsat_count;
-    int dnnf_count_match = (dnnf_cnt == sharpsat) ? 1 : 0;
 
-    // Borne BCMS : 7 * k^3 * (n + m). On detecte l'overflow par calcul en
-    // long long : si ps_width^3 deborde, le drapeau correspondant est mis.
+    // Drapeaux d'overflow : on prefere les sticky flags propages depuis la DP
+    // (B4) plutot que la detection post-hoc fragile sur la valeur finale (qui
+    // ratait le wrap-around vers 0, bug observe sur type3_n>=200 dans le run 1).
+    int sharpsat_overflow = dp_result.sharpsat_overflow ? 1 : 0;
+    int dnnf_cnt_overflow = dnnf_cnt_overflow_local ? 1 : 0;
+
+    // Match : si les deux ont overflow, on considere qu'ils sont en accord
+    // (tous deux satures au meme grand entier). Sinon, comparaison stricte.
+    int dnnf_count_match;
+    if (sharpsat_overflow && dnnf_cnt_overflow) {
+        dnnf_count_match = 1;
+    } else if (sharpsat_overflow != dnnf_cnt_overflow) {
+        dnnf_count_match = 0;
+    } else {
+        dnnf_count_match = (dnnf_cnt == sharpsat) ? 1 : 0;
+    }
+
+    // B5 : Borne BCMS 7 * k^3 * (n + m). Detection robuste de l'overflow via
+    // chaine __builtin_mul_overflow. L'ancienne detection (psw > 2642245) ne
+    // couvrait que l'overflow de psw^3 isole, pas les facteurs 7 et (n+m).
+    // Preuve d'echec dans le run 1 : type1_v80_c100 linear, psw=757024 (sous
+    // l'ancien seuil) a produit bound = -6764736377788170240 (negatif).
     int bound_overflow = 0;
-    long long psw_ll  = (long long)ps_width;
-    long long psw_cube = psw_ll * psw_ll * psw_ll;
     long long bound = 0;
     if (ps_width > 0) {
-        // Detection overflow grossiere : si psw > 2642245, psw^3 deborde 2^63.
-        if (ps_width > 2642245) {
+        long long psw_ll = (long long)ps_width;
+        long long psw_sq, psw_cube, t7, nm;
+        if (__builtin_mul_overflow(psw_ll, psw_ll, &psw_sq) ||
+            __builtin_mul_overflow(psw_sq, psw_ll, &psw_cube) ||
+            __builtin_mul_overflow(7LL, psw_cube, &t7)) {
             bound_overflow = 1;
         } else {
-            bound = 7LL * psw_cube * ((long long)f.num_vars + (long long)f.num_clauses);
+            nm = (long long)f.num_vars + (long long)f.num_clauses;
+            if (__builtin_mul_overflow(t7, nm, &bound)) {
+                bound_overflow = 1;
+            }
         }
     }
 
     double total_ms = time_phase0_ms + time_phase1_ms + time_phase2_ms + time_phase3_ms;
-
-    // Detection overflow > 1e18 sur sharpsat / dnnf_cnt (precision JSON).
-    int sharpsat_overflow = (sharpsat > (long long)1e18 || sharpsat < -(long long)1e18) ? 1 : 0;
-    int dnnf_cnt_overflow = (dnnf_cnt > (long long)1e18 || dnnf_cnt < -(long long)1e18) ? 1 : 0;
 
     // SERIALISATION JSON : une seule ligne, pas d'espaces inutiles.
     printf("{");
@@ -849,23 +889,26 @@ static int solve_formula_json(const char* filename, int execution_mode) {
     printf("\"time_total_ms\":%.3f,", total_ms);
     printf("\"maxsat\":%lld,", maxsat);
     if (sharpsat_overflow) {
-        printf("\"sharpsat\":\"overflow\",\"sharpsat_overflow\":true,");
+        printf("\"sharpsat\":\"overflow\",");
     } else {
         printf("\"sharpsat\":%lld,", sharpsat);
     }
+    printf("\"sharpsat_overflow\":%s,", sharpsat_overflow ? "true" : "false");
     if (dnnf_cnt_overflow) {
-        printf("\"dnnf_count_recomputed\":\"overflow\",\"dnnf_count_overflow\":true,");
+        printf("\"dnnf_count_recomputed\":\"overflow\",");
     } else {
         printf("\"dnnf_count_recomputed\":%lld,", dnnf_cnt);
     }
+    printf("\"dnnf_count_overflow\":%s,", dnnf_cnt_overflow ? "true" : "false");
     printf("\"dnnf_count_match\":%s,", dnnf_count_match ? "true" : "false");
     printf("\"dnnf_nodes\":%d,", dnnf_nodes);
     printf("\"dnnf_edges\":%lld,", dnnf_edges);
     if (bound_overflow) {
-        printf("\"dnnf_bound_7k3nm\":\"overflow\",\"bound_overflow\":true");
+        printf("\"dnnf_bound_7k3nm\":\"overflow\",");
     } else {
-        printf("\"dnnf_bound_7k3nm\":%lld", bound);
+        printf("\"dnnf_bound_7k3nm\":%lld,", bound);
     }
+    printf("\"bound_overflow\":%s", bound_overflow ? "true" : "false");
     printf("}\n");
     fflush(stdout);
 

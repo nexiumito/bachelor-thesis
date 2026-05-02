@@ -52,10 +52,20 @@ _configure_z3()
 # Parser DIMACS minimaliste (independant du parseur C, on n'a pas besoin de la
 # masque optimisation -- juste la liste des clauses comme listes d'entiers).
 # ----------------------------------------------------------------------------
-def parse_dimacs(path: str | Path) -> tuple[int, int, list[list[int]]]:
-    """Lit un fichier DIMACS CNF et retourne (n_vars, n_clauses, clauses)."""
+def parse_dimacs(path: str | Path) -> tuple[int, int, list[list[int]], bool]:
+    """Lit un fichier DIMACS CNF et retourne (n_vars, n_clauses, clauses,
+    has_empty_clause).
+
+    Une clause vide (ligne `0` seule) rend la formule UNSAT par definition
+    (disjonction sur ensemble vide = false). On la conserve dans `clauses`
+    comme `[]` pour que le compte de clauses reste fidele a l'en-tete DIMACS,
+    et on signale sa presence via `has_empty_clause` pour permettre aux
+    callers (run_z3_maxsat / run_z3_sat) de court-circuiter en UNSAT sans
+    appeler Z3.
+    """
     n_vars, n_clauses = 0, 0
     clauses: list[list[int]] = []
+    has_empty_clause = False
     with open(path) as fh:
         for raw in fh:
             line = raw.strip()
@@ -68,14 +78,21 @@ def parse_dimacs(path: str | Path) -> tuple[int, int, list[list[int]]]:
                     n_vars = int(parts[2])
                     n_clauses = int(parts[3])
                 continue
-            # Clause : termine par 0.
+            # Clause : termine par 0. On enleve le terminateur.
             try:
                 lits = [int(x) for x in line.split() if x and x != "0"]
             except ValueError:
                 continue
-            if lits:
+            # Distinction entre "ligne sans contenu" (deja filtree au-dessus)
+            # et "clause vide DIMACS" (ligne contenant juste '0' ou ' 0').
+            stripped = line.split()
+            if not lits and stripped and stripped[-1] == "0":
+                # Clause vide explicite -> formule UNSAT.
+                has_empty_clause = True
+                clauses.append([])
+            elif lits:
                 clauses.append(lits)
-    return n_vars, n_clauses, clauses
+    return n_vars, n_clauses, clauses, has_empty_clause
 
 
 # ----------------------------------------------------------------------------
@@ -95,22 +112,51 @@ def _extract_stats(stats_obj: Any) -> dict[str, Any]:
     except Exception:
         return out
 
+    def _read(key: str) -> Any:
+        try:
+            return stats_obj.get_key_value(key) \
+                if hasattr(stats_obj, "get_key_value") else stats_obj[key]
+        except Exception:
+            return None
+
     aliases = {
         "z3_conflicts":      ["sat conflicts", "conflicts"],
         "z3_decisions":      ["sat decisions", "decisions"],
         "z3_restarts":       ["sat restarts", "restarts"],
-        "z3_propagations":   ["sat propagations", "propagations", "binary propagations"],
         "z3_time_internal_s": ["time", "total time"],
     }
     for out_key, candidates in aliases.items():
         for cand in candidates:
             if cand in keys_seen:
-                try:
-                    out[out_key] = stats_obj.get_key_value(cand) \
-                        if hasattr(stats_obj, "get_key_value") else stats_obj[cand]
-                except Exception:
-                    pass
+                v = _read(cand)
+                if v is not None:
+                    out[out_key] = v
                 break
+
+    # B8 : Z3 sur racer emet "sat propagations 2ary" + "sat propagations nary"
+    # separement (pas de cle aggregee "sat propagations"). On somme toutes les
+    # cles qui matchent le pattern. Inclus aussi les noms historiques.
+    propagation_keys = []
+    for k in keys_seen:
+        kl = k.lower().strip()
+        if kl in ("sat propagations", "propagations", "binary propagations") \
+                or kl.startswith("sat propagations "):
+            propagation_keys.append(k)
+    if propagation_keys:
+        total = 0
+        any_read = False
+        for k in propagation_keys:
+            v = _read(k)
+            if v is None:
+                continue
+            try:
+                total += int(v)
+                any_read = True
+            except (TypeError, ValueError):
+                pass
+        if any_read:
+            out["z3_propagations"] = total
+
     out["z3_stats_keys_available"] = ",".join(keys_seen)
     return out
 
@@ -147,7 +193,7 @@ def run_z3_maxsat(instance: Any, timeout_s: int, repo_root: str = ".") -> dict[s
     abs_path = Path(repo_root) / "src" / instance.path
 
     try:
-        n, m, clauses = parse_dimacs(abs_path)
+        n, m, clauses, has_empty_clause = parse_dimacs(abs_path)
     except (OSError, ValueError) as e:
         return {
             **base,
@@ -156,10 +202,28 @@ def run_z3_maxsat(instance: Any, timeout_s: int, repo_root: str = ".") -> dict[s
             "z3_total_ms": (time.perf_counter() - t_total) * 1000,
         }
 
+    # Court-circuit : une clause vide rend la formule UNSAT par definition.
+    # Pour MaxSAT, on peut au mieux satisfaire les m - n_empty clauses non-vides.
+    if has_empty_clause:
+        n_empty = sum(1 for c in clauses if not c)
+        return {
+            **base,
+            "z3_status": "unsat",
+            "z3_maxsat": m - n_empty,
+            "z3_solve_ms": 0.0,
+            "z3_total_ms": (time.perf_counter() - t_total) * 1000,
+            "z3_n_vars": n,
+            "z3_n_clauses": m,
+            "z3_stats_keys_available": "",
+            "z3_short_circuit_empty_clause": True,
+        }
+
     V = [Bool(f"x{i+1}") for i in range(n)]
     opt = Optimize()
     opt.set("timeout", int(timeout_s * 1000))
     for c in clauses:
+        if not c:
+            continue  # garde-fou (deja court-circuite plus haut)
         lits = [V[abs(l) - 1] if l > 0 else Not(V[abs(l) - 1]) for l in c]
         opt.add_soft(Or(lits) if len(lits) > 1 else lits[0])
 
@@ -241,7 +305,7 @@ def run_z3_sat(instance: Any, timeout_s: int, repo_root: str = ".") -> dict[str,
 
     abs_path = Path(repo_root) / "src" / instance.path
     try:
-        n, m, clauses = parse_dimacs(abs_path)
+        n, m, clauses, has_empty_clause = parse_dimacs(abs_path)
     except (OSError, ValueError) as e:
         return {
             **base,
@@ -250,10 +314,26 @@ def run_z3_sat(instance: Any, timeout_s: int, repo_root: str = ".") -> dict[str,
             "z3_total_ms": (time.perf_counter() - t_total) * 1000,
         }
 
+    # Court-circuit : une clause vide rend la formule UNSAT par definition.
+    if has_empty_clause:
+        return {
+            **base,
+            "z3_status": "unsat",
+            "z3_sat_status": "unsat",
+            "z3_solve_ms": 0.0,
+            "z3_total_ms": (time.perf_counter() - t_total) * 1000,
+            "z3_n_vars": n,
+            "z3_n_clauses": m,
+            "z3_stats_keys_available": "",
+            "z3_short_circuit_empty_clause": True,
+        }
+
     V = [Bool(f"x{i+1}") for i in range(n)]
     solver = Solver()
     solver.set("timeout", int(timeout_s * 1000))
     for c in clauses:
+        if not c:
+            continue  # garde-fou (deja court-circuite plus haut)
         lits = [V[abs(l) - 1] if l > 0 else Not(V[abs(l) - 1]) for l in c]
         solver.add(Or(lits) if len(lits) > 1 else lits[0])
 

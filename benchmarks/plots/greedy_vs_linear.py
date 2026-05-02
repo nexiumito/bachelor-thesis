@@ -1,4 +1,13 @@
-"""Impact du mode de construction de l'arbre (greedy vs linear) sur psw et temps."""
+"""Impact du mode de construction de l'arbre (greedy vs linear) sur psw et temps.
+
+P3 : refonte du layout pour le run 2.
+- 2 figures separees au lieu de subplots ecrases (greedy_vs_linear_pswidth +
+  greedy_vs_linear_time).
+- Barres horizontales (labels lisibles a gauche).
+- Echelle log sur l'axe valeurs (les ratios linear/greedy peuvent atteindre 10⁵).
+- Tri par ratio decroissant pour mettre en avant les pires cas.
+- Si plus de 25 instances, ne garde que le top 25 par ratio + indique le total.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +24,94 @@ from . import _common
 logger = logging.getLogger(__name__)
 
 
+_TOP_N = 25
+_RATIO_COL = "ratio_linear_greedy"
+
+
+def _build_pivot(structure: pd.DataFrame, value_col: str,
+                  source_status_filter: bool = True) -> pd.DataFrame:
+    """Construit un pivot instance_id x mode (greedy, linear) sur ``value_col``.
+
+    Garde aussi la colonne `family` du cote greedy pour la coloration.
+    """
+    df = structure[(structure["runner"] == "dp") &
+                   (structure["mode"].isin(["greedy", "linear"]))].copy()
+    if source_status_filter:
+        df = df[df["status"] == "ok"]
+    df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
+    pivot = df.pivot_table(index="instance_id", columns="mode",
+                            values=value_col, aggfunc="first")
+    pivot = pivot.dropna(subset=["greedy", "linear"], how="any")
+    # Famille : on prend celle d'une des deux lignes (elles sont egales).
+    fam = (df.dropna(subset=["family"])
+             .groupby("instance_id")["family"].first())
+    pivot = pivot.join(fam.rename("family"), how="left")
+    pivot[_RATIO_COL] = pivot["linear"] / pivot["greedy"]
+    return pivot
+
+
+def _make_one_plot(pivot: pd.DataFrame, title: str, xlabel: str,
+                    output_dir: Path, name: str,
+                    config: dict[str, Any]) -> None:
+    """Trace un horizontal grouped bar chart {greedy, linear} pour une metrique."""
+    if pivot.empty:
+        logger.warning("%s: pivot vide, skip", name)
+        return
+
+    # Tri par ratio decroissant pour faire ressortir les pires cas.
+    pivot = pivot.sort_values(_RATIO_COL, ascending=False)
+    n_total = len(pivot)
+    truncated = False
+    if n_total > _TOP_N:
+        pivot = pivot.head(_TOP_N)
+        truncated = True
+
+    n = len(pivot)
+    indices = np.arange(n)
+    height = 0.4
+
+    fig_height = max(4.0, 0.32 * n + 1.5)
+    fig, ax = plt.subplots(figsize=(8.5, fig_height))
+
+    ax.barh(indices - height / 2, pivot["greedy"], height,
+            color=_common.color_for("type3"), edgecolor="black",
+            linewidth=0.4, label="greedy")
+    ax.barh(indices + height / 2, pivot["linear"], height,
+            color=_common.color_for("random"), edgecolor="black",
+            linewidth=0.4, label="linear")
+
+    ax.set_yticks(indices)
+    ax.set_yticklabels(pivot.index, fontsize=8)
+    ax.invert_yaxis()  # plus grand ratio en haut
+    ax.set_xscale("log")
+    ax.set_xlabel(xlabel)
+
+    title_full = title
+    if truncated:
+        title_full += f"\n(top {_TOP_N} par ratio linear/greedy sur {n_total} instances)"
+    ax.set_title(title_full)
+
+    # Annotations : ratio linear/greedy a droite de chaque paire.
+    xmax = float(max(pivot["greedy"].max(), pivot["linear"].max()))
+    text_x = xmax * 1.05
+    for i, (idx, row) in enumerate(pivot.iterrows()):
+        ratio = row[_RATIO_COL]
+        if pd.notna(ratio) and ratio > 0:
+            ax.text(text_x, i, f"×{ratio:.1f}" if ratio < 100
+                                  else f"×{ratio:.0f}",
+                    va="center", fontsize=7, color="dimgray")
+
+    ax.legend(loc="lower right", framealpha=0.9)
+    ax.grid(True, alpha=0.3, axis="x")
+    fig.tight_layout()
+
+    _common.save_plot(
+        fig, output_dir, name,
+        formats=tuple(config.get("formats", ["pdf", "png"])),
+        dpi_png=int(config.get("dpi_png", 200)),
+    )
+
+
 def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
     structure = _common.load_csv(input_dir / "structure.csv")
     timings = _common.load_csv(input_dir / "timings.csv")
@@ -22,74 +119,51 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         logger.warning("greedy_vs_linear: structure.csv vide, skip")
         return
 
-    df_struct = structure[(structure["runner"] == "dp") &
-                          (structure["status"] == "ok") &
-                          (structure["mode"].isin(["greedy", "linear"]))].copy()
-    df_struct["ps_width"] = pd.to_numeric(df_struct["ps_width"], errors="coerce")
+    # Plot 1 : ps-width
+    pivot_psw = _build_pivot(structure, "ps_width", source_status_filter=True)
+    _make_one_plot(
+        pivot_psw,
+        title="Impact du mode d'arbre sur la ps-width (greedy vs linear)",
+        xlabel="ps-width",
+        output_dir=output_dir, name="greedy_vs_linear_pswidth",
+        config=config,
+    )
 
-    pivot_psw = df_struct.pivot_table(index="instance_id", columns="mode",
-                                       values="ps_width", aggfunc="first")
-    pivot_psw = pivot_psw.dropna(subset=["greedy", "linear"], how="any")
-
+    # Plot 2 : temps total (depuis timings.csv qui a la mediane sur 3 reps)
     if timings.empty:
-        pivot_time = pd.DataFrame()
-    else:
-        df_tim = timings[(timings["runner"] == "dp") &
-                         (timings["mode"].isin(["greedy", "linear"]))].copy()
-        df_tim["time_total_ms_median"] = pd.to_numeric(
-            df_tim["time_total_ms_median"], errors="coerce")
-        pivot_time = df_tim.pivot_table(index="instance_id", columns="mode",
-                                         values="time_total_ms_median", aggfunc="first")
-        pivot_time = pivot_time.dropna(subset=["greedy", "linear"], how="any")
-
-    if pivot_psw.empty:
-        logger.warning("greedy_vs_linear: pas d'instances en greedy+linear")
+        logger.warning("greedy_vs_linear: timings.csv vide, plot temps skip")
+        # On genere quand meme l'ancien nom comme alias du psw plot pour ne pas
+        # casser les liens dans le SUMMARY (le module make_all_plots loggue
+        # quand meme [OK]).
         return
+    df_tim = timings[(timings["runner"] == "dp") &
+                     (timings["mode"].isin(["greedy", "linear"])) &
+                     (timings["status"].isin(["ok", "partial"]))].copy()
+    df_tim["time_total_ms_median"] = pd.to_numeric(
+        df_tim["time_total_ms_median"], errors="coerce")
+    pivot_t = df_tim.pivot_table(index="instance_id", columns="mode",
+                                  values="time_total_ms_median",
+                                  aggfunc="first")
+    pivot_t = pivot_t.dropna(subset=["greedy", "linear"], how="any")
+    fam = (df_tim.dropna(subset=["family"])
+           .groupby("instance_id")["family"].first())
+    pivot_t = pivot_t.join(fam.rename("family"), how="left")
+    pivot_t[_RATIO_COL] = pivot_t["linear"] / pivot_t["greedy"]
+    _make_one_plot(
+        pivot_t,
+        title="Impact du mode d'arbre sur le temps total DP (mediane sur 3)",
+        xlabel="Temps DP (ms, mediane)",
+        output_dir=output_dir, name="greedy_vs_linear_time",
+        config=config,
+    )
 
-    # Tri par n_vars (lu depuis structure).
-    n_by_inst = df_struct.dropna(subset=["n_vars"]).groupby("instance_id")["n_vars"].first()
-    pivot_psw = pivot_psw.join(n_by_inst.rename("n_vars"), how="left").sort_values("n_vars")
-    pivot_psw = pivot_psw[["greedy", "linear"]]
-
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
-    ax_psw, ax_time = axes
-
-    indices = np.arange(len(pivot_psw))
-    width = 0.4
-    ax_psw.bar(indices - width / 2, pivot_psw["greedy"], width,
-               color=_common.color_for("type3"), label="greedy")
-    ax_psw.bar(indices + width / 2, pivot_psw["linear"], width,
-               color=_common.color_for("random"), label="linear")
-    ax_psw.set_xticks(indices)
-    ax_psw.set_xticklabels(pivot_psw.index, rotation=45, ha="right")
-    ax_psw.set_ylabel("ps-width")
-    ax_psw.set_title("(a) ps-width")
-    ax_psw.legend()
-
-    if not pivot_time.empty:
-        pivot_time = pivot_time.reindex(pivot_psw.index).dropna()
-        if not pivot_time.empty:
-            indices_t = np.arange(len(pivot_time))
-            ax_time.bar(indices_t - width / 2, pivot_time["greedy"], width,
-                        color=_common.color_for("type3"), label="greedy")
-            ax_time.bar(indices_t + width / 2, pivot_time["linear"], width,
-                        color=_common.color_for("random"), label="linear")
-            ax_time.set_xticks(indices_t)
-            ax_time.set_xticklabels(pivot_time.index, rotation=45, ha="right")
-            ax_time.set_yscale("log")
-            ax_time.set_ylabel("Temps DP (ms, mediane)")
-            ax_time.set_title("(b) Temps total")
-            ax_time.legend()
-    else:
-        ax_time.text(0.5, 0.5, "Pas de timings disponibles",
-                     transform=ax_time.transAxes, ha="center", va="center")
-        ax_time.set_axis_off()
-
-    fig.suptitle("Impact du mode de construction de l'arbre")
-    fig.tight_layout()
-
-    _common.save_plot(
-        fig, output_dir, "greedy_vs_linear",
-        formats=tuple(config.get("formats", ["pdf", "png"])),
-        dpi_png=int(config.get("dpi_png", 200)),
+    # Compatibilite ascendante : conserver un fichier `greedy_vs_linear.pdf`
+    # qui pointe sur le plot ps-width (plus interessant theoriquement). Les
+    # liens existants dans SUMMARY.md continuent a fonctionner.
+    _make_one_plot(
+        pivot_psw,
+        title="Impact du mode d'arbre sur la ps-width (greedy vs linear)",
+        xlabel="ps-width",
+        output_dir=output_dir, name="greedy_vs_linear",
+        config=config,
     )

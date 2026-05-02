@@ -64,6 +64,15 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         logger.warning("pswidth_vs_theory: aucune instance avec borne theorique")
         return
 
+    # P4 : log-y obligatoire pour eviter qu'un outlier (psw~32000 sur type2
+    # dans le run 1) ecrase visuellement toutes les autres barres. Filtre
+    # defensif sur psw > 0 (log(0) n'est pas defini).
+    df = df[df["ps_width"] > 0].copy()
+    df = df[df["expected_psw_max"] > 0]
+    if df.empty:
+        logger.warning("pswidth_vs_theory: aucune instance avec psw > 0")
+        return
+
     df = df.sort_values(["family", "instance_id"])
     indices = np.arange(len(df))
 
@@ -73,19 +82,23 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
                    edgecolor="black", linewidth=0.4)
 
     # Pour chaque barre, trace un trait noir epais a la borne theorique.
+    bound_handle = None
     for i, (psw, exp) in enumerate(zip(df["ps_width"].values,
                                         df["expected_psw_max"].values)):
-        ax.hlines(exp, i - 0.4, i + 0.4, colors="black", linewidth=2)
+        h = ax.hlines(exp, i - 0.4, i + 0.4, colors="black", linewidth=2)
+        if bound_handle is None:
+            bound_handle = h
         if psw > exp:
             bars[i].set_edgecolor("red")
             bars[i].set_linewidth(2)
 
     ax.set_xticks(indices)
     ax.set_xticklabels(df["instance_id"].values, rotation=90)
-    ax.set_ylabel("ps-width")
+    ax.set_ylabel("ps-width (log)")
+    ax.set_yscale("log")
     ax.set_title("Verification empirique des bornes ps-width par famille (mode greedy)")
 
-    # Legende des familles presentes.
+    # Legende des familles presentes + entree pour la borne theorique.
     seen: set[str] = set()
     handles = []
     for fam in df["family"]:
@@ -95,6 +108,9 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         handles.append(plt.Rectangle((0, 0), 1, 1,
                                       facecolor=_common.color_for(str(fam)),
                                       edgecolor="black", label=str(fam)))
+    # Ajout d'un proxy line pour les hlines (qu'on ne peut pas legender direct).
+    handles.append(plt.Line2D([0], [0], color="black", linewidth=2,
+                              label="borne theorique (par instance)"))
     if handles:
         ax.legend(handles=handles, loc="upper left", framealpha=0.9)
 

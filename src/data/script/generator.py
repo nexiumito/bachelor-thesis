@@ -160,8 +160,12 @@ def generate_type1_interval(n, m, permute=True):
     # old_id -> new_id (1-indexed)
     var_remap = {old: new + 1 for new, old in enumerate(sorted_vars)}
 
-    # Construire les clauses a partir des chevauchements d'intervalles
-    clauses = []
+    # Construire les clauses a partir des chevauchements d'intervalles.
+    # Garde anti-clause-vide : une clause dont l'intervalle ne chevauche aucune
+    # variable produirait litteralement la clause vide (faux par definition,
+    # rendant la formule UNSAT). On la skip pour eviter cette degenerescence.
+    # On enregistre les c_id retenus pour preserver l'interval ordering au tri.
+    clauses_by_cid = {}
     for c_id in range(1, m + 1):
         c_left, c_right = clause_intervals[c_id]
         clause = []
@@ -171,11 +175,13 @@ def generate_type1_interval(n, m, permute=True):
             if v_left <= c_right and c_left <= v_right:
                 sign = 1 if random.random() < 0.5 else -1
                 clause.append(sign * var_remap[v_id])
-        clauses.append(clause)
+        if clause:
+            clauses_by_cid[c_id] = clause
 
-    # Trier les clauses par right endpoint (interval ordering)
-    clause_order = sorted(range(m), key=lambda i: clause_intervals[i + 1][1])
-    clauses = [clauses[i] for i in clause_order]
+    # Trier les clauses retenues par right endpoint (interval ordering)
+    sorted_cids = sorted(clauses_by_cid.keys(),
+                         key=lambda c: clause_intervals[c][1])
+    clauses = [clauses_by_cid[c] for c in sorted_cids]
 
     if permute:
         clauses = _permute_formula(n, clauses)
@@ -295,6 +301,10 @@ def generate_type2_interval_fixed_size(n, m, t, permute=True):
     all_clauses = []
     for c_id in sorted_clause_ids:
         vars_in_clause = sorted(clause_overlap_vars.get(c_id, set()))
+        # Garde anti-clause-vide : si l'intervalle n'a chevauche aucune
+        # variable, on aurait genere 4 clauses vides (formule UNSAT triviale).
+        if not vars_in_clause:
+            continue
         # Prendre exactement t variables (ou moins si pas assez)
         if len(vars_in_clause) > t:
             vars_in_clause = sorted(random.sample(vars_in_clause, t))
@@ -426,33 +436,38 @@ if __name__ == "__main__":
         (100, 100, 3),
         (200, 200, 3),
         (500, 500, 3),
+        (1000, 1000, 3),
+        (2000, 2000, 3),
         (25, 25, 4),
         (50, 50, 4),
         (100, 100, 4),
     ]
     for n_param, m_intervals, t in type2_configs:
+        # Naming convention : c{m_intervals*4} reflete la commande de generation
+        # (4 clauses par intervalle), pas le count effectif (qui peut etre
+        # moindre apres skip des intervalles sans variables chevauchantes).
+        # Le count effectif reste lisible dans l'en-tete `p cnf` du DIMACS.
+        c_param = m_intervals * 4
         # Version permutee
         nv, cls = generate_type2_interval_fixed_size(n_param, m_intervals, t,
                                                      permute=True)
-        actual_c = len(cls)
         fname = os.path.join(output_dirs["type2"],
-                             f"type2_v{nv}_c{actual_c}_t{t}.cnf")
+                             f"type2_v{nv}_c{c_param}_t{t}.cnf")
         write_dimacs(nv, cls, fname,
                      f"Type 2: interval ordering (permuted), n={nv}, "
                      f"m_intervals={m_intervals}, t={t}")
-        print(f"  [OK] type2_v{nv}_c{actual_c}_t{t}.cnf "
-              f"({nv} vars, {actual_c} clauses, t={t})")
+        print(f"  [OK] type2_v{nv}_c{c_param}_t{t}.cnf "
+              f"({nv} vars, {len(cls)} clauses, t={t})")
         # Version ordonnee
         nv2, cls2 = generate_type2_interval_fixed_size(n_param, m_intervals, t,
                                                        permute=False)
-        actual_c2 = len(cls2)
         fname_ord = os.path.join(output_dirs["type2"],
-                                 f"type2_v{nv2}_c{actual_c2}_t{t}_ordered.cnf")
+                                 f"type2_v{nv2}_c{c_param}_t{t}_ordered.cnf")
         write_dimacs(nv2, cls2, fname_ord,
                      f"Type 2: interval ordering (ordered), n={nv2}, "
                      f"m_intervals={m_intervals}, t={t}")
-        print(f"  [OK] type2_v{nv2}_c{actual_c2}_t{t}_ordered.cnf "
-              f"({nv2} vars, {actual_c2} clauses, t={t})")
+        print(f"  [OK] type2_v{nv2}_c{c_param}_t{t}_ordered.cnf "
+              f"({nv2} vars, {len(cls2)} clauses, t={t})")
 
     #  Type 3 : XOR circulaire
     #  Structure cachee : bipartisation d'un graphe d'arcs circulaires

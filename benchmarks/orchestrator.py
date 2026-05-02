@@ -175,6 +175,10 @@ STRUCTURE_CSV_COLS = [
     "maxsat", "sharpsat", "dnnf_count_recomputed", "dnnf_count_match",
     "dnnf_nodes", "dnnf_edges", "dnnf_bound_7k3nm",
     "exit_code", "command", "error_message",
+    # B6 : queue de stderr (1 KB max, newlines remplaces par " | ") pour
+    # diagnostic post-mortem des crashes (cf. bug du trie.c silencieux dans
+    # le run 1).
+    "stderr_tail",
 ]
 
 Z3_CSV_COLS = [
@@ -183,6 +187,9 @@ Z3_CSV_COLS = [
     "z3_conflicts", "z3_decisions", "z3_restarts", "z3_propagations",
     "z3_time_internal_s", "z3_n_vars", "z3_n_clauses", "z3_stats_keys_available",
     "z3_error",
+    # B2 : drapeau leve quand le runner Z3 a court-circuite en UNSAT a cause
+    # d'une clause vide DIMACS (sans appeler Z3).
+    "z3_short_circuit_empty_clause",
 ]
 
 TIMINGS_CSV_COLS = [
@@ -594,6 +601,10 @@ def _build_passe_a_z3_tasks(
 def _row_for_dp(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -> dict[str, Any]:
     inst = inst_by_id.get(result.get("instance_id", ""))
     family = inst.family if inst else ""
+    # Tronque + neutralise les newlines pour le CSV (sinon un stderr multiligne
+    # casse la coherence visuelle des outils CSV simples).
+    stderr_raw = (result.get("stderr") or "")
+    stderr_tail = stderr_raw[-1024:].replace("\r\n", " | ").replace("\n", " | ")
     return {
         "timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "instance_id": result.get("instance_id"),
@@ -625,6 +636,7 @@ def _row_for_dp(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -
         "exit_code": result.get("exit_code"),
         "command": result.get("command"),
         "error_message": result.get("error_message"),
+        "stderr_tail": stderr_tail,
     }
 
 
@@ -650,6 +662,7 @@ def _row_for_z3(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -
         "z3_n_clauses": result.get("z3_n_clauses"),
         "z3_stats_keys_available": result.get("z3_stats_keys_available"),
         "z3_error": result.get("z3_error"),
+        "z3_short_circuit_empty_clause": result.get("z3_short_circuit_empty_clause", False),
     }
 
 
@@ -1287,7 +1300,7 @@ def main() -> int:
         stop_heartbeat.set()
         hb_thread.join(timeout=2)
 
-    # Notification finale.
+    # Notification finale (flush implicite des FAIL hard bufferises).
     elapsed = time.time() - state.start_time
     notifier.finished(
         summary_path=str(output_dir / "SUMMARY.md"),
@@ -1295,6 +1308,8 @@ def main() -> int:
         n_fail=n_total_failed,
         duration_str=_human_duration(elapsed),
     )
+    # Arret propre du thread de flush du notifier.
+    notifier.stop()
 
     if shutdown_event.is_set():
         return 130

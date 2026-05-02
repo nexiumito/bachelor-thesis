@@ -21,8 +21,10 @@
  */
 DPTable* create_dp_table(int rows, int cols) {
     DPTable* tab = malloc(sizeof(DPTable));
+    if (!tab) return NULL;
     tab->num_rows = rows;
     tab->num_cols = cols;
+    tab->overflow = 0;
 
     int total = rows * cols;
     if (total == 0) {
@@ -35,6 +37,13 @@ DPTable* create_dp_table(int rows, int cols) {
     tab->maxsat = malloc(total * sizeof(long long));
     tab->sharpsat = calloc(total, sizeof(long long));
     tab->dnnf = calloc(total, sizeof(struct dnnf_node*));
+    if (!tab->maxsat || !tab->sharpsat || !tab->dnnf) {
+        if (tab->maxsat) free(tab->maxsat);
+        if (tab->sharpsat) free(tab->sharpsat);
+        if (tab->dnnf) free(tab->dnnf);
+        free(tab);
+        return NULL;
+    }
     for (int i = 0; i < total; i++) {
         tab->maxsat[i] = -1;
     }

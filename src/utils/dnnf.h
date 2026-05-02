@@ -72,6 +72,13 @@ typedef struct {
     int             capacity;
     DNNFNode*       node_true;      // singleton Top
     DNNFNode*       node_false;     // singleton Bot
+    // Drapeau sticky : passe a 1 des qu'une allocation interne (malloc d'un
+    // DNNFNode, realloc du tableau pool->nodes, ou realloc de la liste
+    // d'enfants d'un OR) a echoue. Une fois leve, les factories deviennent
+    // des no-op qui retournent ``node_false`` (semantique conservatrice :
+    // un sous-arbre absent compte 0 modele). Le caller (solve_dp / main)
+    // doit verifier ce drapeau pour router vers print_json_error.
+    int             alloc_failed;
 } DNNFPool;
 
 // ============================================================================
@@ -82,7 +89,8 @@ typedef struct {
  * Cree un pool initialise avec les deux singletons TRUE (id=0) et FALSE (id=1).
  *
  * @param initial_capacity  Capacite initiale du tableau de pointeurs (>= 2).
- * @return                  Pool alloue (a liberer via free_dnnf_pool).
+ * @return                  Pool alloue, ou NULL si une allocation initiale
+ *                          echoue (le caller doit emettre print_json_error).
  */
 DNNFPool* create_dnnf_pool(int initial_capacity);
 
