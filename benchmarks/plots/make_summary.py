@@ -171,8 +171,10 @@ def _top_instances(structure: pd.DataFrame, timings: pd.DataFrame,
     struct = structure[(structure["runner"] == "dp") &
                        (structure["mode"] == "greedy") &
                        (structure["status"] == "ok")]
+    # `family` est deja dans `tim` (orchestrateur) ; le re-inclure cote droit
+    # creerait `family_x` / `family_y` et viderait la colonne dans le SUMMARY.
     merged = tim.merge(
-        struct[["instance_id", "family", "n_vars", "n_clauses", "ps_width"]],
+        struct[["instance_id", "n_vars", "n_clauses", "ps_width"]],
         on="instance_id", how="left",
     )
     merged["time_total_ms_median"] = pd.to_numeric(

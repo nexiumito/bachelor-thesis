@@ -36,8 +36,10 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         logger.warning("time_vs_pswidth: pas de donnees mode greedy ok")
         return
 
+    # `family` est deja dans `tim` (orchestrateur) ; le re-inclure cote droit
+    # creerait `family_x` / `family_y` et casserait le groupby plus bas.
     merged = tim.merge(
-        struct[["instance_id", "mode", "seed", "ps_width", "family"]],
+        struct[["instance_id", "mode", "seed", "ps_width"]],
         on=["instance_id", "mode", "seed"], how="left",
     )
     merged = merged.dropna(subset=["ps_width", "time_total_ms_median"])

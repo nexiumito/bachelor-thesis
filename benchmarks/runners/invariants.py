@@ -176,12 +176,25 @@ def _check_maxsat_match_z3(row: dict[str, Any], z3_row: dict[str, Any] | None) -
 
 
 def _check_psw_bound(row: dict[str, Any], inst: Any) -> _Check:
+    mode = row["mode"]
+    configured_severity = (getattr(inst, "expected_psw_severity", "none")
+                           if inst else "none")
+    # La borne psw du papier (Saether/Telle/Vatshelle Sect. 6.1) porte sur la
+    # decomposition OPTIMALE. Seul greedy est l'heuristique conçue pour s'en
+    # approcher. linear et random ne pretendent pas la respecter : un
+    # depassement y est un constat attendu (visualise dans greedy_vs_linear),
+    # pas une violation theorique. On degrade donc hard -> soft pour ces modes
+    # pour eviter de spammer les notifs FAIL hard pendant le bench long.
+    if mode != "greedy" and configured_severity == "hard":
+        effective_severity = "soft"
+    else:
+        effective_severity = configured_severity
     base = dict(
         instance_id=row["instance_id"],
-        mode=row["mode"],
+        mode=mode,
         seed=int(row.get("seed") or 0),
         invariant="psw_within_family_bound",
-        severity=getattr(inst, "expected_psw_severity", "none") if inst else "none",
+        severity=effective_severity,
     )
     if row.get("status") != "ok":
         return _Check(**base, status="SKIPPED", expected="-", observed="-",
