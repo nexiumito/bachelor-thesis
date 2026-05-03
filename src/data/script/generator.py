@@ -377,11 +377,15 @@ def generate_type3_circular_xor(n, t, s, permute=True):
 
 
 if __name__ == "__main__":
+    # Resolution explicite et defensive du data_root pour eviter toute ambiguite.
+    # Apres le run 2 (audit), on a constate qu'un dossier `<repo>/data/` existait
+    # en parallele de `<repo>/src/data/` et que le solveur lisait le mauvais.
+    # On cible explicitement `<repo>/src/data/` et on assert le layout attendu.
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Les formules sont rangees par type dans data/type1 ... data/random.
-    # Le script est situe dans data/script/, donc la racine de sortie
-    # est le dossier parent.
-    data_root = os.path.abspath(os.path.join(script_dir, ".."))
+    data_root = os.path.dirname(script_dir)  # <repo>/src/data/
+    assert os.path.basename(data_root) == "data" \
+        and os.path.basename(os.path.dirname(data_root)) == "src", \
+        f"Layout inattendu : data_root={data_root}. Attendu : <repo>/src/data/"
     output_dirs = {
         "type1":  os.path.join(data_root, "type1"),
         "type2":  os.path.join(data_root, "type2"),

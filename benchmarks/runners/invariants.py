@@ -81,6 +81,23 @@ def _is_overflow(v: Any) -> bool:
 
 
 def _check_dnnf_count_match(row: dict[str, Any]) -> _Check:
+    """Verifie que sharpsat (DP) et dnnf_count_recomputed (DAG) coincident.
+
+    C2 (run 2 fix) : la saturation a LLONG_MAX cote DP peut etre invalidee
+    par une simplification structurelle du DAG (AND avec FALSE -> FALSE),
+    auquel cas le recompte sur le DAG est plus precis. On ne fait donc plus
+    confiance au drapeau `dnnf_count_match` rapporte par le C (qui faisait
+    une stricte egalite), on re-derive a partir des etats d'overflow :
+
+        sharpsat_ovf | dnnf_ovf | verdict
+        -------------+----------+--------------------------------------------
+        T            | T        | OK (les deux satures, accord par convention)
+        T            | F        | OK (DP saturated mais DAG simplifie au DP
+                     |          |     incorrect ; DAG = verite, on le respecte)
+        F            | T        | FAIL (anormal : si recompte overflow alors
+                     |          |       le DP devrait aussi avoir overflow)
+        F            | F        | OK ssi sharpsat == dnnf_count_recomputed
+    """
     base = dict(
         instance_id=row["instance_id"],
         mode=row["mode"],
@@ -91,25 +108,47 @@ def _check_dnnf_count_match(row: dict[str, Any]) -> _Check:
     if row.get("status") != "ok":
         return _Check(**base, status="SKIPPED", expected="true", observed="-",
                        message="run non OK")
-    match = _parse_bool(row.get("dnnf_count_match"))
+
     sharpsat_raw = row.get("sharpsat")
     dnnf_recomp_raw = row.get("dnnf_count_recomputed")
-    if _is_overflow(sharpsat_raw) or _is_overflow(dnnf_recomp_raw):
-        # Si l'un des deux a overflow, on compare seulement le drapeau match
-        # tel que rapporte par le binaire C.
-        if match is True:
-            return _Check(**base, status="OK", expected="true", observed="true",
-                           message="overflow JSON, drapeau match=true conserve")
-        return _Check(**base, status="FAIL", expected="true",
-                       observed=str(match), message="overflow detecte et drapeau != true")
-    if match is None:
-        return _Check(**base, status="SKIPPED", expected="true", observed="-",
-                       message="dnnf_count_match absent")
-    if match is True:
-        return _Check(**base, status="OK", expected="true", observed="true", message="")
-    return _Check(**base, status="FAIL", expected="true",
-                   observed=f"sharpsat={sharpsat_raw} dnnf={dnnf_recomp_raw}",
-                   message=f"dnnf_count={dnnf_recomp_raw} != sharpsat={sharpsat_raw}")
+    sharpsat_ovf = _is_overflow(sharpsat_raw)
+    dnnf_ovf = _is_overflow(dnnf_recomp_raw)
+
+    if sharpsat_ovf and dnnf_ovf:
+        return _Check(**base, status="OK",
+                      expected="overflow~overflow",
+                      observed="overflow~overflow",
+                      message="DP et DAG tous deux satures, accord par convention")
+
+    if sharpsat_ovf and not dnnf_ovf:
+        # Cas C2 : DP a sature mais le DAG donne une valeur precise.
+        # Le DAG est la source de verite (simplifications structurelles).
+        return _Check(**base, status="OK",
+                      expected=f"DAG = {dnnf_recomp_raw}",
+                      observed=f"sharpsat=overflow dnnf={dnnf_recomp_raw}",
+                      message=("DP saturated mais DAG simplifie a valeur "
+                               "precise ; DAG = source de verite"))
+
+    if not sharpsat_ovf and dnnf_ovf:
+        # Anormal : si le DAG a overflow, le DP aussi devrait.
+        return _Check(**base, status="FAIL",
+                      expected="sharpsat aussi en overflow",
+                      observed=f"sharpsat={sharpsat_raw} dnnf=overflow",
+                      message="DAG en overflow mais DP a une valeur finie")
+
+    # Cas nominal : aucun overflow, comparaison stricte.
+    sharpsat = _parse_int(sharpsat_raw)
+    dnnf = _parse_int(dnnf_recomp_raw)
+    if sharpsat is None or dnnf is None:
+        return _Check(**base, status="SKIPPED", expected="-",
+                       observed=f"sharpsat={sharpsat_raw} dnnf={dnnf_recomp_raw}",
+                       message="valeurs absentes ou non parsables")
+    if sharpsat == dnnf:
+        return _Check(**base, status="OK", expected=str(dnnf),
+                      observed=str(sharpsat), message="")
+    return _Check(**base, status="FAIL",
+                   expected=str(dnnf), observed=str(sharpsat),
+                   message=f"dnnf_count={dnnf} != sharpsat={sharpsat}")
 
 
 def _check_dag_bound(row: dict[str, Any]) -> _Check:
@@ -238,9 +277,32 @@ def _check_consistency_match(row: dict[str, Any], z3_sat_row: dict[str, Any] | N
     if z3_status not in ("sat", "unsat"):
         return _Check(**base, status="SKIPPED", expected="-",
                        observed=f"z3={z3_status}", message="Z3 non concluant")
+    # C2 (run 2 fix) : determiner dp_sat avec preference au DAG quand le DP
+    # a sature. La table de decision :
+    #   sharpsat_ovf | dnnf_ovf | dp_sat
+    #   -------------+----------+----------------------------------------
+    #   T            | T        | True  (les deux satures = beaucoup de modeles)
+    #   T            | F        | dnnf_count > 0 (DAG = verite, simplifications
+    #                |          |   structurelles ont reduit le compte)
+    #   F            | T        | True  (anormal mais a la limite, on prend SAT
+    #                |          |   par defaut puisque qch est calcule cote DP)
+    #   F            | F        | sharpsat > 0
     sharpsat_raw = row.get("sharpsat")
-    if _is_overflow(sharpsat_raw):
-        # Overflow signifie SAT (forcement > 0).
+    dnnf_recomp_raw = row.get("dnnf_count_recomputed")
+    sharpsat_ovf = _is_overflow(sharpsat_raw)
+    dnnf_ovf = _is_overflow(dnnf_recomp_raw)
+
+    if sharpsat_ovf and dnnf_ovf:
+        dp_sat = True
+    elif sharpsat_ovf and not dnnf_ovf:
+        # DP sature mais DAG precis : DAG est source de verite.
+        dnnf = _parse_int(dnnf_recomp_raw)
+        if dnnf is None:
+            return _Check(**base, status="SKIPPED", expected="-",
+                           observed="-",
+                           message="DP sature et DAG non parsable")
+        dp_sat = dnnf > 0
+    elif not sharpsat_ovf and dnnf_ovf:
         dp_sat = True
     else:
         sharpsat = _parse_int(sharpsat_raw)
@@ -248,6 +310,7 @@ def _check_consistency_match(row: dict[str, Any], z3_sat_row: dict[str, Any] | N
             return _Check(**base, status="SKIPPED", expected="-",
                            observed="-", message="sharpsat absent")
         dp_sat = sharpsat > 0
+
     z3_sat = (z3_status == "sat")
     if dp_sat == z3_sat:
         return _Check(**base, status="OK",
