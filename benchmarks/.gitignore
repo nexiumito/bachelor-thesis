@@ -1,7 +1,3 @@
-# Resultats : on garde le dossier mais pas les runs.
-results/*
-!results/.gitkeep
-
 # Python
 __pycache__/
 *.py[cod]

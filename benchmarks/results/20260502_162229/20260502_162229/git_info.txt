@@ -1,0 +1,15 @@
+# git_info.txt - genere le 2026-05-02T16:22:30.369897+00:00
+
+## git rev-parse HEAD
+e1e8d83d18b50a075e1fc0112bd514054121bd3d
+
+## git rev-parse --abbrev-ref HEAD
+main
+
+## git status -s
+?? .venv-bench/
+
+## git log -3 --oneline
+e1e8d83 fix benchmark
+699b979 fix bench: --resume targets in Makefile + path corrections in START.md
+0aa7df0 fix bench: psw bound hard-only on greedy + family merge collision
