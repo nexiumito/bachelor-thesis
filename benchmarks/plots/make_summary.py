@@ -258,6 +258,98 @@ def _dp_vs_z3_by_family(structure: pd.DataFrame, timings: pd.DataFrame,
     return out
 
 
+_QUERY_LABELS = [
+    ("query_co_ms",         "CO"),
+    ("query_va_ms",         "VA"),
+    ("query_ct_ms",         "CT"),
+    ("query_me_ms",         "ME-1"),
+    ("query_ce_ms",         "CE"),
+    ("query_im_ms",         "IM"),
+    ("query_enum_first_ms", "ME-multi (1er)"),
+]
+
+
+def _query_stats(structure: pd.DataFrame, z3: pd.DataFrame, timings: pd.DataFrame
+                 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Stats par requete (mediane, us/arete, speedup vs Z3) + break-even N.
+
+    Retourne ([stats par requete], {breakeven_median, finite, total_instances_query}).
+    Listes vides si la passe C n'a pas encore tourne.
+    """
+    if structure.empty:
+        return [], {}
+    dp_q = structure[(structure["runner"] == "dp_query") &
+                     (structure["status"] == "ok")]
+    if dp_q.empty:
+        return [], {}
+
+    # ---- Stats par requete (mediane sur toutes les instances OK passe C). ----
+    z3_sat = (z3[z3["z3_kind"] == "sat"][["instance_id", "z3_solve_ms"]]
+              if not z3.empty else pd.DataFrame())
+    if not z3_sat.empty:
+        z3_sat = z3_sat.copy()
+        z3_sat["z3_solve_ms"] = pd.to_numeric(z3_sat["z3_solve_ms"], errors="coerce")
+    df = dp_q.merge(z3_sat, on="instance_id", how="left") if not z3_sat.empty else dp_q.copy()
+    df["dnnf_edges"] = pd.to_numeric(df.get("dnnf_edges"), errors="coerce")
+
+    stats = []
+    for col, label in _QUERY_LABELS:
+        if col not in df.columns:
+            continue
+        sub = df.copy()
+        sub["t_q"] = pd.to_numeric(sub[col], errors="coerce")
+        sub = sub.dropna(subset=["t_q"])
+        sub = sub[sub["t_q"] > 0]
+        if sub.empty:
+            continue
+        median_ms = float(sub["t_q"].median())
+        edges = sub["dnnf_edges"].dropna()
+        med_us_per_edge = (
+            float((sub["t_q"] * 1000.0 / sub["dnnf_edges"]).median())
+            if not edges.empty and (edges > 0).any() else None
+        )
+        if "z3_solve_ms" in sub.columns:
+            sp = sub["z3_solve_ms"] / sub["t_q"]
+            sp = sp.dropna()
+            speedup_med = f"{float(sp.median()):.2f}x" if not sp.empty else "-"
+        else:
+            speedup_med = "-"
+        stats.append({
+            "name": label,
+            "median_us": f"{median_ms * 1000.0:.2f}",
+            "median_us_per_edge": (f"{med_us_per_edge:.4f}"
+                                   if med_us_per_edge is not None else "-"),
+            "speedup_vs_z3": speedup_med,
+        })
+
+    # ---- Break-even N : utilise time_total_ms_median (passe B greedy) si dispo. ----
+    breakeven: dict[str, Any] = {}
+    if not timings.empty and not z3_sat.empty:
+        dp_b = timings[(timings["runner"] == "dp") &
+                       (timings["mode"] == "greedy")][
+                       ["instance_id", "time_total_ms_median"]].copy()
+        merged = dp_q.merge(dp_b, on="instance_id", how="left") \
+                     .merge(z3_sat, on="instance_id", how="left")
+        merged["t_query"]    = pd.to_numeric(merged["query_co_ms"], errors="coerce")
+        merged["dp_compile"] = pd.to_numeric(merged["time_total_ms_median"], errors="coerce")
+        merged["z3_solve"]   = pd.to_numeric(merged["z3_solve_ms"], errors="coerce")
+        merged = merged.dropna(subset=["t_query", "dp_compile", "z3_solve"])
+        if not merged.empty:
+            import numpy as np
+            diff = merged["z3_solve"] - merged["t_query"]
+            n_star = np.where(diff > 0,
+                              np.ceil(merged["dp_compile"] / np.maximum(diff, 1e-12)),
+                              np.inf)
+            finite = n_star[n_star != np.inf]
+            breakeven = {
+                "breakeven_median": (f"{float(np.median(finite)):.0f}"
+                                     if len(finite) else "infini"),
+                "breakeven_finite_count": int(len(finite)),
+                "total_instances_query": int(len(merged)),
+            }
+    return stats, breakeven
+
+
 def _instances_meta(repo_root: Path) -> dict[str, Any]:
     inst_yaml = repo_root / "benchmarks" / "config" / "instances.yaml"
     if not inst_yaml.exists():
@@ -321,6 +413,7 @@ def run(input_dir: Path, repo_root: Path, cfg: Any,
     invariants_table, invariant_failures = _invariant_summary(input_dir / "invariants.csv")
     top_slowest, top_fastest = _top_instances(structure, timings, z3, n=10)
     dp_vs_z3 = _dp_vs_z3_by_family(structure, timings, z3)
+    query_stats_list, breakeven_meta = _query_stats(structure, z3, timings)
 
     git_meta = _parse_git_info(input_dir)
     machine = _machine_meta()
@@ -354,6 +447,10 @@ def run(input_dir: Path, repo_root: Path, cfg: Any,
         "top_slowest": top_slowest,
         "top_fastest": top_fastest,
         "dp_vs_z3": dp_vs_z3,
+        "query_stats": query_stats_list,
+        "breakeven_median": breakeven_meta.get("breakeven_median"),
+        "breakeven_finite_count": breakeven_meta.get("breakeven_finite_count"),
+        "total_instances_query": breakeven_meta.get("total_instances_query"),
         **git_meta,
         **machine,
     }

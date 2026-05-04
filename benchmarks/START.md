@@ -290,6 +290,38 @@ ssh ebussod@racer
 tmux attach -t bench
 ```
 
+### F.4 — Passe C (bench des requêtes sur DAG compilé)
+
+La passe C est lancée automatiquement après les passes A et B si
+`passe_c.enabled: true` dans `benchmark.yaml` (défaut). Pour la lancer
+isolément (par exemple si on veut juste rejouer cette mesure sans relancer
+A et B) :
+
+```bash
+python3 benchmarks/orchestrator.py --only-passe-c \
+        --output benchmarks/results/<TIMESTAMP>
+# Ou via la cible Make :
+make -C benchmarks bench-query
+```
+
+**Durée typique** : ~30 min sur racer (110 instances OK greedy filtrées par
+`passe_c.dnnf_nodes_max=1e6` ; 1 appel solveur par instance, 5 répétitions
+internes par requête). Le solveur fait toutes les répétitions en mémoire
+via le flag `--json-with-queries`.
+
+**Ressources** : utilise les 4 CCDs (`machine.passe_b_taskset_cpus` par
+défaut, hérité de la passe B). RLIMIT_AS 50 GiB par process.
+
+**Sortie** : nouvelles lignes dans `structure.csv` avec `runner='dp_query'`
+et colonnes `query_*_ms` / `query_*_result` renseignées. Les passes A et B
+laissent ces colonnes vides (rétro-compat).
+
+**Plots additionnels** générés par cette passe :
+
+- `figures/breakeven_n.pdf` — courbe de coût DP+queries vs N×Z3 + ECDF des N*
+- `figures/query_vs_z3.pdf` — speedup par requête × famille (boxplot)
+- `figures/query_per_edge.pdf` — coût empirique µs/arête par requête
+
 ---
 
 ## Étape G — Récupération des résultats (côté local, après le run)

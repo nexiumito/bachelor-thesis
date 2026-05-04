@@ -17,6 +17,9 @@
 #include "utils/query/consistency.h"
 #include "utils/query/validity.h"
 #include "utils/query/find_model.h"
+#include "utils/query/entails.h"
+#include "utils/query/is_implicant.h"
+#include "utils/query/enumerate.h"
 #include "algo/procedure1.h"
 #include "algo/procedure2.h"
 #include "algo/procedure3.h"
@@ -106,10 +109,47 @@ void print_node_ps_barre_set(Node* node, SAT_Formula* f, const char* node_name) 
 #define TREE_GREEDY 3
 #define TREE_BENCHMARK 4
 
+// Contexte + callback pour enumerate ASCII (file scope pour rester C standard,
+// pas de fonction nested GNU).
+typedef struct {
+    long long count;
+    long long limit;
+} enum_ascii_ctx;
+
+static int enum_ascii_print_cb(const int* m, int n, void* u) {
+    enum_ascii_ctx* ctx = (enum_ascii_ctx*)u;
+    if (ctx->count >= ctx->limit) return 1;
+    for (int v = 1; v <= n; v++) putchar(m[v] ? '1' : '0');
+    putchar('\n');
+    ctx->count++;
+    return 0;
+}
+
+// Callback silencieux pour le bench enum_all : compte sans imprimer.
+static int enum_silent_cb(const int* m, int n, void* u) {
+    (void)m; (void)n;
+    long long* counter = (long long*)u;
+    (*counter)++;
+    return 0;
+}
+
+// Callback silencieux qui stoppe immediatement au 1er modele (bench enum_first).
+static int enum_silent_first_cb(const int* m, int n, void* u) {
+    (void)m; (void)n; (void)u;
+    return 1;  // stop apres le 1er modele.
+}
+
 // Description d'une requete optionnelle a executer apres la construction
 // du DAG d-DNNF. Si name == NULL, aucune requete n'est lancee.
+//
+// Pour les requetes parametrees :
+//   - entails L1 L2 ... Lk    : args = literaux DIMACS de la clause
+//   - is_implicant L1 L2 ... Lk : args = literaux DIMACS du terme gamma
+//   - enumerate [LIMIT]       : args = limite optionnelle (defaut 1e6)
 typedef struct {
-    const char* name;       // nom de la requete (consistency, validity, find_model)
+    const char* name;       // consistency, validity, find_model, entails, is_implicant, enumerate
+    int          argc;       // nb d'arguments suivant le nom de requete (cf. main argv)
+    char**       argv;       // arguments bruts (non-libere par solve_formula)
 } QuerySpec;
 
 // ============================================================================
@@ -226,7 +266,46 @@ static void run_benchmark(void) {
 // Une seule ligne sur stdout, terminée par \n, puis exit.
 // ============================================================================
 
-static int solve_formula_json(const char* filename, int execution_mode);
+static int solve_formula_json_impl(const char* filename, int execution_mode,
+                                   int with_queries);
+static int solve_formula_json(const char* filename, int execution_mode) {
+    return solve_formula_json_impl(filename, execution_mode, 0);
+}
+static int solve_formula_json_with_queries(const char* filename, int execution_mode) {
+    return solve_formula_json_impl(filename, execution_mode, 1);
+}
+
+// Tri partiel de 5 doubles puis mediane (= troisieme element). Utilise par
+// le bench query : on jette la 1ere mesure (warm-up) et on prend la mediane
+// des 4 suivantes ; pour simplifier, on stocke 5 mesures et on lit le
+// 3eme tri (apres avoir mis la 1ere a +inf pour qu'elle ne compte pas).
+static double median_of_5_drop_first(double samples[5]) {
+    double s[5];
+    for (int i = 0; i < 5; i++) s[i] = samples[i];
+    s[0] = 1e308;  // exclut la 1ere mesure (warm-up cold) du tri.
+    for (int i = 1; i < 5; i++) {
+        for (int j = i; j > 0 && s[j] < s[j-1]; j--) {
+            double t = s[j]; s[j] = s[j-1]; s[j-1] = t;
+        }
+    }
+    // Apres tri (avec 1e308 en s[4]) : mediane des 4 mesures restantes
+    // = moyenne de s[1] et s[2] (les deux plus petites apres la 1ere).
+    return (s[1] + s[2]) / 2.0;
+}
+
+// Extrait les literaux DIMACS de la 1ere clause de F (clause d'index 0).
+// Ecrit dans `out_lits` (pre-alloue, taille >= num_vars) et `*out_num`.
+// Si la 1ere clause est vide (clause vide DIMACS, indique F UNSAT), retourne 0.
+static int extract_first_clause_literals(SAT_Formula* f, int* out_lits, int* out_num) {
+    int n = 0;
+    for (int v = 1; v <= f->num_vars; v++) {
+        // Bit 0 de mask_pos[v] = "v apparait positivement dans clause 0".
+        if ((f->mask_pos[v]->words[0] >> 0) & 1ULL) out_lits[n++] = v;
+        if ((f->mask_neg[v]->words[0] >> 0) & 1ULL) out_lits[n++] = -v;
+    }
+    *out_num = n;
+    return n;
+}
 
 /**
  * Écrit une ligne JSON minimale en cas d'erreur (avant ou après parsing).
@@ -272,6 +351,16 @@ static inline double elapsed_ms_ts(struct timespec start, struct timespec end) {
          + (end.tv_nsec - start.tv_nsec) / 1e6;
 }
 
+// Decode un mode d'arbre (manual / random / linear / greedy) ; retourne -1
+// si inconnu.
+static int decode_mode(const char* mode_str) {
+    if      (strcmp(mode_str, "manual") == 0) return TREE_MANUAL;
+    else if (strcmp(mode_str, "random") == 0) return TREE_RANDOM;
+    else if (strcmp(mode_str, "linear") == 0) return TREE_LINEAR;
+    else if (strcmp(mode_str, "greedy") == 0) return TREE_GREEDY;
+    return -1;
+}
+
 int main(int argc, char *argv[]) {
     // Mode benchmark special
     if (argc == 2 && strcmp(argv[1], "benchmark") == 0) {
@@ -282,21 +371,29 @@ int main(int argc, char *argv[]) {
     // Mode --json : argc == 4 et argv[3] == "--json".
     // Sortie : une seule ligne JSON sur stdout, exit 0 ou 1.
     if (argc == 4 && strcmp(argv[3], "--json") == 0) {
-        int mode = -1;
-        if      (strcmp(argv[2], "manual") == 0) mode = TREE_MANUAL;
-        else if (strcmp(argv[2], "random") == 0) mode = TREE_RANDOM;
-        else if (strcmp(argv[2], "linear") == 0) mode = TREE_LINEAR;
-        else if (strcmp(argv[2], "greedy") == 0) mode = TREE_GREEDY;
-        else {
+        int mode = decode_mode(argv[2]);
+        if (mode < 0) {
             print_json_error(argv[1], argv[2], "error", "mode inconnu");
             return 1;
         }
         return solve_formula_json(argv[1], mode);
     }
 
-    if (argc < 3 || argc > 4) {
+    // Mode --json-with-queries : argc == 4 et argv[3] == "--json-with-queries".
+    // Compile le DAG puis chronometre toutes les requetes en interne.
+    // Champs query_*_ms additionnels dans le JSON (timings des requetes).
+    if (argc == 4 && strcmp(argv[3], "--json-with-queries") == 0) {
+        int mode = decode_mode(argv[2]);
+        if (mode < 0) {
+            print_json_error(argv[1], argv[2], "error", "mode inconnu");
+            return 1;
+        }
+        return solve_formula_json_with_queries(argv[1], mode);
+    }
+
+    if (argc < 3) {
         printf("Erreur : Mauvais nombre d'arguments.\n\n");
-        printf("Utilisation : %s <fichier.cnf> <mode> [requete]\n", argv[0]);
+        printf("Utilisation : %s <fichier.cnf> <mode> [requete [args...]]\n", argv[0]);
         printf("       ou   : %s benchmark\n\n", argv[0]);
         printf("Modes disponibles :\n");
         printf("  manual : Arbre manuel (Figure 2, page 67 du papier)\n");
@@ -305,46 +402,62 @@ int main(int argc, char *argv[]) {
         printf("  greedy : GreedyOrder (heuristique du papier, Section 6, page 76)\n");
         printf("  benchmark : Execute toutes les instances de test\n\n");
         printf("Requetes optionnelles (sur le DAG d-DNNF compile) :\n");
-        printf("  consistency : F est-elle satisfaisable ?\n");
-        printf("  validity    : F est-elle une tautologie ?\n");
-        printf("  find_model  : Donne une affectation satisfaisante (ou UNSAT)\n\n");
+        printf("  consistency       : F est-elle satisfaisable ? (CO)\n");
+        printf("  validity          : F est-elle une tautologie ? (VA)\n");
+        printf("  find_model        : Donne une affectation satisfaisante (ou UNSAT) (ME, 1 modele)\n");
+        printf("  entails L1 L2...  : F entraine-t-elle (L1 v L2 v ...) ? (CE, litteraux DIMACS)\n");
+        printf("  is_implicant L1...: terme (L1 ^ L2 ^ ...) est-il implicant de F ? (IM)\n");
+        printf("  enumerate [LIMIT] : Enumere LIMIT modeles (defaut: 1000000) (ME multi)\n\n");
+        printf("Flags machine-readable :\n");
+        printf("  --json              : sortie JSON minimale (compatible run 1..3)\n");
+        printf("  --json-with-queries : sortie JSON enrichie avec timings query_*_ms (run 4)\n\n");
         printf("Exemples :\n");
-        printf("  %s ../data/exemple1.cnf manual\n", argv[0]);
-        printf("  %s ../data/exemple1.cnf manual consistency\n", argv[0]);
-        printf("  %s ../data/exemple1.cnf manual validity\n", argv[0]);
-        printf("  %s ../data/exemple1.cnf manual find_model\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy consistency\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy entails 1 2\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy is_implicant 1\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy enumerate 10\n", argv[0]);
+        printf("  %s data/exemple1.cnf greedy --json-with-queries | jq .\n", argv[0]);
         return 1;
     }
 
     // recup des arguments
     char* filename = argv[1];
     char* mode_str = argv[2];
-    int execution_mode = -1;
-
-    // décodage du mode
-    if (strcmp(mode_str, "manual") == 0) {
-        execution_mode = TREE_MANUAL;
-    } else if (strcmp(mode_str, "random") == 0) {
-        execution_mode = TREE_RANDOM;
-    } else if (strcmp(mode_str, "linear") == 0) {
-        execution_mode = TREE_LINEAR;
-    } else if (strcmp(mode_str, "greedy") == 0) {
-        execution_mode = TREE_GREEDY;
-    } else {
+    int execution_mode = decode_mode(mode_str);
+    if (execution_mode < 0) {
         printf("Erreur : Mode '%s' inconnu.\n", mode_str);
         printf("Veuillez choisir parmi : manual, random, linear, greedy, benchmark\n");
         return 1;
     }
 
-    // Decodage de la requete optionnelle (argv[3])
-    QuerySpec query = { .name = NULL };
-    if (argc == 4) {
+    // Decodage de la requete optionnelle (argv[3]) + arguments suivants.
+    // Convention : query.argv[0..argc-1] sont les arguments suivant le nom
+    // de la requete (literaux DIMACS pour entails/is_implicant, limite
+    // optionnelle pour enumerate).
+    QuerySpec query = { .name = NULL, .argc = 0, .argv = NULL };
+    if (argc >= 4) {
         query.name = argv[3];
-        if (strcmp(query.name, "consistency") != 0
-            && strcmp(query.name, "validity") != 0
-            && strcmp(query.name, "find_model") != 0) {
+        query.argc = argc - 4;
+        query.argv = (argc > 4) ? &argv[4] : NULL;
+
+        int known = (strcmp(query.name, "consistency") == 0)
+                 || (strcmp(query.name, "validity") == 0)
+                 || (strcmp(query.name, "find_model") == 0)
+                 || (strcmp(query.name, "entails") == 0)
+                 || (strcmp(query.name, "is_implicant") == 0)
+                 || (strcmp(query.name, "enumerate") == 0);
+        if (!known) {
             printf("Erreur : Requete '%s' inconnue.\n", query.name);
-            printf("Choix : consistency, validity, find_model.\n");
+            printf("Choix : consistency, validity, find_model, entails, is_implicant, enumerate.\n");
+            return 1;
+        }
+        // entails et is_implicant exigent au moins 1 litteral.
+        if ((strcmp(query.name, "entails") == 0
+             || strcmp(query.name, "is_implicant") == 0)
+            && query.argc < 1) {
+            printf("Erreur : '%s' exige au moins 1 litteral DIMACS en argument.\n",
+                   query.name);
             return 1;
         }
     }
@@ -635,6 +748,91 @@ static int solve_formula(const char* filename, int execution_mode,
                     free(model);
                 }
             }
+            else if (strcmp(query->name, "entails") == 0) {
+                printf("\n=== Requete : entails (CE) ===\n");
+                int* lits = malloc(query->argc * sizeof(int));
+                for (int i = 0; i < query->argc; i++) lits[i] = atoi(query->argv[i]);
+                long long c = 0;
+                int rc = dnnf_entails(dp_result.dnnf_root, dnnf_pool,
+                                      lits, query->argc, f.num_vars, &c);
+                printf("Clause testee : (");
+                for (int i = 0; i < query->argc; i++) {
+                    if (i > 0) printf(" v ");
+                    if (lits[i] > 0) printf("x%d", lits[i]);
+                    else             printf("~x%d", -lits[i]);
+                }
+                printf(")\n");
+                switch (rc) {
+                    case DNNF_ENTAILS_YES:
+                        printf("F |= clause (YES, 0 contre-exemple).\n");
+                        break;
+                    case DNNF_ENTAILS_NO:
+                        printf("F NE entraine PAS la clause (NO, %lld contre-exemples).\n", c);
+                        break;
+                    case DNNF_ENTAILS_VACUOUSLY:
+                        printf("F est UNSAT, donc entraine vacuously toute clause.\n");
+                        break;
+                    case DNNF_ENTAILS_BAD_VAR:
+                        printf("Erreur : un litteral mentionne une variable hors borne 1..%d.\n",
+                               f.num_vars);
+                        break;
+                    case DNNF_ENTAILS_OVERFLOW:
+                        printf("Verdict ambigu : dnnf_count a sature avec c > 0.\n");
+                        break;
+                }
+                free(lits);
+            }
+            else if (strcmp(query->name, "is_implicant") == 0) {
+                printf("\n=== Requete : is_implicant (IM) ===\n");
+                int* lits = malloc(query->argc * sizeof(int));
+                for (int i = 0; i < query->argc; i++) lits[i] = atoi(query->argv[i]);
+                long long c = 0, target = 0;
+                int k_distinct = 0;
+                int rc = dnnf_is_implicant(dp_result.dnnf_root, dnnf_pool,
+                                           f.num_vars, lits, query->argc,
+                                           &c, &target, &k_distinct);
+                printf("Terme teste : (");
+                for (int i = 0; i < query->argc; i++) {
+                    if (i > 0) printf(" ^ ");
+                    if (lits[i] > 0) printf("x%d", lits[i]);
+                    else             printf("~x%d", -lits[i]);
+                }
+                printf(") -- k=%d variables distinctes\n", k_distinct);
+                switch (rc) {
+                    case DNNF_IS_IMPLICANT_YES:
+                        printf("gamma |= F (YES, #SAT(F | gamma) = %lld = 2^(%d-%d)).\n",
+                               c, f.num_vars, k_distinct);
+                        break;
+                    case DNNF_IS_IMPLICANT_NO:
+                        printf("gamma NE est PAS implicant (NO, #SAT(F | gamma) = %lld != %lld).\n",
+                               c, target);
+                        break;
+                    case DNNF_IS_IMPLICANT_UNSAT:
+                        printf("F est UNSAT, aucun terme n'est implicant non-trivialement.\n");
+                        break;
+                    case DNNF_IS_IMPLICANT_BAD_VAR:
+                        printf("Erreur : un litteral mentionne une variable hors borne 1..%d.\n",
+                               f.num_vars);
+                        break;
+                    case DNNF_IS_IMPLICANT_OVERFLOW:
+                        printf("Overflow : 2^(n-k) ne tient pas, ou dnnf_count a sature.\n");
+                        break;
+                }
+                free(lits);
+            }
+            else if (strcmp(query->name, "enumerate") == 0) {
+                printf("\n=== Requete : enumerate (ME multi) ===\n");
+                long long limit = (query->argc >= 1) ? atoll(query->argv[0]) : 1000000LL;
+                if (!dp_result.dnnf_root) {
+                    printf("Formule insatisfiable, 0 modele.\n");
+                } else {
+                    enum_ascii_ctx ctx = { .count = 0, .limit = limit };
+                    long long total = dnnf_enumerate(dp_result.dnnf_root, dnnf_pool,
+                                                     f.num_vars,
+                                                     enum_ascii_print_cb, &ctx);
+                    printf("Total enumerated: %lld (limit=%lld)\n", total, limit);
+                }
+            }
         }
     }
 
@@ -663,7 +861,8 @@ static int solve_formula(const char* filename, int execution_mode,
  * @param execution_mode TREE_MANUAL | TREE_RANDOM | TREE_LINEAR | TREE_GREEDY.
  * @return 0 si "ok", 1 sinon.
  */
-static int solve_formula_json(const char* filename, int execution_mode) {
+static int solve_formula_json_impl(const char* filename, int execution_mode,
+                                   int with_queries) {
     const char* mode_str = (execution_mode == TREE_GREEDY) ? "greedy" :
                            (execution_mode == TREE_LINEAR) ? "linear" :
                            (execution_mode == TREE_RANDOM) ? "random" : "manual";
@@ -909,6 +1108,191 @@ static int solve_formula_json(const char* filename, int execution_mode) {
         printf("\"dnnf_bound_7k3nm\":%lld,", bound);
     }
     printf("\"bound_overflow\":%s", bound_overflow ? "true" : "false");
+
+    // ========================================================================
+    // BENCH DES REQUETES SUR DAG COMPILE (mode --json-with-queries)
+    // ========================================================================
+    // 7 requetes mesurees in-process : CO, VA, CT, ME-find_model, CE, IM,
+    // ME-enumerate (1er modele + total cape). 5 repetitions par requete,
+    // 1ere jetee (warm-up cold), mediane des 4 suivantes.
+    if (with_queries) {
+        const int REPETITIONS = 5;
+        const long long ENUM_ALL_CAP = 1000000LL;
+        struct timespec qt0, qt1;
+        double samples[5];
+
+        // CO ---------------------------------------------------------------
+        int co_result = 0;
+        for (int r = 0; r < REPETITIONS; r++) {
+            clock_gettime(CLOCK_MONOTONIC, &qt0);
+            co_result = dnnf_consistency(dp_result.dnnf_root, dnnf_pool);
+            clock_gettime(CLOCK_MONOTONIC, &qt1);
+            samples[r] = elapsed_ms_ts(qt0, qt1);
+        }
+        double query_co_ms = median_of_5_drop_first(samples);
+
+        // VA ---------------------------------------------------------------
+        int va_result = 0;
+        for (int r = 0; r < REPETITIONS; r++) {
+            long long cv = 0, mm = 0;
+            clock_gettime(CLOCK_MONOTONIC, &qt0);
+            va_result = dnnf_validity(dp_result.dnnf_root, dnnf_pool,
+                                      f.num_vars, &cv, &mm);
+            clock_gettime(CLOCK_MONOTONIC, &qt1);
+            samples[r] = elapsed_ms_ts(qt0, qt1);
+        }
+        double query_va_ms = median_of_5_drop_first(samples);
+
+        // CT ---------------------------------------------------------------
+        long long ct_count = 0;
+        int ct_overflow = 0;
+        for (int r = 0; r < REPETITIONS; r++) {
+            int ovf = 0;
+            clock_gettime(CLOCK_MONOTONIC, &qt0);
+            ct_count = dnnf_count(dp_result.dnnf_root, dnnf_pool, &ovf);
+            clock_gettime(CLOCK_MONOTONIC, &qt1);
+            samples[r] = elapsed_ms_ts(qt0, qt1);
+            ct_overflow = ovf;
+        }
+        double query_ct_ms = median_of_5_drop_first(samples);
+
+        // ME-find_model ----------------------------------------------------
+        // Skipper proprement si UNSAT (sinon dnnf_find_model retourne 0 sans
+        // panique mais le timing perd du sens).
+        double query_me_ms = 0.0;
+        int me_skipped = (dp_result.sharpsat_count == 0
+                          && !dp_result.sharpsat_overflow);
+        if (!me_skipped) {
+            int* mbuf = calloc(f.num_vars + 1, sizeof(int));
+            for (int r = 0; r < REPETITIONS; r++) {
+                clock_gettime(CLOCK_MONOTONIC, &qt0);
+                (void)dnnf_find_model(dp_result.dnnf_root, dnnf_pool,
+                                      f.num_vars, mbuf);
+                clock_gettime(CLOCK_MONOTONIC, &qt1);
+                samples[r] = elapsed_ms_ts(qt0, qt1);
+            }
+            free(mbuf);
+            query_me_ms = median_of_5_drop_first(samples);
+        }
+
+        // CE : clause de reference = 1ere clause de F.
+        // Resultat attendu = YES (F entraine trivialement ses propres clauses).
+        int* ce_lits = malloc(((size_t)f.num_vars * 2 + 1) * sizeof(int));
+        int ce_num_lits = 0;
+        extract_first_clause_literals(&f, ce_lits, &ce_num_lits);
+        long long ce_count = 0;
+        int ce_result = 0;
+        if (ce_num_lits == 0) {
+            // Clause vide (defense, ne devrait pas arriver post-B1) : YES vacuously.
+            ce_result = DNNF_ENTAILS_YES;
+            samples[0] = samples[1] = samples[2] = samples[3] = samples[4] = 0.0;
+        } else {
+            for (int r = 0; r < REPETITIONS; r++) {
+                long long cc = 0;
+                clock_gettime(CLOCK_MONOTONIC, &qt0);
+                ce_result = dnnf_entails(dp_result.dnnf_root, dnnf_pool,
+                                         ce_lits, ce_num_lits, f.num_vars, &cc);
+                clock_gettime(CLOCK_MONOTONIC, &qt1);
+                samples[r] = elapsed_ms_ts(qt0, qt1);
+                ce_count = cc;
+            }
+        }
+        double query_ce_ms = median_of_5_drop_first(samples);
+        free(ce_lits);
+
+        // IM : terme de reference = gamma vide (= test "F est-elle tautologie ?").
+        // Resultat attendu sur instances reelles = NO (F n'est presque jamais une tautologie).
+        long long im_count = 0, im_target = 0;
+        int im_k_distinct = 0, im_result = 0;
+        for (int r = 0; r < REPETITIONS; r++) {
+            long long cc = 0, tt = 0;
+            int kd = 0;
+            clock_gettime(CLOCK_MONOTONIC, &qt0);
+            im_result = dnnf_is_implicant(dp_result.dnnf_root, dnnf_pool,
+                                          f.num_vars, NULL, 0, &cc, &tt, &kd);
+            clock_gettime(CLOCK_MONOTONIC, &qt1);
+            samples[r] = elapsed_ms_ts(qt0, qt1);
+            im_count = cc; im_target = tt; im_k_distinct = kd;
+        }
+        double query_im_ms = median_of_5_drop_first(samples);
+        (void)im_count; (void)im_target; (void)im_k_distinct;
+
+        // ME-enumerate (1er modele) : callback silencieux qui stoppe au 1er.
+        double query_enum_first_ms = 0.0;
+        if (!me_skipped) {
+            for (int r = 0; r < REPETITIONS; r++) {
+                clock_gettime(CLOCK_MONOTONIC, &qt0);
+                (void)dnnf_enumerate(dp_result.dnnf_root, dnnf_pool, f.num_vars,
+                                     enum_silent_first_cb, NULL);
+                clock_gettime(CLOCK_MONOTONIC, &qt1);
+                samples[r] = elapsed_ms_ts(qt0, qt1);
+            }
+            query_enum_first_ms = median_of_5_drop_first(samples);
+        }
+
+        // ME-enumerate (tous modeles, capes a ENUM_ALL_CAP). Skip si dnnf_count
+        // depasse le cap (timeout garanti) ou si overflow (compte inconnu).
+        // NB: La callback ASCII print_cb ferait du bourrage stdout ; on utilise
+        // un cb silencieux qui se contente de compter.
+        double query_enum_all_ms = 0.0;
+        long long enum_count = 0;
+        int enum_all_skipped = (ct_overflow || ct_count > ENUM_ALL_CAP || me_skipped);
+        if (!enum_all_skipped) {
+            // Callback silencieux : juste incrementer un compteur, jamais stopper.
+            // NB on reuse enum_ascii_ctx : sans imprimer (limit=ENUM_ALL_CAP+1
+            // mais le print_cb imprime si count<limit). Pour ne PAS imprimer,
+            // on inline un cb local-style via un wrapper static.
+            //
+            // Simplification : on compte via une callback static dediee.
+            for (int r = 0; r < REPETITIONS; r++) {
+                long long counter = 0;
+                clock_gettime(CLOCK_MONOTONIC, &qt0);
+                (void)dnnf_enumerate(dp_result.dnnf_root, dnnf_pool, f.num_vars,
+                                     enum_silent_cb, &counter);
+                clock_gettime(CLOCK_MONOTONIC, &qt1);
+                samples[r] = elapsed_ms_ts(qt0, qt1);
+                enum_count = counter;
+            }
+            query_enum_all_ms = median_of_5_drop_first(samples);
+        }
+
+        // SERIALISATION JSON des champs query_*.
+        printf(",\"query_repetitions\":%d", REPETITIONS);
+        printf(",\"query_co_ms\":%.6f,\"query_co_result\":%d",
+               query_co_ms, co_result);
+        printf(",\"query_va_ms\":%.6f,\"query_va_result\":%d",
+               query_va_ms, va_result);
+        if (ct_overflow) {
+            printf(",\"query_ct_ms\":%.6f,\"query_ct_count\":\"overflow\"",
+                   query_ct_ms);
+        } else {
+            printf(",\"query_ct_ms\":%.6f,\"query_ct_count\":%lld",
+                   query_ct_ms, ct_count);
+        }
+        if (me_skipped) {
+            printf(",\"query_me_ms\":null");
+        } else {
+            printf(",\"query_me_ms\":%.6f", query_me_ms);
+        }
+        printf(",\"query_ce_ms\":%.6f,\"query_ce_result\":%d,\"query_ce_count\":%lld",
+               query_ce_ms, ce_result, ce_count);
+        printf(",\"query_im_ms\":%.6f,\"query_im_result\":%d",
+               query_im_ms, im_result);
+        if (me_skipped) {
+            printf(",\"query_enum_first_ms\":null");
+        } else {
+            printf(",\"query_enum_first_ms\":%.6f", query_enum_first_ms);
+        }
+        if (enum_all_skipped) {
+            printf(",\"query_enum_all_ms\":null,\"query_enum_count\":null,"
+                   "\"query_enum_all_skipped\":true");
+        } else {
+            printf(",\"query_enum_all_ms\":%.6f,\"query_enum_count\":%lld,"
+                   "\"query_enum_all_skipped\":false",
+                   query_enum_all_ms, enum_count);
+        }
+    }
+
     printf("}\n");
     fflush(stdout);
 

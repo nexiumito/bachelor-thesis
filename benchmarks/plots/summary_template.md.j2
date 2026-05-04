@@ -59,6 +59,38 @@
 | {{ f.name }} | {{ f.dp_med }} | {{ f.z3_med }} | {{ f.speedup_med }} | {{ f.dp_slower }} | {{ f.dp_faster }} |
 {% endfor %}
 
+{% if query_stats %}
+## Bench des requêtes sur DAG compilé (passe C)
+
+> Mesure du temps d'exécution des requêtes CO/VA/CT/CE/IM/ME (1 modèle / énumération
+> partielle) sur DAG **déjà compilé** (in-process, médiane sur 5 répétitions, 1ère
+> exécution jetée pour warm-up). Cette section supporte l'argument
+> d'amortissement multi-requêtes (cf. plot break-even N).
+
+### Médiane par requête (toutes familles confondues)
+
+| Requête | Médiane (µs) | Médiane µs/arête | Speedup vs Z3 (médiane) |
+|---|---:|---:|---:|
+{% for q in query_stats -%}
+| {{ q.name }} | {{ q.median_us }} | {{ q.median_us_per_edge }} | {{ q.speedup_vs_z3 }} |
+{% endfor %}
+
+{% if breakeven_median %}
+### Break-even N
+
+- Médiane N* (sur instances avec N* fini) : **{{ breakeven_median }}**
+- {{ breakeven_finite_count }} / {{ total_instances_query }} instances ont N* fini
+- Lecture : si l'utilisateur prévoit **≥ {{ breakeven_median }} requêtes par
+  formule**, le DP+queries est en moyenne plus rentable que N appels Z3 froids.
+{% endif %}
+
+### Note méthodologique
+
+Le scénario "cache cold vs warm" (1ère requête vs 5ème) n'est volontairement
+pas mesuré : le warm-up structurel (1ère exécution jetée) masque l'effet pour
+rester focus sur le break-even.
+{% endif %}
+
 ## Figures
 
 - [time_vs_pswidth.pdf](figures/time_vs_pswidth.pdf) — temps DP vs ps-width par famille
@@ -69,6 +101,11 @@
 - [phase_breakdown.pdf](figures/phase_breakdown.pdf) — profil temporel des 4 phases
 - [query_cost.pdf](figures/query_cost.pdf) — coût des requêtes sur DAG (v1, proxy)
 - [pswidth_vs_theory.pdf](figures/pswidth_vs_theory.pdf) — vérification des bornes théoriques
+{% if query_stats %}
+- [breakeven_n.pdf](figures/breakeven_n.pdf) — courbe de coût et distribution des N* (passe C)
+- [query_vs_z3.pdf](figures/query_vs_z3.pdf) — speedup par requête × famille
+- [query_per_edge.pdf](figures/query_per_edge.pdf) — coût empirique µs/arête par requête
+{% endif %}
 
 ## Fichiers de données
 

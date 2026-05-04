@@ -10,6 +10,12 @@ invariants suivants :
     I5 — consistency_match_dp_z3    (hard, sharpsat>0 == Z3 sat)
     I6 — phase_times_nonneg         (soft, sanity)
 
+Pour les lignes runner='dp_query' (passe C, bench des requetes sur DAG
+compile), deux invariants supplementaires sont verifies :
+
+    I7 — entails_match_z3           (hard, F entraine sa propre 1ere clause)
+    I8 — enumerate_count_match      (hard, ME multi == CT, Lemme A.3 D-M 2002)
+
 Ecrit une ligne par (instance, mode, seed, invariant) dans invariants.csv.
 Append failures.log pour chaque FAIL hard. Continue meme si certains FAIL.
 """
@@ -351,6 +357,75 @@ def _check_phase_times_nonneg(row: dict[str, Any]) -> _Check:
                    observed=f"sum={sum_phases:.3f}", message="")
 
 
+def _check_enumerate_count_match(row: dict[str, Any]) -> _Check:
+    """I8 : query_enum_count == dnnf_count_recomputed (Lemme A.3 D-M 2002).
+
+    Verification stricte sur DAG lisse : ME multi (enumerate) doit produire
+    exactement #SAT modeles distincts. Skip si enumerate a ete cape (par
+    exemple si dnnf_count > 1e6) ou si le run a echoue.
+    """
+    base = dict(
+        instance_id=row["instance_id"],
+        mode=row["mode"],
+        seed=int(row.get("seed") or 0),
+        invariant="enumerate_count_match",
+        severity="hard",
+    )
+    if row.get("status") != "ok":
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="run non OK")
+    if row.get("query_enum_count") in (None, ""):
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="pas de bench query")
+    skipped = _parse_bool(row.get("query_enum_all_skipped"))
+    if skipped:
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="enumerate cape (>seuil ou overflow)")
+    enum_count = _parse_int(row["query_enum_count"])
+    dnnf_count = _parse_int(row.get("dnnf_count_recomputed"))
+    if enum_count is None or dnnf_count is None:
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="parse error")
+    if enum_count == dnnf_count:
+        return _Check(**base, status="OK", expected=str(dnnf_count),
+                       observed=str(enum_count), message="")
+    return _Check(**base, status="FAIL", expected=str(dnnf_count),
+                   observed=str(enum_count),
+                   message=f"enumerate produit {enum_count} modeles vs "
+                           f"dnnf_count={dnnf_count}")
+
+
+def _check_entails_match_z3(row: dict[str, Any]) -> _Check:
+    """I7 : F entraine sa propre 1ere clause (verdict trivial cote Z3).
+
+    Le solveur en mode --json-with-queries interroge CE sur la 1ere clause de
+    F par convention. F entraine trivialement chacune de ses propres clauses,
+    donc query_ce_result doit etre 1 (YES) ou -1 (VACUOUSLY si F UNSAT).
+    """
+    base = dict(
+        instance_id=row["instance_id"],
+        mode=row["mode"],
+        seed=int(row.get("seed") or 0),
+        invariant="entails_match_z3",
+        severity="hard",
+    )
+    if row.get("status") != "ok":
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="run non OK")
+    ce = _parse_int(row.get("query_ce_result"))
+    if ce is None:
+        return _Check(**base, status="SKIPPED", expected="-", observed="-",
+                       message="pas de query_ce_result")
+    # 1 (YES) ou -1 (VACUOUSLY si F UNSAT) sont sémantiquement YES.
+    if ce in (1, -1):
+        return _Check(**base, status="OK", expected="1 ou -1 (YES/VACUOUSLY)",
+                       observed=str(ce), message="")
+    return _Check(**base, status="FAIL",
+                   expected="1 (YES, F entraine sa propre 1ere clause)",
+                   observed=str(ce),
+                   message="contradiction theorique")
+
+
 # ===========================================================================
 # Entree publique
 # ===========================================================================
@@ -400,12 +475,14 @@ def check_all_invariants(
 
         with structure_csv.open("r", newline="", encoding="utf-8") as fh_in:
             for row in csv.DictReader(fh_in):
-                if row.get("runner") != "dp":
+                runner = row.get("runner")
+                if runner not in ("dp", "dp_query"):
                     continue
                 inst = instances.get(row["instance_id"])
                 z3_max_row = z3_index.get((row["instance_id"], "maxsat"))
                 z3_sat_row = z3_index.get((row["instance_id"], "sat"))
 
+                # I1..I6 sur toutes les lignes DP (passes A et C).
                 checks = [
                     _check_dnnf_count_match(row),
                     _check_dag_bound(row),
@@ -414,6 +491,11 @@ def check_all_invariants(
                     _check_consistency_match(row, z3_sat_row),
                     _check_phase_times_nonneg(row),
                 ]
+                # I7 et I8 uniquement sur les lignes de la passe C
+                # (donnees query_* presentes).
+                if runner == "dp_query":
+                    checks.append(_check_entails_match_z3(row))
+                    checks.append(_check_enumerate_count_match(row))
                 for c in checks:
                     total += 1
                     counts[c.status] = counts.get(c.status, 0) + 1

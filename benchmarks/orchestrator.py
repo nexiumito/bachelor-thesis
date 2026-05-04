@@ -90,6 +90,9 @@ class BenchmarkConfig:
     plots: dict[str, Any]
     logging_cfg: dict[str, Any]
     notifications: dict[str, Any]
+    # Bench des requetes sur DAG compile (in-process). Optionnelle :
+    # absente du YAML => dict vide (passe C inactive).
+    passe_c: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 _VALID_FAMILIES = {"type1", "type2", "type3", "random", "tseytin", "factorization", "misc"}
@@ -148,6 +151,7 @@ def _load_benchmark_config(path: Path) -> BenchmarkConfig:
         plots=raw["plots"],
         logging_cfg=raw["logging"],
         notifications=raw["notifications"],
+        passe_c=raw.get("passe_c", {}) or {},
     )
 
 
@@ -179,6 +183,14 @@ STRUCTURE_CSV_COLS = [
     # diagnostic post-mortem des crashes (cf. bug du trie.c silencieux dans
     # le run 1).
     "stderr_tail",
+    # Passe C : timings et resultats des requetes sur DAG compile (in-process).
+    # Champs vides pour les lignes de passe A et B (rétro-compat). Renseignes
+    # uniquement quand runner == "dp_query".
+    "query_co_ms", "query_va_ms", "query_ct_ms", "query_me_ms",
+    "query_ce_ms", "query_im_ms", "query_enum_first_ms", "query_enum_all_ms",
+    "query_enum_count", "query_co_result", "query_va_result",
+    "query_ce_result", "query_im_result", "query_ct_count",
+    "query_repetitions", "query_enum_all_skipped",
 ]
 
 Z3_CSV_COLS = [
@@ -468,6 +480,7 @@ class DpTask:
     nice_level: int
     taskset_cpu: int | None
     repo_root: str
+    with_queries: bool = False
 
 
 def _worker_run_dp(task: DpTask) -> dict[str, Any]:
@@ -488,6 +501,7 @@ def _worker_run_dp(task: DpTask) -> dict[str, Any]:
         nice_level=task.nice_level,
         taskset_cpu=task.taskset_cpu,
         repo_root=task.repo_root,
+        with_queries=task.with_queries,
     )
 
 
@@ -598,20 +612,21 @@ def _build_passe_a_z3_tasks(
 # Runtime : passe A (parallele), passe B (4 coeurs CCDs distincts)
 # ===========================================================================
 
-def _row_for_dp(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -> dict[str, Any]:
+def _row_for_dp(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig],
+                runner_label: str = "dp") -> dict[str, Any]:
     inst = inst_by_id.get(result.get("instance_id", ""))
     family = inst.family if inst else ""
     # Tronque + neutralise les newlines pour le CSV (sinon un stderr multiligne
     # casse la coherence visuelle des outils CSV simples).
     stderr_raw = (result.get("stderr") or "")
     stderr_tail = stderr_raw[-1024:].replace("\r\n", " | ").replace("\n", " | ")
-    return {
+    row = {
         "timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "instance_id": result.get("instance_id"),
         "family": family,
         "mode": result.get("mode"),
         "seed": result.get("seed"),
-        "runner": "dp",
+        "runner": runner_label,
         "status": result.get("status"),
         "n_vars": result.get("n_vars"),
         "n_clauses": result.get("n_clauses"),
@@ -638,6 +653,17 @@ def _row_for_dp(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -
         "error_message": result.get("error_message"),
         "stderr_tail": stderr_tail,
     }
+    # Champs query_* uniquement renseignes quand runner == "dp_query"
+    # (passe C). Sur les passes A et B, les colonnes restent vides.
+    for key in (
+        "query_co_ms", "query_va_ms", "query_ct_ms", "query_me_ms",
+        "query_ce_ms", "query_im_ms", "query_enum_first_ms", "query_enum_all_ms",
+        "query_enum_count", "query_co_result", "query_va_result",
+        "query_ce_result", "query_im_result", "query_ct_count",
+        "query_repetitions", "query_enum_all_skipped",
+    ):
+        row[key] = result.get(key)
+    return row
 
 
 def _row_for_z3(result: dict[str, Any], inst_by_id: dict[str, InstanceConfig]) -> dict[str, Any]:
@@ -1058,6 +1084,153 @@ def run_passe_b(
 
 
 # ===========================================================================
+# Passe C : bench des requetes sur DAG compile (in-process)
+# ===========================================================================
+
+def _build_passe_c_dp_tasks(
+    instances: list[InstanceConfig],
+    cfg: BenchmarkConfig,
+    repo_root: Path,
+    structure_csv_path: Path,
+) -> list[DpTask]:
+    """Construit les taches de la passe C.
+
+    Filtre les instances : seules celles dont la passe A est OK avec mode
+    greedy ET dont dnnf_nodes < passe_c.dnnf_nodes_max (au-dela, les requetes
+    prennent trop de temps et le bench derive). 1 appel par instance (pas de
+    repetitions multiples cote orchestrateur : le solveur fait deja ses 5
+    repetitions internes via --json-with-queries).
+    """
+    out: list[DpTask] = []
+    passe_c_cfg = getattr(cfg, "passe_c", {}) or {}
+    if not passe_c_cfg.get("enabled", True):
+        return out
+
+    dnnf_nodes_max = int(passe_c_cfg.get("dnnf_nodes_max", 1_000_000))
+    timeout = int(passe_c_cfg.get("default_timeout_s", 600))
+    mem_cap = int(cfg.machine.get("memory_cap_gib_per_proc", 50)) * (1024 ** 3)
+    nice = int(cfg.machine.get("nice_level", 19))
+    binary = cfg.dp.get("binary", "src/sat_solver")
+    cwd = cfg.dp.get("cwd", "src")
+    cpus = list(cfg.machine.get("passe_b_taskset_cpus", [0, 8, 16, 24]))
+
+    # Lecture de structure.csv pour identifier les instances OK + < seuil.
+    eligible: dict[str, int] = {}  # instance_id -> dnnf_nodes
+    if structure_csv_path.exists():
+        try:
+            with structure_csv_path.open("r", newline="", encoding="utf-8") as fh:
+                for row in csv.DictReader(fh):
+                    if row.get("runner") != "dp":
+                        continue
+                    if row.get("status") != "ok":
+                        continue
+                    if row.get("mode") != "greedy":
+                        continue
+                    try:
+                        nn = int(float(row.get("dnnf_nodes") or 0))
+                    except ValueError:
+                        continue
+                    if 0 < nn < dnnf_nodes_max:
+                        eligible[row["instance_id"]] = nn
+        except Exception as e:
+            logger.warning("Lecture structure.csv impossible (passe C) : %s", e)
+
+    cpu_idx = 0
+    for inst in instances:
+        if not inst.enabled:
+            continue
+        if inst.id not in eligible:
+            continue
+        out.append(DpTask(
+            instance_id=inst.id, instance_path=inst.path, mode="greedy", seed=0,
+            timeout_s=timeout, memory_cap_bytes=mem_cap,
+            binary_path=binary, cwd=cwd, nice_level=nice,
+            taskset_cpu=int(cpus[cpu_idx % len(cpus)]) if cpus else None,
+            repo_root=str(repo_root),
+            with_queries=True,
+        ))
+        cpu_idx += 1
+    return out
+
+
+def run_passe_c(
+    instances: list[InstanceConfig],
+    cfg: BenchmarkConfig,
+    repo_root: Path,
+    output_dir: Path,
+    state: HeartbeatState,
+    shutdown_event: threading.Event,
+    inst_by_id: dict[str, InstanceConfig],
+) -> tuple[int, int]:
+    """Lance la passe C (4 workers sur 4 CCDs distincts, in-process).
+
+    Pour chaque instance eligible (OK passe A en mode greedy + dnnf_nodes
+    sous le seuil), un seul appel solveur en --json-with-queries qui
+    chronometre les 7 requetes en interne. Les lignes resultantes sont
+    appendues a structure.csv avec runner='dp_query' (rétro-compat : les
+    consommateurs filtrent sur ce label pour distinguer des passes A/B).
+    """
+    structure_csv = CsvAppender(
+        output_dir / "structure.csv", STRUCTURE_CSV_COLS,
+        flush_each_row=cfg.logging_cfg.get("csv_flush_each_row", True),
+    )
+    failures_log = output_dir / "failures.log"
+    cpus = list(cfg.machine.get("passe_b_taskset_cpus", [0, 8, 16, 24]))
+    n_workers = max(1, len(cpus))
+
+    dp_tasks = _build_passe_c_dp_tasks(
+        instances, cfg, repo_root, output_dir / "structure.csv",
+    )
+
+    # Skip taches deja faites (resume).
+    done = _existing_keys_structure(output_dir / "structure.csv")
+    dp_to_run = [t for t in dp_tasks
+                 if (t.instance_id, t.mode, t.seed, "dp_query") not in done]
+    skipped = len(dp_tasks) - len(dp_to_run)
+    total = len(dp_to_run)
+
+    state.update(phase="passe_c", done=0, failed=0, total=total)
+    logger.info("Passe C: %d taches DP-query (skip %d deja faites, %d workers)",
+                total, skipped, n_workers)
+
+    if total == 0:
+        return 0, 0
+
+    n_done = 0
+    n_failed = 0
+
+    with ProcessPoolExecutor(max_workers=n_workers) as exe:
+        futures: dict[Any, str] = {}
+        for t in dp_to_run:
+            futures[exe.submit(_worker_run_dp, t)] = "dp_query"
+
+        for fut in as_completed(futures):
+            if shutdown_event.is_set():
+                logger.warning("Shutdown demande, annule futures non commencees")
+                for f in list(futures.keys()):
+                    if not f.running() and not f.done():
+                        f.cancel()
+                break
+            try:
+                result = fut.result()
+            except Exception as exc:
+                logger.exception("Worker passe C exception: %s", exc)
+                n_failed += 1
+                n_done += 1
+                state.update(done=n_done, failed=n_failed)
+                continue
+
+            structure_csv.append(_row_for_dp(result, inst_by_id, runner_label="dp_query"))
+            if result.get("status") not in ("ok",):
+                n_failed += 1
+                _append_failure_log(failures_log, result)
+            n_done += 1
+            state.update(done=n_done, failed=n_failed)
+
+    return n_done, n_failed
+
+
+# ===========================================================================
 # Plots et SUMMARY
 # ===========================================================================
 
@@ -1099,6 +1272,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--resume", default=None, help="reprend un run existant")
     p.add_argument("--only-passe-a", action="store_true")
     p.add_argument("--only-passe-b", action="store_true")
+    p.add_argument("--only-passe-c", action="store_true")
     p.add_argument("--only-plots", action="store_true")
     p.add_argument("--only-summary", action="store_true")
     p.add_argument("--only-invariants", action="store_true")
@@ -1238,7 +1412,7 @@ def main() -> int:
 
     try:
         # ---------------- PASSE A ----------------
-        if not (args.only_passe_b or args.only_plots
+        if not (args.only_passe_b or args.only_passe_c or args.only_plots
                 or args.only_summary or args.only_invariants):
             if cfg.passe_a.get("enabled", True):
                 d, f = run_passe_a(
@@ -1249,7 +1423,8 @@ def main() -> int:
                 n_total_failed += f
 
         # ---------------- INVARIANTS ----------------
-        if not (args.only_passe_a or args.only_plots or args.only_summary):
+        if not (args.only_passe_a or args.only_passe_b or args.only_passe_c
+                or args.only_plots or args.only_summary):
             try:
                 state.update(phase="invariants")
                 inv_summary = invariants_mod.check_all_invariants(
@@ -1265,7 +1440,7 @@ def main() -> int:
                 logger.exception("Invariants ont echoue : %s", e)
 
         # ---------------- PASSE B ----------------
-        if not (args.only_passe_a or args.only_plots
+        if not (args.only_passe_a or args.only_passe_c or args.only_plots
                 or args.only_summary or args.only_invariants):
             if cfg.passe_b.get("enabled", True) and not shutdown_event.is_set():
                 d, f = run_passe_b(
@@ -1275,15 +1450,27 @@ def main() -> int:
                 n_total_done += d
                 n_total_failed += f
 
+        # ---------------- PASSE C (bench des requetes sur DAG compile) ----------------
+        if not (args.only_passe_a or args.only_passe_b or args.only_plots
+                or args.only_summary or args.only_invariants):
+            passe_c_cfg = getattr(cfg, "passe_c", {}) or {}
+            if passe_c_cfg.get("enabled", True) and not shutdown_event.is_set():
+                d, f = run_passe_c(
+                    instances, cfg, repo_root, output_dir, state,
+                    shutdown_event, inst_by_id,
+                )
+                n_total_done += d
+                n_total_failed += f
+
         # ---------------- PLOTS ----------------
-        if not (args.only_passe_a or args.only_passe_b
+        if not (args.only_passe_a or args.only_passe_b or args.only_passe_c
                 or args.only_summary or args.only_invariants):
             if cfg.plots.get("enabled", True) and not shutdown_event.is_set():
                 state.update(phase="plots")
                 run_plots(output_dir, cfg)
 
         # ---------------- SUMMARY ----------------
-        if not (args.only_passe_a or args.only_passe_b
+        if not (args.only_passe_a or args.only_passe_b or args.only_passe_c
                 or args.only_plots or args.only_invariants):
             if not shutdown_event.is_set():
                 state.update(phase="summary")

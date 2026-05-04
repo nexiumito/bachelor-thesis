@@ -82,6 +82,30 @@ passe_b:
   z3_in_passe_b: true                    # mesure Z3 en mono-coeur isole
 
 # ----------------------------------------------------------------------------
+# Passe C : bench des requetes sur DAG compile (in-process)
+#
+# Pour chaque instance OK en mode greedy avec dnnf_nodes < dnnf_nodes_max,
+# un seul appel solveur en --json-with-queries qui chronometre 7 requetes
+# (CO/VA/CT/ME-1/CE/IM/ME-multi) sur DAG deja compile. Mediane sur
+# query_repetitions repetitions internes (1ere jetee, warm-up cold).
+#
+# Reuse les memes 4 CCDs que la passe B (machine.passe_b_taskset_cpus).
+# RLIMIT_AS heritee de machine.memory_cap_gib_per_proc.
+# ----------------------------------------------------------------------------
+passe_c:
+  enabled: true
+  # Filtre instances : seules celles dont le DAG compile est < ce seuil
+  # (au-dela, les requetes prennent trop de temps et le bench derive).
+  dnnf_nodes_max: 1000000
+  # Nombre de repetitions internes par requete (le solveur jette la 1ere et
+  # garde la mediane des 4 suivantes par defaut).
+  query_repetitions: 5
+  # Cap sur dnnf_enumerate(all) : si dnnf_count > ce seuil, skip enumerate(all)
+  # (sinon timeout garanti sur instances a 2^n modeles).
+  enumerate_count_cap: 1000000
+  default_timeout_s: 600
+
+# ----------------------------------------------------------------------------
 # Echantillonnage du mode arbre random
 # 5 instances * 3 seeds = 15 runs supplementaires en mode 'random'
 # ----------------------------------------------------------------------------

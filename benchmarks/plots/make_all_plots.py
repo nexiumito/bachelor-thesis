@@ -1,4 +1,4 @@
-"""make_all_plots.py — orchestrateur des 8 plots, robuste aux donnees partielles.
+"""make_all_plots.py — orchestrateur des plots, robuste aux donnees partielles.
 
 Chaque plot est tente independamment ; un crash ne bloque pas les autres
 (try/except global).
@@ -16,12 +16,15 @@ import yaml
 
 from . import (
     _common,
+    breakeven_n,
     dag_size_vs_bound,
     dp_vs_z3_maxsat,
     greedy_vs_linear,
     phase_breakdown,
     pswidth_vs_theory,
     query_cost,
+    query_per_edge,
+    query_vs_z3,
     time_vs_pswidth,
     z3_conflicts_vs_pswidth,
 )
@@ -37,6 +40,11 @@ PLOT_MODULES = [
     phase_breakdown,
     query_cost,
     pswidth_vs_theory,
+    # Plots dependants de la passe C (donnees query_*). Skip silencieux si
+    # absentes.
+    breakeven_n,
+    query_vs_z3,
+    query_per_edge,
 ]
 
 

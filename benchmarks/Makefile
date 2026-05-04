@@ -1,4 +1,4 @@
-.PHONY: bench bench-smoke bench-resume plot verify summary clean help
+.PHONY: bench bench-smoke bench-resume bench-query plot verify summary clean help
 
 PYTHON ?= python3
 ORCH = $(PYTHON) orchestrator.py
@@ -34,6 +34,16 @@ bench-resume:
 	@echo "==> Reprise du run $(DIR)"
 	$(ORCH) --resume "$(DIR)"
 
+bench-query:
+	@if [ -z "$(LATEST)" ] || [ ! -d "$(DIR)" ]; then \
+	  echo "ERREUR : aucun run dans results/ (DIR='$(DIR)'). Lance 'make bench' d'abord."; \
+	  exit 1; \
+	fi
+	@echo "==> Build sat_solver"
+	$(MAKE) -C ../src
+	@echo "==> Passe C (bench des requetes sur DAG compile) sur $(DIR)"
+	$(ORCH) --resume "$(DIR)" --only-passe-c
+
 plot:
 	@if [ -z "$(LATEST)" ] || [ ! -d "$(DIR)" ]; then \
 	  echo "ERREUR : aucun run dans results/ (DIR='$(DIR)'). Lance 'make bench' d'abord."; \
@@ -64,9 +74,10 @@ clean:
 
 help:
 	@echo "Cibles disponibles :"
-	@echo "  bench         Lance la chaine complete (passe A + B + plots + summary)"
+	@echo "  bench         Lance la chaine complete (passes A + B + C + plots + summary)"
 	@echo "  bench-smoke   Test a blanc sur 3 instances triviales (< 60s)"
 	@echo "  bench-resume  Reprend le run le plus recent (utilise DIR=... pour cibler)"
+	@echo "  bench-query   Lance uniquement la passe C (bench des requetes sur DAG compile)"
 	@echo "  plot          Regenere les plots du dernier run (DIR=... pour cibler)"
 	@echo "  verify        Re-verifie les invariants du dernier run (DIR=... pour cibler)"
 	@echo "  summary       Regenere SUMMARY.md du dernier run (DIR=... pour cibler)"
@@ -74,4 +85,5 @@ help:
 	@echo ""
 	@echo "Exemples :"
 	@echo "  make bench-resume                          # reprend le dernier run"
+	@echo "  make bench-query                           # ne relance que la passe C"
 	@echo "  make plot DIR=results/20260502_120000      # regenere les plots d'un run specifique"

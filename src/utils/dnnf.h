@@ -2,6 +2,7 @@
 #define DNNF_H
 
 #include <stdio.h>
+#include "bitset.h"
 
 // ============================================================================
 // DNNF : CONSTRUCTION D'UN DAG D-DNNF PENDANT LA PROCEDURE 3
@@ -17,7 +18,9 @@
 // Le DAG est possede par un DNNFPool unique (arena allocator). Aucun autre
 // conteneur (DPTable, DPResult) n'appelle free() sur les DNNFNode pointes.
 //
-// REQUETES (CO, VA, CT, ME) : voir utils/query/.
+// REQUETES (CO, VA, CT, ME, CE, IM) : voir utils/query/.
+// TRANSFORMATIONS internes (compress, smooth, condition) : voir
+// utils/dnnf_transform.{h,c}.
 // ============================================================================
 
 /**
@@ -58,6 +61,10 @@ typedef struct dnnf_node {
     int                 capacity;       // capacite allouee, doublee en cas de besoin
 } DNNFNode;
 
+// Forward declaration de la table de hash-consing (definie dans dnnf_transform.c).
+struct dnnf_hash_table;
+typedef struct dnnf_hash_table DNNFHashTable;
+
 /**
  * Pool (arena allocator) proprietaire de tous les DNNFNode alloues.
  *
@@ -79,6 +86,15 @@ typedef struct {
     // un sous-arbre absent compte 0 modele). Le caller (solve_dp / main)
     // doit verifier ce drapeau pour router vers print_json_error.
     int             alloc_failed;
+    // Champs auxiliaires installes lazy par dnnf_transform :
+    //   hashcons       : table de hash-consing (NULL avant 1er compress).
+    //   scope_by_id    : Bitset par noeud (NULL avant 1er smooth).
+    //   scope_capacity : taille de scope_by_id.
+    //   num_vars       : capture au 1er compute_scopes (necessaire au smoothing).
+    DNNFHashTable*  hashcons;
+    Bitset**        scope_by_id;
+    int             scope_capacity;
+    int             num_vars;
 } DNNFPool;
 
 // ============================================================================
@@ -153,5 +169,28 @@ long long dnnf_size(DNNFNode* root, DNNFPool* pool);
  * V=num_vars. Une ligne par noeud en ordre topologique (id local croissant).
  */
 void dnnf_export_nnf(DNNFNode* root, int num_vars, DNNFPool* pool, FILE* out);
+
+// ============================================================================
+// API INTERNE : helpers exposes uniquement pour dnnf_transform.c
+// ============================================================================
+// NE PAS appeler depuis main.c, procedure3.c, ou les requetes : utiliser les
+// factories dnnf_make_* qui appliquent les simplifications locales et la
+// discipline alloc_failed. Ces helpers existent uniquement pour permettre a
+// dnnf_compress de construire des noeuds bruts sans simplification (les
+// factories sont incompatibles avec le hash-consing).
+
+/**
+ * Alloue un DNNFNode brut (champs id, type, var_index, children, num_children,
+ * capacity non initialises ; a la charge du caller). Retourne NULL si malloc
+ * echoue (le caller doit lever pool->alloc_failed et router vers node_false).
+ */
+DNNFNode* allocate_raw_node(void);
+
+/**
+ * Enregistre node dans pool->nodes, lui assigne id = pool->num_nodes, double
+ * la capacite si besoin. Retourne 0 sur succes, -1 sur echec (alloc_failed
+ * leve). Sur echec, le caller doit liberer node lui-meme.
+ */
+int pool_register_node(DNNFPool* pool, DNNFNode* node);
 
 #endif

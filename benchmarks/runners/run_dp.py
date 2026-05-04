@@ -58,6 +58,7 @@ def run_dp(
     nice_level: int = 19,
     taskset_cpu: int | None = None,
     repo_root: str = ".",
+    with_queries: bool = False,
 ) -> dict[str, Any]:
     """Lance sat_solver --json et parse la sortie.
 
@@ -72,6 +73,11 @@ def run_dp(
         nice_level: priorite via ``nice -n <level>``.
         taskset_cpu: si non None, pinning CPU via ``taskset -c <cpu>``.
         repo_root: racine du repo, utilise pour construire ``cwd_abs``.
+        with_queries: si True, le solveur compile le DAG ET chronometre chaque
+            requete (CO/VA/CT/CE/IM/ME/enumerate) en interne via
+            ``--json-with-queries``. Les timings sont retournes dans les champs
+            ``query_*_ms``. Cout supplementaire par appel : O(query_repetitions
+            * |D|) par requete. A utiliser uniquement pour la passe query-bench.
 
     Returns:
         Un dict contenant les cles du JSON natif + champs ajoutes :
@@ -88,7 +94,8 @@ def run_dp(
         cmd_parts += ["taskset", "-c", str(taskset_cpu)]
     cmd_parts += ["nice", "-n", str(nice_level)]
     # On lance via le nom du binaire relatif a cwd (./sat_solver).
-    cmd_parts += [f"./{Path(binary_path).name}", instance.path, mode, "--json"]
+    json_flag = "--json-with-queries" if with_queries else "--json"
+    cmd_parts += [f"./{Path(binary_path).name}", instance.path, mode, json_flag]
     cmd_str = " ".join(shlex.quote(p) for p in cmd_parts)
 
     # Environnement : seed pour le mode random, hereditairement transmis.
