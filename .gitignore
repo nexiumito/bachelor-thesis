@@ -57,3 +57,4 @@ checkpoint/
 .claude/
 
 tests/
+benchmarks/
