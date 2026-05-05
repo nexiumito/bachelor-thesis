@@ -8,7 +8,6 @@
 #include "../utils/trie.h"
 
 
-PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, BinaryTrie* trie);
 PS_Set* compute_ps_prime_bottom_up(Node* node, SAT_Formula* f, Bitset* all_clauses_mask, BinaryTrie* trie);
 
 #endif

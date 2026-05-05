@@ -30,7 +30,7 @@
  *
  * Retourne NULL si malloc echoue (l'appelant doit lever pool->alloc_failed).
  */
-DNNFNode* allocate_raw_node(void) {
+static DNNFNode* allocate_raw_node(void) {
     DNNFNode* node = malloc(sizeof(DNNFNode));
     if (!node) return NULL;
     node->id = -1;
@@ -50,7 +50,7 @@ DNNFNode* allocate_raw_node(void) {
  * pool->alloc_failed est leve et le noeud n'est pas enregistre (le caller
  * doit liberer ``node`` lui-meme avant de retourner pool->node_false).
  */
-int pool_register_node(DNNFPool* pool, DNNFNode* node) {
+static int pool_register_node(DNNFPool* pool, DNNFNode* node) {
     if (pool->num_nodes >= pool->capacity) {
         int new_cap = pool->capacity * 2;
         DNNFNode** new_nodes = realloc(pool->nodes,
@@ -77,7 +77,6 @@ DNNFPool* create_dnnf_pool(int initial_capacity) {
     pool->node_true = NULL;
     pool->node_false = NULL;
     // Champs auxiliaires installes lazy par dnnf_transform.
-    pool->hashcons = NULL;
     pool->scope_by_id = NULL;
     pool->scope_capacity = 0;
     pool->num_vars = 0;
@@ -118,8 +117,7 @@ DNNFPool* create_dnnf_pool(int initial_capacity) {
 
 void free_dnnf_pool(DNNFPool* pool) {
     if (!pool) return;
-    // Libere les structures auxiliaires (hashcons + scope_by_id) installees
-    // par dnnf_compress / dnnf_smooth. No-op si non allouees.
+    // Libere la table de portees installee par dnnf_smooth. No-op si non allouee.
     dnnf_transform_free_pool_extras(pool);
 
     for (int k = 0; k < pool->num_nodes; k++) {

@@ -1,6 +1,4 @@
-#include "procedure1.h" 
-
-#include <stddef.h>
+#include "procedure1.h"
 
 // ============================================================================
 // PROCEDURE 1 : GENERATION DE PS'(F_v)
@@ -23,7 +21,7 @@
  * @param trie     Le trie binaire pour la déduplication des PS-sets.
  * @return         PS_Set contenant les éléments de PS'(Fv).
  */
-PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, BinaryTrie* trie) {
+static PS_Set* compute_leaf_ps_prime(Node* leaf, SAT_Formula* f, Bitset* mask_Fv, BinaryTrie* trie) {
     PS_Set* ps_v = create_ps_set(2);
 
     if (leaf->type == NODE_LEAF_VAR) {
