@@ -54,6 +54,10 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
         return
 
     dp_q["dnnf_edges"] = pd.to_numeric(dp_q["dnnf_edges"], errors="coerce")
+    # Filtre instances UNSAT (DAG reduit a FALSE, dnnf_edges == 0) :
+    # les requetes y retournent en ~30 ns (test if(!root) en debut de
+    # fonction), ce qui produit des us/arete erronnement bas et fausse
+    # les medianes utilisees pour les annotations facteur vs CO.
     dp_q = dp_q[dp_q["dnnf_edges"] > 0]
     if dp_q.empty:
         logger.warning("query_per_edge: dnnf_edges nul partout, skip")

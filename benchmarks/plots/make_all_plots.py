@@ -17,6 +17,7 @@ import yaml
 from . import (
     _common,
     breakeven_n,
+    co_vs_z3_per_instance,
     dag_size_vs_bound,
     dp_vs_z3_maxsat,
     greedy_vs_linear,
@@ -45,6 +46,7 @@ PLOT_MODULES = [
     breakeven_n,
     query_vs_z3,
     query_per_edge,
+    co_vs_z3_per_instance,
 ]
 
 

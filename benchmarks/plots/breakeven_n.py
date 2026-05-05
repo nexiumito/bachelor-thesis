@@ -69,6 +69,12 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
     df = dp_q.merge(dp_b, on="instance_id", how="left") \
               .merge(z3_sat, on="instance_id", how="left")
 
+    # Filtre instances UNSAT (dnnf_edges == 0) : sur ces instances les
+    # requetes retournent en ~30 ns et le DP compile aussi tres vite,
+    # ce qui produit des N* artificiellement petits qui faussent l'ECDF.
+    df["dnnf_edges"] = pd.to_numeric(df.get("dnnf_edges"), errors="coerce")
+    df = df[df["dnnf_edges"] > 0]
+
     df["t_query"]    = pd.to_numeric(df["query_co_ms"], errors="coerce")
     df["dp_compile"] = pd.to_numeric(df["dp_compile_ms"], errors="coerce")
     df["z3_solve"]   = pd.to_numeric(df["z3_solve_ms"], errors="coerce")

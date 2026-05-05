@@ -1,0 +1,1075 @@
+instance_id,mode,seed,invariant,severity,status,expected,observed,message
+type1_v20_c25,linear,0,dnnf_count_match,hard,OK,194320,194320,
+type1_v20_c25,linear,0,dag_within_bcms_bound,hard,OK,<=845152000,2935,
+type1_v20_c25,linear,0,maxsat_match_z3,hard,OK,24,24,
+type1_v20_c25,linear,0,psw_within_family_bound,soft,SKIPPED,-,140,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v20_c25,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v20_c25,linear,0,phase_times_nonneg,soft,OK,>=0,sum=2.834,
+type1_v30_c40_ordered,linear,0,dnnf_count_match,hard,OK,263422857,263422857,
+type1_v30_c40_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=4863916988,4584,
+type1_v30_c40_ordered,linear,0,maxsat_match_z3,hard,OK,38,38,
+type1_v30_c40_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,217,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v30_c40_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v30_c40_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=3.167,
+type1_v20_c25_ordered,linear,0,dnnf_count_match,hard,OK,561310,561310,
+type1_v20_c25_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=430803765,2465,
+type1_v20_c25_ordered,linear,0,maxsat_match_z3,hard,OK,25,25,
+type1_v20_c25_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,111,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v20_c25_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v20_c25_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1.992,
+type1_v20_c25,greedy,0,dnnf_count_match,hard,OK,194320,194320,
+type1_v20_c25,greedy,0,dag_within_bcms_bound,hard,OK,<=532224,1097,
+type1_v20_c25,greedy,0,maxsat_match_z3,hard,OK,24,24,
+type1_v20_c25,greedy,0,psw_within_family_bound,soft,OK,<=26,12,
+type1_v20_c25,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v20_c25,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=0.981,
+type1_v20_c25_ordered,greedy,0,dnnf_count_match,hard,OK,561310,561310,
+type1_v20_c25_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=4354560,4891,
+type1_v20_c25_ordered,greedy,0,maxsat_match_z3,hard,OK,25,25,
+type1_v20_c25_ordered,greedy,0,psw_within_family_bound,soft,OK,<=26,24,
+type1_v20_c25_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v20_c25_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=2.525,
+type1_v30_c40,greedy,0,dnnf_count_match,hard,OK,218503168,218503168,
+type1_v30_c40,greedy,0,dag_within_bcms_bound,hard,OK,<=1634304,4075,
+type1_v30_c40,greedy,0,maxsat_match_z3,hard,OK,27,27,
+type1_v30_c40,greedy,0,psw_within_family_bound,soft,OK,<=41,16,
+type1_v30_c40,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v30_c40,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=2.476,
+type1_v50_c60,greedy,0,dnnf_count_match,hard,OK,0,0,
+type1_v50_c60,greedy,0,dag_within_bcms_bound,hard,OK,<=121701888,145,
+type1_v50_c60,greedy,0,maxsat_match_z3,hard,OK,46,46,
+type1_v50_c60,greedy,0,psw_within_family_bound,soft,OK,<=61,56,
+type1_v50_c60,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v50_c60,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=4.137,
+type1_v30_c40_ordered,greedy,0,dnnf_count_match,hard,OK,263422857,263422857,
+type1_v30_c40_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=2776032,5900,
+type1_v30_c40_ordered,greedy,0,maxsat_match_z3,hard,OK,38,38,
+type1_v30_c40_ordered,greedy,0,psw_within_family_bound,soft,OK,<=41,18,
+type1_v30_c40_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v30_c40_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=4.406,
+type1_v30_c40,linear,0,dnnf_count_match,hard,OK,218503168,218503168,
+type1_v30_c40,linear,0,dag_within_bcms_bound,hard,OK,<=69322703688,9936,
+type1_v30_c40,linear,0,maxsat_match_z3,hard,OK,27,27,
+type1_v30_c40,linear,0,psw_within_family_bound,soft,SKIPPED,-,558,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v30_c40,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v30_c40,linear,0,phase_times_nonneg,soft,OK,>=0,sum=8.149,
+type1_v50_c60_ordered,greedy,0,dnnf_count_match,hard,OK,158597616286976,158597616286976,
+type1_v50_c60_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=20223000,11633,
+type1_v50_c60_ordered,greedy,0,maxsat_match_z3,hard,OK,57,57,
+type1_v50_c60_ordered,greedy,0,psw_within_family_bound,soft,OK,<=61,30,
+type1_v50_c60_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v50_c60_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=9.887,
+type2_v25_c100_t3_ordered,linear,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=767506509,2707,
+type2_v25_c100_t3_ordered,linear,0,maxsat_match_z3,hard,OK,85,85,
+type2_v25_c100_t3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,99,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v25_c100_t3_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=7.183,
+type2_v25_c100_t3_ordered,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=17364032,71,
+type2_v25_c100_t3_ordered,greedy,0,maxsat_match_z3,hard,OK,85,85,
+type2_v25_c100_t3_ordered,greedy,0,psw_within_family_bound,soft,OK,<=32,28,
+type2_v25_c100_t3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=3.481,
+type2_v25_c100_t4,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t4,greedy,0,dag_within_bcms_bound,hard,OK,<=2401000,80,
+type2_v25_c100_t4,greedy,0,maxsat_match_z3,hard,OK,99,99,
+type2_v25_c100_t4,greedy,0,psw_within_family_bound,soft,OK,<=64,14,
+type2_v25_c100_t4,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t4,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=3.373,
+type2_v25_c100_t3,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t3,greedy,0,dag_within_bcms_bound,hard,OK,<=15379000,137,
+type2_v25_c100_t3,greedy,0,maxsat_match_z3,hard,OK,98,98,
+type2_v25_c100_t3,greedy,0,psw_within_family_bound,soft,OK,<=32,26,
+type2_v25_c100_t3,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=6.912,
+type1_v50_c60_ordered,linear,0,dnnf_count_match,hard,OK,158597616286976,158597616286976,
+type1_v50_c60_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=67346628608,9909,
+type1_v50_c60_ordered,linear,0,maxsat_match_z3,hard,OK,57,57,
+type1_v50_c60_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,448,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v50_c60_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v50_c60_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=17.222,
+type1_v80_c100,greedy,0,dnnf_count_match,hard,OK,0,0,
+type1_v80_c100,greedy,0,dag_within_bcms_bound,hard,OK,<=39682048,14884,
+type1_v80_c100,greedy,0,maxsat_match_z3,hard,OK,91,91,
+type1_v80_c100,greedy,0,psw_within_family_bound,soft,OK,<=101,32,
+type1_v80_c100,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v80_c100,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=18.488,
+type3_n30_t3_s2_ordered,greedy,0,dnnf_count_match,hard,OK,32768,32768,
+type3_n30_t3_s2_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=136080,930,
+type3_n30_t3_s2_ordered,greedy,0,maxsat_match_z3,hard,OK,60,60,
+type3_n30_t3_s2_ordered,greedy,0,psw_within_family_bound,hard,OK,<=8,6,
+type3_n30_t3_s2_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n30_t3_s2_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=1.736,
+type3_n60_t3_s2,greedy,0,dnnf_count_match,hard,OK,1073741824,1073741824,
+type3_n60_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=272160,2358,
+type3_n60_t3_s2,greedy,0,maxsat_match_z3,hard,OK,120,120,
+type3_n60_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,6,
+type3_n60_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=6.804,
+type2_v25_c100_t4_ordered,greedy,0,dnnf_count_match,hard,OK,41896,41896,
+type2_v25_c100_t4_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=5450816000,2692,
+type2_v25_c100_t4_ordered,greedy,0,maxsat_match_z3,hard,OK,100,100,
+type2_v25_c100_t4_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=64,184,"psw=184 > borne attendue=64 (famille type2, mode greedy)"
+type2_v25_c100_t4_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v25_c100_t4_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=20.735,
+type3_n30_t3_s2,greedy,0,dnnf_count_match,hard,OK,32768,32768,
+type3_n30_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=322560,1391,
+type3_n30_t3_s2,greedy,0,maxsat_match_z3,hard,OK,60,60,
+type3_n30_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,8,
+type3_n30_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n30_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=2.530,
+type3_n30_t3_s2_ordered,linear,0,dnnf_count_match,hard,OK,32768,32768,
+type3_n30_t3_s2_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=1088640,1067,
+type3_n30_t3_s2_ordered,linear,0,maxsat_match_z3,hard,OK,60,60,
+type3_n30_t3_s2_ordered,linear,0,psw_within_family_bound,hard,SKIPPED,-,12,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n30_t3_s2_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n30_t3_s2_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=2.094,
+type3_n60_t3_s2_ordered,linear,0,dnnf_count_match,hard,OK,1073741824,1073741824,
+type3_n60_t3_s2_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=2177280,2207,
+type3_n60_t3_s2_ordered,linear,0,maxsat_match_z3,hard,OK,120,120,
+type3_n60_t3_s2_ordered,linear,0,psw_within_family_bound,hard,SKIPPED,-,12,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n60_t3_s2_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t3_s2_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=6.272,
+type3_n60_t3_s2_ordered,greedy,0,dnnf_count_match,hard,OK,1073741824,1073741824,
+type3_n60_t3_s2_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=272160,1920,
+type3_n60_t3_s2_ordered,greedy,0,maxsat_match_z3,hard,OK,120,120,
+type3_n60_t3_s2_ordered,greedy,0,psw_within_family_bound,hard,OK,<=8,6,
+type3_n60_t3_s2_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t3_s2_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=9.193,
+type3_n100_t3_s2_ordered,greedy,0,dnnf_count_match,hard,OK,1125899906842624,1125899906842624,
+type3_n100_t3_s2_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=453600,3240,
+type3_n100_t3_s2_ordered,greedy,0,maxsat_match_z3,hard,OK,200,200,
+type3_n100_t3_s2_ordered,greedy,0,psw_within_family_bound,hard,OK,<=8,6,
+type3_n100_t3_s2_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n100_t3_s2_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=12.767,
+type3_n100_t3_s2_ordered,linear,0,dnnf_count_match,hard,OK,1125899906842624,1125899906842624,
+type3_n100_t3_s2_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=3628800,3727,
+type3_n100_t3_s2_ordered,linear,0,maxsat_match_z3,hard,OK,200,200,
+type3_n100_t3_s2_ordered,linear,0,psw_within_family_bound,hard,SKIPPED,-,12,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n100_t3_s2_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n100_t3_s2_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=15.392,
+type2_v50_c200_t3_ordered,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v50_c200_t3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=26541555712,244,
+type2_v50_c200_t3_ordered,greedy,0,maxsat_match_z3,hard,OK,172,172,
+type2_v50_c200_t3_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=32,256,"psw=256 > borne attendue=32 (famille type2, mode greedy)"
+type2_v50_c200_t3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v50_c200_t3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=37.467,
+type1_v80_c100_ordered,linear,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type1_v80_c100_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=108197662664,24987,
+type1_v80_c100_ordered,linear,0,maxsat_match_z3,hard,OK,99,99,
+type1_v80_c100_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,442,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v80_c100_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v80_c100_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=52.230,
+type3_n100_t3_s2,greedy,0,dnnf_count_match,hard,OK,1125899906842624,1125899906842624,
+type3_n100_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=1075200,4849,
+type3_n100_t3_s2,greedy,0,maxsat_match_z3,hard,OK,200,200,
+type3_n100_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,8,
+type3_n100_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n100_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=30.520,
+type2_v50_c200_t3_ordered,linear,0,dnnf_count_match,hard,OK,0,0,
+type2_v50_c200_t3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=17780768768,3533,
+type2_v50_c200_t3_ordered,linear,0,maxsat_match_z3,hard,OK,172,172,
+type2_v50_c200_t3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,224,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v50_c200_t3_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v50_c200_t3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=41.949,
+type3_n200_t3_s2_ordered,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n200_t3_s2_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=907200,6540,
+type3_n200_t3_s2_ordered,greedy,0,maxsat_match_z3,hard,OK,400,400,
+type3_n200_t3_s2_ordered,greedy,0,psw_within_family_bound,hard,OK,<=8,6,
+type3_n200_t3_s2_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n200_t3_s2_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=76.588,
+type2_v25_c100_t4_ordered,linear,0,dnnf_count_match,hard,OK,41896,41896,
+type2_v25_c100_t4_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=1512000000000,29873,
+type2_v25_c100_t4_ordered,linear,0,maxsat_match_z3,hard,OK,100,100,
+type2_v25_c100_t4_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,1200,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v25_c100_t4_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v25_c100_t4_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=92.805,
+type2_v50_c200_t4_ordered,greedy,0,dnnf_count_match,hard,OK,16290859008,16290859008,
+type2_v50_c200_t4_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=165932928000,14604,
+type2_v50_c200_t4_ordered,greedy,0,maxsat_match_z3,hard,OK,200,200,
+type2_v50_c200_t4_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=64,456,"psw=456 > borne attendue=64 (famille type2, mode greedy)"
+type2_v50_c200_t4_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v50_c200_t4_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=99.917,
+type2_v50_c200_t4,greedy,0,dnnf_count_match,hard,OK,11041505280,11041505280,
+type2_v50_c200_t4,greedy,0,dag_within_bcms_bound,hard,OK,<=5114202030,6156,
+type2_v50_c200_t4,greedy,0,maxsat_match_z3,hard,OK,180,180,
+type2_v50_c200_t4,greedy,0,psw_within_family_bound,soft,WARN,<=64,147,"psw=147 > borne attendue=64 (famille type2, mode greedy)"
+type2_v50_c200_t4,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v50_c200_t4,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=109.093,
+type1_v200_c250_ordered,linear,0,dnnf_count_match,hard,OK,DAG = 0,sharpsat=overflow dnnf=0,DP saturated mais DAG simplifie a valeur precise ; DAG = source de verite
+type1_v200_c250_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=873834084585,33008,
+type1_v200_c250_ordered,linear,0,maxsat_match_z3,hard,OK,184,184,
+type1_v200_c250_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,687,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v200_c250_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v200_c250_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=119.036,
+type3_n200_t3_s2,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n200_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=2150400,9393,
+type3_n200_t3_s2,greedy,0,maxsat_match_z3,hard,OK,400,400,
+type3_n200_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,8,
+type3_n200_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n200_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=98.325,
+type3_n200_t3_s2_ordered,linear,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n200_t3_s2_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=7257600,7527,
+type3_n200_t3_s2_ordered,linear,0,maxsat_match_z3,hard,OK,400,400,
+type3_n200_t3_s2_ordered,linear,0,psw_within_family_bound,hard,SKIPPED,-,12,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n200_t3_s2_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n200_t3_s2_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=100.823,
+type2_v100_c400_t4,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type2_v100_c400_t4,greedy,0,dag_within_bcms_bound,hard,OK,<=9604000000,12098,
+type2_v100_c400_t4,greedy,0,maxsat_match_z3,hard,OK,400,400,
+type2_v100_c400_t4,greedy,0,psw_within_family_bound,soft,WARN,<=64,140,"psw=140 > borne attendue=64 (famille type2, mode greedy)"
+type2_v100_c400_t4,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v100_c400_t4,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=150.609,
+type3_n60_t5_s3_ordered,greedy,0,dnnf_count_match,hard,OK,1099511627776,1099511627776,
+type3_n60_t5_s3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=574560000,20604,
+type3_n60_t5_s3_ordered,greedy,0,maxsat_match_z3,hard,OK,320,320,
+type3_n60_t5_s3_ordered,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n60_t5_s3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t5_s3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=114.596,
+type2_v100_c400_t3_ordered,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v100_c400_t3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=48384000000,323,
+type2_v100_c400_t3_ordered,greedy,0,maxsat_match_z3,hard,OK,391,391,
+type2_v100_c400_t3_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=32,240,"psw=240 > borne attendue=32 (famille type2, mode greedy)"
+type2_v100_c400_t3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v100_c400_t3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=173.503,
+type2_v100_c400_t4_ordered,greedy,0,dnnf_count_match,hard,OK,74649816583372800,74649816583372800,
+type2_v100_c400_t4_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=21803264000,5069,
+type2_v100_c400_t4_ordered,greedy,0,maxsat_match_z3,hard,OK,400,400,
+type2_v100_c400_t4_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=64,184,"psw=184 > borne attendue=64 (famille type2, mode greedy)"
+type2_v100_c400_t4_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v100_c400_t4_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=186.504,
+type2_v25_c100_t3,linear,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t3,linear,0,dag_within_bcms_bound,hard,OK,<=5035261952000,11666,
+type2_v25_c100_t3,linear,0,maxsat_match_z3,hard,OK,98,98,
+type2_v25_c100_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,1792,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v25_c100_t3,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t3,linear,0,phase_times_nonneg,soft,OK,>=0,sum=202.188,
+type3_n60_t5_s3_ordered,linear,0,dnnf_count_match,hard,OK,1099511627776,1099511627776,
+type3_n60_t5_s3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=1361920000,21251,
+type3_n60_t5_s3_ordered,linear,0,maxsat_match_z3,hard,OK,320,320,
+type3_n60_t5_s3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,80,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n60_t5_s3_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t5_s3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=152.531,
+random_k3_v7_c50,greedy,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v7_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=86184000,581,
+random_k3_v7_c50,greedy,0,maxsat_match_z3,hard,OK,47,47,
+random_k3_v7_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,60,pas de borne
+random_k3_v7_c50,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v7_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=4.592,
+random_k3_v7_c50,linear,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v7_c50,linear,0,dag_within_bcms_bound,hard,OK,<=131075091,359,
+random_k3_v7_c50,linear,0,maxsat_match_z3,hard,OK,47,47,
+random_k3_v7_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,69,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v7_c50,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v7_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=3.382,
+random_k3_v8_c20,greedy,0,dnnf_count_match,hard,OK,23,23,
+random_k3_v8_c20,greedy,0,dag_within_bcms_bound,hard,OK,<=6422528,1538,
+random_k3_v8_c20,greedy,0,maxsat_match_z3,hard,OK,20,20,
+random_k3_v8_c20,greedy,0,psw_within_family_bound,none,SKIPPED,-,32,pas de borne
+random_k3_v8_c20,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v8_c20,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=1.738,
+random_k3_v8_c20,linear,0,dnnf_count_match,hard,OK,23,23,
+random_k3_v8_c20,linear,0,dag_within_bcms_bound,hard,OK,<=76247332,663,
+random_k3_v8_c20,linear,0,maxsat_match_z3,hard,OK,20,20,
+random_k3_v8_c20,linear,0,psw_within_family_bound,none,SKIPPED,-,73,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v8_c20,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v8_c20,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1.204,
+random_k3_v8_c50,greedy,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v8_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=585816182,1102,
+random_k3_v8_c50,greedy,0,maxsat_match_z3,hard,OK,49,49,
+random_k3_v8_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,113,pas de borne
+random_k3_v8_c50,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v8_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=7.889,
+random_k3_v8_c50,linear,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v8_c50,linear,0,dag_within_bcms_bound,hard,OK,<=650254878,287,
+random_k3_v8_c50,linear,0,maxsat_match_z3,hard,OK,49,49,
+random_k3_v8_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,117,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v8_c50,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v8_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=4.846,
+type3_n60_t5_s3,greedy,0,dnnf_count_match,hard,OK,1099511627776,1099511627776,
+type3_n60_t5_s3,greedy,0,dag_within_bcms_bound,hard,OK,<=697303040,44343,
+type3_n60_t5_s3,greedy,0,maxsat_match_z3,hard,OK,320,320,
+type3_n60_t5_s3,greedy,0,psw_within_family_bound,soft,WARN,<=60,64,"psw=64 > borne attendue=60 (famille type3, mode greedy)"
+type3_n60_t5_s3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n60_t5_s3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=231.531,
+random_k3_v9_c50,greedy,0,dnnf_count_match,hard,OK,1,1,
+random_k3_v9_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=866123776,2635,
+random_k3_v9_c50,greedy,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v9_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,128,pas de borne
+random_k3_v9_c50,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v9_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=13.124,
+random_k3_v9_c50,linear,0,dnnf_count_match,hard,OK,1,1,
+random_k3_v9_c50,linear,0,dag_within_bcms_bound,hard,OK,<=2368695007,936,
+random_k3_v9_c50,linear,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v9_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,179,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v9_c50,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v9_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=7.687,
+random_k3_v10_c50,linear,0,dnnf_count_match,hard,OK,2,2,
+random_k3_v10_c50,linear,0,dag_within_bcms_bound,hard,OK,<=40350203040,1163,
+random_k3_v10_c50,linear,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v10_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,458,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v10_c50,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v10_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=11.693,
+random_k3_v10_c50,greedy,0,dnnf_count_match,hard,OK,2,2,
+random_k3_v10_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=10673117280,5197,
+random_k3_v10_c50,greedy,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v10_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,294,pas de borne
+random_k3_v10_c50,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v10_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=19.711,
+type3_n90_t5_s3_ordered,greedy,0,dnnf_count_match,hard,OK,1152921504606846976,1152921504606846976,
+type3_n90_t5_s3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=861840000,31664,
+type3_n90_t5_s3_ordered,greedy,0,maxsat_match_z3,hard,OK,480,480,
+type3_n90_t5_s3_ordered,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n90_t5_s3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n90_t5_s3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=251.054,
+type2_v100_c400_t3,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v100_c400_t3,greedy,0,dag_within_bcms_bound,hard,OK,<=6341787648,283,
+type2_v100_c400_t3,greedy,0,maxsat_match_z3,hard,OK,324,324,
+type2_v100_c400_t3,greedy,0,psw_within_family_bound,soft,WARN,<=32,128,"psw=128 > borne attendue=32 (famille type2, mode greedy)"
+type2_v100_c400_t3,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v100_c400_t3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=327.827,
+random_k3_v11_c50,greedy,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v11_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=43210135192,2426,
+random_k3_v11_c50,greedy,0,maxsat_match_z3,hard,OK,48,48,
+random_k3_v11_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,466,pas de borne
+random_k3_v11_c50,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v11_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=36.195,
+random_k3_v11_c50,linear,0,dnnf_count_match,hard,OK,0,0,
+random_k3_v11_c50,linear,0,dag_within_bcms_bound,hard,OK,<=125006361088,925,
+random_k3_v11_c50,linear,0,maxsat_match_z3,hard,OK,48,48,
+random_k3_v11_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,664,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v11_c50,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+random_k3_v11_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=17.888,
+random_k3_v12_c50,linear,0,dnnf_count_match,hard,OK,12,12,
+random_k3_v12_c50,linear,0,dag_within_bcms_bound,hard,OK,<=232358100352,4084,
+random_k3_v12_c50,linear,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v12_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,812,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v12_c50,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v12_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=30.104,
+random_k3_v12_c50,greedy,0,dnnf_count_match,hard,OK,12,12,
+random_k3_v12_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=31019444750,4738,
+random_k3_v12_c50,greedy,0,maxsat_match_z3,hard,OK,50,50,
+random_k3_v12_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,415,pas de borne
+random_k3_v12_c50,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v12_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=35.641,
+type3_n90_t5_s3_ordered,linear,0,dnnf_count_match,hard,OK,1152921504606846976,1152921504606846976,
+type3_n90_t5_s3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=2042880000,32671,
+type3_n90_t5_s3_ordered,linear,0,maxsat_match_z3,hard,OK,480,480,
+type3_n90_t5_s3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,80,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n90_t5_s3_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n90_t5_s3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=278.212,
+type2_v50_c200_t3,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v50_c200_t3,greedy,0,dag_within_bcms_bound,hard,OK,<=99090432000,456,
+type2_v50_c200_t3,greedy,0,maxsat_match_z3,hard,OK,195,195,
+type2_v50_c200_t3,greedy,0,psw_within_family_bound,soft,WARN,<=32,384,"psw=384 > borne attendue=32 (famille type2, mode greedy)"
+type2_v50_c200_t3,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v50_c200_t3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=412.401,
+type2_v200_c800_t3_ordered,greedy,0,dnnf_count_match,hard,OK,0,0,
+type2_v200_c800_t3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=117440512000,619,
+type2_v200_c800_t3_ordered,greedy,0,maxsat_match_z3,hard,OK,780,780,
+type2_v200_c800_t3_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=32,256,"psw=256 > borne attendue=32 (famille type2, mode greedy)"
+type2_v200_c800_t3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v200_c800_t3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=492.063,
+type2_v25_c100_t4,linear,0,dnnf_count_match,hard,OK,0,0,
+type2_v25_c100_t4,linear,0,dag_within_bcms_bound,hard,OK,<=214238872064000,130611,
+type2_v25_c100_t4,linear,0,maxsat_match_z3,hard,OK,99,99,
+type2_v25_c100_t4,linear,0,psw_within_family_bound,soft,SKIPPED,-,6256,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v25_c100_t4,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v25_c100_t4,linear,0,phase_times_nonneg,soft,OK,>=0,sum=488.513,
+random_k3_v15_c64_difficile,linear,0,dnnf_count_match,hard,OK,5,5,
+random_k3_v15_c64_difficile,linear,0,dag_within_bcms_bound,hard,OK,<=48665306955776,7194,
+random_k3_v15_c64_difficile,linear,0,maxsat_match_z3,hard,OK,64,64,
+random_k3_v15_c64_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,4448,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v15_c64_difficile,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v15_c64_difficile,linear,0,phase_times_nonneg,soft,OK,>=0,sum=178.036,
+type3_n120_t5_s3_ordered,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n120_t5_s3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=1149120000,42724,
+type3_n120_t5_s3_ordered,greedy,0,maxsat_match_z3,hard,OK,640,640,
+type3_n120_t5_s3_ordered,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n120_t5_s3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n120_t5_s3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=441.287,
+type3_n120_t5_s3_ordered,linear,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n120_t5_s3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=2723840000,44091,
+type3_n120_t5_s3_ordered,linear,0,maxsat_match_z3,hard,OK,640,640,
+type3_n120_t5_s3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,80,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n120_t5_s3_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n120_t5_s3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=484.430,
+type1_v150_c180_ordered,linear,0,dnnf_count_match,hard,OK,0,0,
+type1_v150_c180_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=1682807450658929,316,
+type1_v150_c180_ordered,linear,0,maxsat_match_z3,hard,OK,177,177,
+type1_v150_c180_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,9007,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v150_c180_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v150_c180_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=679.130,
+type3_n90_t5_s3,greedy,0,dnnf_count_match,hard,OK,1152921504606846976,1152921504606846976,
+type3_n90_t5_s3,greedy,0,dag_within_bcms_bound,hard,OK,<=1045954560,90576,
+type3_n90_t5_s3,greedy,0,maxsat_match_z3,hard,OK,480,480,
+type3_n90_t5_s3,greedy,0,psw_within_family_bound,soft,WARN,<=60,64,"psw=64 > borne attendue=60 (famille type3, mode greedy)"
+type3_n90_t5_s3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n90_t5_s3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=637.548,
+random_k3_v15_c64_difficile,greedy,0,dnnf_count_match,hard,OK,5,5,
+random_k3_v15_c64_difficile,greedy,0,dag_within_bcms_bound,hard,OK,<=965171728192,18004,
+random_k3_v15_c64_difficile,greedy,0,maxsat_match_z3,hard,OK,64,64,
+random_k3_v15_c64_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,1204,pas de borne
+random_k3_v15_c64_difficile,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v15_c64_difficile,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=381.237,
+type3_n150_t5_s3_ordered,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n150_t5_s3_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=1436400000,53784,
+type3_n150_t5_s3_ordered,greedy,0,maxsat_match_z3,hard,OK,800,800,
+type3_n150_t5_s3_ordered,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n150_t5_s3_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n150_t5_s3_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=670.565,
+type3_n150_t5_s3_ordered,linear,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n150_t5_s3_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=3404800000,55511,
+type3_n150_t5_s3_ordered,linear,0,maxsat_match_z3,hard,OK,800,800,
+type3_n150_t5_s3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,80,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n150_t5_s3_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n150_t5_s3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=769.211,
+type1_v80_c100_ordered,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type1_v80_c100_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=188662666304,963580,
+type1_v80_c100_ordered,greedy,0,maxsat_match_z3,hard,OK,99,99,
+type1_v80_c100_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=101,532,"psw=532 > borne attendue=101 (famille type1, mode greedy)"
+type1_v80_c100_ordered,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v80_c100_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=980.526,
+type3_n120_t5_s3,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n120_t5_s3,greedy,0,dag_within_bcms_bound,hard,OK,<=1394606080,112400,
+type3_n120_t5_s3,greedy,0,maxsat_match_z3,hard,OK,640,640,
+type3_n120_t5_s3,greedy,0,psw_within_family_bound,soft,WARN,<=60,64,"psw=64 > borne attendue=60 (famille type3, mode greedy)"
+type3_n120_t5_s3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n120_t5_s3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=1015.184,
+type3_n30_t3_s2,linear,0,dnnf_count_match,hard,OK,32768,32768,
+type3_n30_t3_s2,linear,0,dag_within_bcms_bound,hard,OK,<=74810771153879040,750889,
+type3_n30_t3_s2,linear,0,maxsat_match_z3,hard,OK,60,60,
+type3_n30_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,49152,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n30_t3_s2,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n30_t3_s2,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1008.685,
+type1_v50_c60,linear,0,dnnf_count_match,hard,OK,0,0,
+type1_v50_c60,linear,0,dag_within_bcms_bound,hard,OK,<=89249824125000000,675,
+type1_v50_c60,linear,0,maxsat_match_z3,hard,OK,46,46,
+type1_v50_c60,linear,0,psw_within_family_bound,soft,SKIPPED,-,50500,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v50_c60,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v50_c60,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1286.175,
+type3_n150_t5_s3,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n150_t5_s3,greedy,0,dag_within_bcms_bound,hard,OK,<=1436400000,113420,
+type3_n150_t5_s3,greedy,0,maxsat_match_z3,hard,OK,800,800,
+type3_n150_t5_s3,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n150_t5_s3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n150_t5_s3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=1369.605,
+type3_n1000_t3_s2,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n1000_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=10752000,49405,
+type3_n1000_t3_s2,greedy,0,maxsat_match_z3,hard,OK,2000,2000,
+type3_n1000_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,8,
+type3_n1000_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n1000_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=1714.407,
+random_k3_v20_c85_difficile,linear,0,dnnf_count_match,hard,OK,47,47,
+random_k3_v20_c85_difficile,linear,0,dag_within_bcms_bound,hard,OK,<=253512195129795008,47591,
+random_k3_v20_c85_difficile,linear,0,maxsat_match_z3,hard,OK,85,85,
+random_k3_v20_c85_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,70130,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v20_c85_difficile,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v20_c85_difficile,linear,0,phase_times_nonneg,soft,OK,>=0,sum=4827.808,
+random_k3_v20_c85_difficile,greedy,0,dnnf_count_match,hard,OK,47,47,
+random_k3_v20_c85_difficile,greedy,0,dag_within_bcms_bound,hard,OK,<=3242043840000000,165695,
+random_k3_v20_c85_difficile,greedy,0,maxsat_match_z3,hard,OK,85,85,
+random_k3_v20_c85_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,16400,pas de borne
+random_k3_v20_c85_difficile,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v20_c85_difficile,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=9103.320,
+random_k3_v30_c60_difficile,linear,0,dnnf_count_match,hard,OK,333580,333580,
+random_k3_v30_c60_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,nodes=1354987 bound=overflow,valeurs manquantes ou overflow
+random_k3_v30_c60_difficile,linear,0,maxsat_match_z3,hard,OK,60,60,
+random_k3_v30_c60_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,313810,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v30_c60_difficile,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v30_c60_difficile,linear,0,phase_times_nonneg,soft,OK,>=0,sum=9565.621,
+type2_v50_c200_t4_ordered,linear,0,dnnf_count_match,hard,OK,16290859008,16290859008,
+type2_v50_c200_t4_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=4016168689139712000,1938576,
+type2_v50_c200_t4_ordered,linear,0,maxsat_match_z3,hard,OK,200,200,
+type2_v50_c200_t4_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,131904,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v50_c200_t4_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v50_c200_t4_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=10698.737,
+type1_v150_c180_ordered,greedy,0,dnnf_count_match,hard,OK,0,0,
+type1_v150_c180_ordered,greedy,0,dag_within_bcms_bound,hard,OK,<=13431096000000,553,
+type1_v150_c180_ordered,greedy,0,maxsat_match_z3,hard,OK,177,177,
+type1_v150_c180_ordered,greedy,0,psw_within_family_bound,soft,WARN,<=181,1800,"psw=1800 > borne attendue=181 (famille type1, mode greedy)"
+type1_v150_c180_ordered,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v150_c180_ordered,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=13459.066,
+random_k4_v20_c50,linear,0,dnnf_count_match,hard,OK,39644,39644,
+random_k4_v20_c50,linear,0,dag_within_bcms_bound,hard,OK,<=319340037870000,182347,
+random_k4_v20_c50,linear,0,maxsat_match_z3,hard,OK,50,50,
+random_k4_v20_c50,linear,0,psw_within_family_bound,none,SKIPPED,-,8670,borne psw definie pour decompo optimale (greedy uniquement)
+random_k4_v20_c50,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k4_v20_c50,linear,0,phase_times_nonneg,soft,OK,>=0,sum=342.040,
+type2_v100_c400_t3_ordered,linear,0,dnnf_count_match,hard,OK,0,0,
+type2_v100_c400_t3_ordered,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,nodes=293 bound=overflow,valeurs manquantes ou overflow
+type2_v100_c400_t3_ordered,linear,0,maxsat_match_z3,hard,OK,391,391,
+type2_v100_c400_t3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,147456,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t3_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type2_v100_c400_t3_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=16205.932,
+random_k4_v20_c50,greedy,0,dnnf_count_match,hard,OK,39644,39644,
+random_k4_v20_c50,greedy,0,dag_within_bcms_bound,hard,OK,<=17101815767680,3508743,
+random_k4_v20_c50,greedy,0,maxsat_match_z3,hard,OK,50,50,
+random_k4_v20_c50,greedy,0,psw_within_family_bound,none,SKIPPED,-,3268,pas de borne
+random_k4_v20_c50,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k4_v20_c50,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=7011.001,
+tseytin_3x3,greedy,0,dnnf_count_match,hard,OK,2,2,
+tseytin_3x3,greedy,0,dag_within_bcms_bound,hard,OK,<=2947166208,4139,
+tseytin_3x3,greedy,0,maxsat_match_z3,hard,OK,105,105,
+tseytin_3x3,greedy,0,psw_within_family_bound,none,SKIPPED,-,144,pas de borne
+tseytin_3x3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_3x3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=334.306,
+tseytin_3x3,linear,0,dnnf_count_match,hard,OK,2,2,
+tseytin_3x3,linear,0,dag_within_bcms_bound,hard,OK,<=447096029184,1014,
+tseytin_3x3,linear,0,maxsat_match_z3,hard,OK,105,105,
+tseytin_3x3,linear,0,psw_within_family_bound,none,SKIPPED,-,768,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_3x3,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_3x3,linear,0,phase_times_nonneg,soft,OK,>=0,sum=49.113,
+tseytin_pure_3x3,greedy,0,dnnf_count_match,hard,OK,64,64,
+tseytin_pure_3x3,greedy,0,dag_within_bcms_bound,hard,OK,<=2821754880,17389,
+tseytin_pure_3x3,greedy,0,maxsat_match_z3,hard,OK,99,99,
+tseytin_pure_3x3,greedy,0,psw_within_family_bound,none,SKIPPED,-,144,pas de borne
+tseytin_pure_3x3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_pure_3x3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=296.595,
+tseytin_pure_3x3,linear,0,dnnf_count_match,hard,OK,64,64,
+tseytin_pure_3x3,linear,0,dag_within_bcms_bound,hard,OK,<=428070666240,4947,
+tseytin_pure_3x3,linear,0,maxsat_match_z3,hard,OK,99,99,
+tseytin_pure_3x3,linear,0,psw_within_family_bound,none,SKIPPED,-,768,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_pure_3x3,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_pure_3x3,linear,0,phase_times_nonneg,soft,OK,>=0,sum=47.349,
+random_k3_v30_c60_difficile,greedy,0,dnnf_count_match,hard,OK,333580,333580,
+random_k3_v30_c60_difficile,greedy,0,dag_within_bcms_bound,hard,OK,<=232024870748160,3493855,
+random_k3_v30_c60_difficile,greedy,0,maxsat_match_z3,hard,OK,60,60,
+random_k3_v30_c60_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,7168,pas de borne
+random_k3_v30_c60_difficile,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v30_c60_difficile,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=18891.658,
+tseytin_4x4,linear,0,dnnf_count_match,hard,OK,2,2,
+tseytin_4x4,linear,0,dag_within_bcms_bound,hard,OK,<=474061310263296,3960,
+tseytin_4x4,linear,0,maxsat_match_z3,hard,OK,220,220,
+tseytin_4x4,linear,0,psw_within_family_bound,none,SKIPPED,-,6144,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_4x4,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_4x4,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1363.462,
+type3_n150_t5_s3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n150_t5_s3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n150_t5_s3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n150_t5_s3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n150_t5_s3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n150_t5_s3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_pure_4x4,linear,0,dnnf_count_match,hard,OK,256,256,
+tseytin_pure_4x4,linear,0,dag_within_bcms_bound,hard,OK,<=461073329160192,33962,
+tseytin_pure_4x4,linear,0,maxsat_match_z3,hard,OK,212,212,
+tseytin_pure_4x4,linear,0,psw_within_family_bound,none,SKIPPED,-,6144,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_pure_4x4,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_pure_4x4,linear,0,phase_times_nonneg,soft,OK,>=0,sum=1300.371,
+type1_v500_c600,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v500_c600,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v500_c600,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v500_c600,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n1000_t5_s3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n1000_t5_s3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n1000_t5_s3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n1000_t5_s3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n1000_t5_s3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n1000_t5_s3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n5000_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n5000_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n5000_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n5000_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n5000_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n5000_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v200_c800_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v200_c800_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v200_c800_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v200_c800_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n120_t5_s3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n120_t5_s3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n120_t5_s3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n120_t5_s3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n120_t5_s3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n120_t5_s3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v150_c180,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type1_v150_c180,greedy,0,dag_within_bcms_bound,hard,OK,<=374443486470144,24341837,
+type1_v150_c180,greedy,0,maxsat_match_z3,hard,OK,152,152,
+type1_v150_c180,greedy,0,psw_within_family_bound,soft,WARN,<=181,5616,"psw=5616 > borne attendue=181 (famille type1, mode greedy)"
+type1_v150_c180,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type1_v150_c180,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=31530.292,
+type2_v500_c2000_t3_ordered,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v500_c2000_t3_ordered,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3_ordered,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v500_c2000_t3_ordered,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3_ordered,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n10000_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n10000_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n10000_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n10000_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n10000_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n10000_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v50_c400_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c400_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c400_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c400_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v50_c400_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c400_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n200_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n200_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n200_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n200_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n200_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n200_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v100_c426_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v100_c426_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v100_c426_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c426_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v100_c426_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c426_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n60_t5_s3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n60_t5_s3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n60_t5_s3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n60_t5_s3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n60_t5_s3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n60_t5_s3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v2000_c8000_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v2000_c8000_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v2000_c8000_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v2000_c8000_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v2000_c8000_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v2000_c8000_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n1000_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n1000_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n1000_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n1000_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n1000_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n1000_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n90_t5_s3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n90_t5_s3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n90_t5_s3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n90_t5_s3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n90_t5_s3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n90_t5_s3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v50_c400_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c400_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c400_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c400_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v50_c400_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c400_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v100_c400_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v15_c64_difficile,random,0,dnnf_count_match,hard,OK,5,5,
+random_k3_v15_c64_difficile,random,0,dag_within_bcms_bound,hard,OK,<=80478961528,4491,
+random_k3_v15_c64_difficile,random,0,maxsat_match_z3,hard,OK,64,64,
+random_k3_v15_c64_difficile,random,0,psw_within_family_bound,none,SKIPPED,-,526,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v15_c64_difficile,random,0,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v15_c64_difficile,random,0,phase_times_nonneg,soft,OK,>=0,sum=74.340,
+random_k3_v15_c64_difficile,random,1,dnnf_count_match,hard,OK,5,5,
+random_k3_v15_c64_difficile,random,1,dag_within_bcms_bound,hard,OK,<=80478961528,4491,
+random_k3_v15_c64_difficile,random,1,maxsat_match_z3,hard,OK,64,64,
+random_k3_v15_c64_difficile,random,1,psw_within_family_bound,none,SKIPPED,-,526,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v15_c64_difficile,random,1,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v15_c64_difficile,random,1,phase_times_nonneg,soft,OK,>=0,sum=65.682,
+random_k3_v15_c64_difficile,random,2,dnnf_count_match,hard,OK,5,5,
+random_k3_v15_c64_difficile,random,2,dag_within_bcms_bound,hard,OK,<=80478961528,4491,
+random_k3_v15_c64_difficile,random,2,maxsat_match_z3,hard,OK,64,64,
+random_k3_v15_c64_difficile,random,2,psw_within_family_bound,none,SKIPPED,-,526,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v15_c64_difficile,random,2,consistency_match_dp_z3,hard,OK,True,True,
+random_k3_v15_c64_difficile,random,2,phase_times_nonneg,soft,OK,>=0,sum=75.004,
+type3_n100_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n100_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n100_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v50_c213_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c213_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c213_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c213_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v50_c213_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c213_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v200_c852_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v200_c852_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v200_c852_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v200_c852_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v200_c852_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v200_c852_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v500_c2000_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v500_c2000_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n5000_t3_s2,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n5000_t3_s2,greedy,0,dag_within_bcms_bound,hard,OK,<=53760000,247433,
+type3_n5000_t3_s2,greedy,0,maxsat_match_z3,hard,OK,10000,10000,
+type3_n5000_t3_s2,greedy,0,psw_within_family_bound,hard,OK,<=8,8,
+type3_n5000_t3_s2,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n5000_t3_s2,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=42347.921,
+type2_v100_c400_t4,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v100_c400_t4,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v100_c400_t4,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t4,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t4,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t4,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v100_c426_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v100_c426_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v100_c426_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c426_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v100_c426_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c426_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v1000_c4000_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v1000_c4000_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v1000_c4000_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v1000_c4000_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v1000_c4000_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v1000_c4000_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_5x5,linear,0,dnnf_count_match,hard,OK,2,2,
+tseytin_5x5,linear,0,dag_within_bcms_bound,hard,OK,<=51432405168291840,11991,
+tseytin_5x5,linear,0,maxsat_match_z3,hard,OK,375,375,
+tseytin_5x5,linear,0,psw_within_family_bound,none,SKIPPED,-,24576,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_5x5,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_5x5,linear,0,phase_times_nonneg,soft,OK,>=0,sum=21930.958,
+random_k3_v200_c852_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v200_c852_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v200_c852_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v200_c852_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v200_c852_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v200_c852_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v30_c240_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v30_c240_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v30_c240_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c240_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v30_c240_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c240_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_pure_5x5,linear,0,dnnf_count_match,hard,OK,1024,1024,
+tseytin_pure_5x5,linear,0,dag_within_bcms_bound,hard,OK,<=50393366680043520,194801,
+tseytin_pure_5x5,linear,0,maxsat_match_z3,hard,OK,365,365,
+tseytin_pure_5x5,linear,0,psw_within_family_bound,none,SKIPPED,-,24576,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_pure_5x5,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_pure_5x5,linear,0,phase_times_nonneg,soft,OK,>=0,sum=20009.900,
+factorization_5x5_464d,linear,0,dnnf_count_match,hard,OK,2,2,
+factorization_5x5_464d,linear,0,dag_within_bcms_bound,hard,OK,<=51432405168291840,11991,
+factorization_5x5_464d,linear,0,maxsat_match_z3,hard,OK,375,375,
+factorization_5x5_464d,linear,0,psw_within_family_bound,none,SKIPPED,-,24576,borne psw definie pour decompo optimale (greedy uniquement)
+factorization_5x5_464d,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+factorization_5x5_464d,linear,0,phase_times_nonneg,soft,OK,>=0,sum=21026.566,
+factorization_5x5_464d_simplified,linear,0,dnnf_count_match,hard,OK,2,2,
+factorization_5x5_464d_simplified,linear,0,dag_within_bcms_bound,hard,OK,<=49562135889444864,11719,
+factorization_5x5_464d_simplified,linear,0,maxsat_match_z3,hard,OK,357,357,
+factorization_5x5_464d_simplified,linear,0,psw_within_family_bound,none,SKIPPED,-,24576,borne psw definie pour decompo optimale (greedy uniquement)
+factorization_5x5_464d_simplified,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+factorization_5x5_464d_simplified,linear,0,phase_times_nonneg,soft,OK,>=0,sum=19686.866,
+random_k3_v80_c200,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v80_c200,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v80_c200,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v80_c200,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v80_c200,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v80_c200,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v100_c200_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v100_c200_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v100_c200_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c200_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v100_c200_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c200_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v30_c128_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v30_c128_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v30_c128_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c128_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v30_c128_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c128_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v30_c240_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v30_c240_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v30_c240_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c240_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v30_c240_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c240_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v50_c200_t3,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v50_c200_t3,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v50_c200_t3,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v50_c200_t3,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v50_c200_t3,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v50_c200_t3,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v100_c400_t4_ordered,linear,0,dnnf_count_match,hard,OK,74649816583372800,74649816583372800,
+type2_v100_c400_t4_ordered,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,nodes=1504315 bound=overflow,valeurs manquantes ou overflow
+type2_v100_c400_t4_ordered,linear,0,maxsat_match_z3,hard,OK,400,400,
+type2_v100_c400_t4_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,174144,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t4_ordered,linear,0,consistency_match_dp_z3,hard,OK,True,True,
+type2_v100_c400_t4_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=62912.797,
+type2_v200_c800_t3,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v200_c800_t3,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v200_c800_t3,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type2_v200_c800_t3,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v2000_c8000_t3,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v2000_c8000_t3,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v2000_c8000_t3,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v2000_c8000_t3,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type2_v2000_c8000_t3,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v2000_c8000_t3,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v50_c200_t4,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v50_c200_t4,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v50_c200_t4,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v50_c200_t4,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v50_c200_t4,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v50_c200_t4,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n1000_t5_s3,greedy,0,dnnf_count_match,hard,OK,overflow~overflow,overflow~overflow,"DP et DAG tous deux satures, accord par convention"
+type3_n1000_t5_s3,greedy,0,dag_within_bcms_bound,hard,OK,<=9567936000,1011659,
+type3_n1000_t5_s3,greedy,0,maxsat_match_z3,hard,OK,5328,5328,
+type3_n1000_t5_s3,greedy,0,psw_within_family_bound,soft,OK,<=60,60,
+type3_n1000_t5_s3,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+type3_n1000_t5_s3,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=71492.612,
+random_k3_v50_c213_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c213_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c213_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c213_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v50_c213_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c213_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v1000_c4000_t3,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v1000_c4000_t3,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v1000_c4000_t3,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v1000_c4000_t3,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type2_v1000_c4000_t3,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v1000_c4000_t3,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n10000_t3_s2,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n10000_t3_s2,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n10000_t3_s2,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n10000_t3_s2,greedy,0,psw_within_family_bound,hard,SKIPPED,-,-,run non OK
+type3_n10000_t3_s2,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n10000_t3_s2,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v40_c100,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v40_c100,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v40_c100,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v40_c100,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v40_c100,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v40_c100,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v500_c600_ordered,linear,0,dnnf_count_match,hard,OK,0,0,
+type1_v500_c600_ordered,linear,0,dag_within_bcms_bound,hard,OK,<=3318777337713529344,1272,
+type1_v500_c600_ordered,linear,0,maxsat_match_z3,hard,OK,507,507,
+type1_v500_c600_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,77769,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v500_c600_ordered,linear,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v500_c600_ordered,linear,0,phase_times_nonneg,soft,OK,>=0,sum=90943.552,
+type3_n60_t3_s2,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n60_t3_s2,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n60_t3_s2,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n60_t3_s2,linear,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n60_t3_s2,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n60_t3_s2,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,random,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v100_c400_t3,random,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,random,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t3,random,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k4_v40_c100,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k4_v40_c100,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k4_v40_c100,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k4_v40_c100,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k4_v40_c100,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k4_v40_c100,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v80_c200,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v80_c200,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v80_c200,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v80_c200,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v80_c200,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v80_c200,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v500_c2000_t3,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v100_c200_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v100_c200_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v100_c200_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c200_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v100_c200_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v100_c200_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v500_c600,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v500_c600,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v500_c600,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type1_v500_c600,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v200_c250,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v200_c250,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v200_c250,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v200_c250,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v200_c250,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v200_c250,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v150_c180,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v150_c180,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v150_c180,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v150_c180,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v150_c180,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v150_c180,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v200_c800_t3_ordered,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v200_c800_t3_ordered,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v200_c800_t3_ordered,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3_ordered,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v200_c800_t3_ordered,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v200_c800_t3_ordered,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v50_c60,random,1,dnnf_count_match,hard,OK,0,0,
+type1_v50_c60,random,1,dag_within_bcms_bound,hard,OK,<=3285950976000,650200,
+type1_v50_c60,random,1,maxsat_match_z3,hard,OK,46,46,
+type1_v50_c60,random,1,psw_within_family_bound,soft,SKIPPED,-,1680,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v50_c60,random,1,consistency_match_dp_z3,hard,OK,False,False,
+type1_v50_c60,random,1,phase_times_nonneg,soft,OK,>=0,sum=168572.153,
+random_k3_v50_c100_difficile,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c100_difficile,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c100_difficile,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c100_difficile,linear,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+random_k3_v50_c100_difficile,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c100_difficile,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,2,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n100_t3_s2,random,2,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,2,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,2,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n100_t3_s2,random,2,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,2,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v80_c100,linear,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v80_c100,linear,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v80_c100,linear,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v80_c100,linear,0,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v80_c100,linear,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v80_c100,linear,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_pure_4x4,greedy,0,dnnf_count_match,hard,OK,256,256,
+tseytin_pure_4x4,greedy,0,dag_within_bcms_bound,hard,OK,<=1092914558009344,799835,
+tseytin_pure_4x4,greedy,0,maxsat_match_z3,hard,OK,212,212,
+tseytin_pure_4x4,greedy,0,psw_within_family_bound,none,SKIPPED,-,8192,pas de borne
+tseytin_pure_4x4,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_pure_4x4,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=224779.088,
+tseytin_4x4,greedy,0,dnnf_count_match,hard,OK,2,2,
+tseytin_4x4,greedy,0,dag_within_bcms_bound,hard,OK,<=1123700883587072,116732,
+tseytin_4x4,greedy,0,maxsat_match_z3,hard,OK,220,220,
+tseytin_4x4,greedy,0,psw_within_family_bound,none,SKIPPED,-,8192,pas de borne
+tseytin_4x4,greedy,0,consistency_match_dp_z3,hard,OK,True,True,
+tseytin_4x4,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=251317.819,
+type2_v500_c2000_t3_ordered,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v500_c2000_t3_ordered,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3_ordered,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3_ordered,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type2_v500_c2000_t3_ordered,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v500_c2000_t3_ordered,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v500_c600_ordered,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v500_c600_ordered,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v500_c600_ordered,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600_ordered,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type1_v500_c600_ordered,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v500_c600_ordered,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_3x3,random,1,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+tseytin_3x3,random,1,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+tseytin_3x3,random,1,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,1,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_3x3,random,1,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,1,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_3x3,random,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+tseytin_3x3,random,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+tseytin_3x3,random,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,0,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_3x3,random,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v50_c60,random,2,dnnf_count_match,hard,OK,0,0,
+type1_v50_c60,random,2,dag_within_bcms_bound,hard,OK,<=41234683133952000,6653891,
+type1_v50_c60,random,2,maxsat_match_z3,hard,OK,46,46,
+type1_v50_c60,random,2,psw_within_family_bound,soft,SKIPPED,-,39040,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v50_c60,random,2,consistency_match_dp_z3,hard,OK,False,False,
+type1_v50_c60,random,2,phase_times_nonneg,soft,OK,>=0,sum=485348.395,
+type2_v100_c400_t3,random,2,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v100_c400_t3,random,2,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,random,2,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,2,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t3,random,2,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,2,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,random,1,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type2_v100_c400_t3,random,1,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type2_v100_c400_t3,random,1,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,1,psw_within_family_bound,soft,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type2_v100_c400_t3,random,1,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type2_v100_c400_t3,random,1,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_3x3,random,2,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+tseytin_3x3,random,2,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+tseytin_3x3,random,2,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,2,psw_within_family_bound,none,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+tseytin_3x3,random,2,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_3x3,random,2,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v200_c250,greedy,0,dnnf_count_match,hard,OK,0,0,
+type1_v200_c250,greedy,0,dag_within_bcms_bound,hard,OK,<=26773551000000000,415,
+type1_v200_c250,greedy,0,maxsat_match_z3,hard,OK,210,210,
+type1_v200_c250,greedy,0,psw_within_family_bound,soft,WARN,<=251,21000,"psw=21000 > borne attendue=251 (famille type1, mode greedy)"
+type1_v200_c250,greedy,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v200_c250,greedy,0,phase_times_nonneg,soft,OK,>=0,sum=581667.359,
+random_k4_v40_c100,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k4_v40_c100,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k4_v40_c100,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k4_v40_c100,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k4_v40_c100,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k4_v40_c100,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type1_v50_c60,random,0,dnnf_count_match,hard,OK,0,0,
+type1_v50_c60,random,0,dag_within_bcms_bound,hard,OK,<=410743872000000,79954,
+type1_v50_c60,random,0,maxsat_match_z3,hard,OK,46,46,
+type1_v50_c60,random,0,psw_within_family_bound,soft,SKIPPED,-,8400,borne psw definie pour decompo optimale (greedy uniquement)
+type1_v50_c60,random,0,consistency_match_dp_z3,hard,OK,False,False,
+type1_v50_c60,random,0,phase_times_nonneg,soft,OK,>=0,sum=932349.137,
+type1_v200_c250_ordered,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type1_v200_c250_ordered,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type1_v200_c250_ordered,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v200_c250_ordered,greedy,0,psw_within_family_bound,soft,SKIPPED,-,-,run non OK
+type1_v200_c250_ordered,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type1_v200_c250_ordered,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v30_c128_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v30_c128_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v30_c128_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c128_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v30_c128_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v30_c128_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v50_c100_difficile,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v50_c100_difficile,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v50_c100_difficile,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c100_difficile,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v50_c100_difficile,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v50_c100_difficile,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+random_k3_v40_c100,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+random_k3_v40_c100,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+random_k3_v40_c100,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v40_c100,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+random_k3_v40_c100,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+random_k3_v40_c100,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,1,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n100_t3_s2,random,1,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,1,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,1,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n100_t3_s2,random,1,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,1,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_5x5,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+tseytin_5x5,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+tseytin_5x5,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_5x5,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+tseytin_5x5,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_5x5,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+tseytin_pure_5x5,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+tseytin_pure_5x5,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+tseytin_pure_5x5,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_pure_5x5,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+tseytin_pure_5x5,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+tseytin_pure_5x5,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+factorization_5x5_464d,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+factorization_5x5_464d,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+factorization_5x5_464d,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+factorization_5x5_464d,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+factorization_5x5_464d,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+factorization_5x5_464d,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+factorization_5x5_464d_simplified,greedy,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+factorization_5x5_464d_simplified,greedy,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+factorization_5x5_464d_simplified,greedy,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+factorization_5x5_464d_simplified,greedy,0,psw_within_family_bound,none,SKIPPED,-,-,run non OK
+factorization_5x5_464d_simplified,greedy,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+factorization_5x5_464d_simplified,greedy,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,0,dnnf_count_match,hard,SKIPPED,true,-,run non OK
+type3_n100_t3_s2,random,0,dag_within_bcms_bound,hard,SKIPPED,-,-,run non OK
+type3_n100_t3_s2,random,0,maxsat_match_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,0,psw_within_family_bound,hard,SKIPPED,-,,borne psw definie pour decompo optimale (greedy uniquement)
+type3_n100_t3_s2,random,0,consistency_match_dp_z3,hard,SKIPPED,-,-,run DP non OK
+type3_n100_t3_s2,random,0,phase_times_nonneg,soft,SKIPPED,-,-,run non OK

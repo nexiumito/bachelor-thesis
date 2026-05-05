@@ -291,6 +291,13 @@ def _query_stats(structure: pd.DataFrame, z3: pd.DataFrame, timings: pd.DataFram
         z3_sat["z3_solve_ms"] = pd.to_numeric(z3_sat["z3_solve_ms"], errors="coerce")
     df = dp_q.merge(z3_sat, on="instance_id", how="left") if not z3_sat.empty else dp_q.copy()
     df["dnnf_edges"] = pd.to_numeric(df.get("dnnf_edges"), errors="coerce")
+    # Filtre instances UNSAT (DAG reduit a FALSE, dnnf_edges == 0) :
+    # sur ces instances les requetes retournent immediatement (~30 ns)
+    # car elles testent if(!root) en debut de fonction, ce qui pollue les
+    # medianes et les ratios us/arete (division par 0).
+    df = df[df["dnnf_edges"] > 0]
+    if df.empty:
+        return [], {}
 
     stats = []
     for col, label in _QUERY_LABELS:
@@ -330,6 +337,11 @@ def _query_stats(structure: pd.DataFrame, z3: pd.DataFrame, timings: pd.DataFram
                        ["instance_id", "time_total_ms_median"]].copy()
         merged = dp_q.merge(dp_b, on="instance_id", how="left") \
                      .merge(z3_sat, on="instance_id", how="left")
+        # Meme filtre UNSAT (dnnf_edges > 0) que ci-dessus pour eviter des
+        # N* artificiellement petits sur des formules UNSAT trivialement
+        # resolues par le DP (t_query et dp_compile tres petits).
+        merged["dnnf_edges"] = pd.to_numeric(merged.get("dnnf_edges"), errors="coerce")
+        merged = merged[merged["dnnf_edges"] > 0]
         merged["t_query"]    = pd.to_numeric(merged["query_co_ms"], errors="coerce")
         merged["dp_compile"] = pd.to_numeric(merged["time_total_ms_median"], errors="coerce")
         merged["z3_solve"]   = pd.to_numeric(merged["z3_solve_ms"], errors="coerce")

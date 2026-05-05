@@ -57,6 +57,11 @@ def make(input_dir: Path, output_dir: Path, config: dict[str, Any]) -> None:
     df["z3_solve"] = pd.to_numeric(df["z3_solve_ms"], errors="coerce")
     df = df.dropna(subset=["z3_solve"])
     df = df[df["z3_solve"] > 0]
+    # Filtre instances UNSAT (dnnf_edges == 0) : sur ces instances les
+    # requetes retournent en ~30 ns et les ratios z3_solve/t_q deviennent
+    # artificiellement geants (10^4 - 10^5), polluant le boxplot IM/CE.
+    df["dnnf_edges"] = pd.to_numeric(df.get("dnnf_edges"), errors="coerce")
+    df = df[df["dnnf_edges"] > 0]
     if df.empty:
         logger.warning("query_vs_z3: pas de donnees apres filtrage, skip")
         return

@@ -1422,23 +1422,6 @@ def main() -> int:
                 n_total_done += d
                 n_total_failed += f
 
-        # ---------------- INVARIANTS ----------------
-        if not (args.only_passe_a or args.only_passe_b or args.only_passe_c
-                or args.only_plots or args.only_summary):
-            try:
-                state.update(phase="invariants")
-                inv_summary = invariants_mod.check_all_invariants(
-                    structure_csv=output_dir / "structure.csv",
-                    z3_csv=output_dir / "z3.csv" if cfg.z3.get("enabled", True) else None,
-                    instances={i.id: i for i in instances},
-                    output_csv=output_dir / "invariants.csv",
-                    failures_log=output_dir / "failures.log",
-                    notifier=notifier,
-                )
-                logger.info("Invariants : %s", inv_summary)
-            except Exception as e:
-                logger.exception("Invariants ont echoue : %s", e)
-
         # ---------------- PASSE B ----------------
         if not (args.only_passe_a or args.only_passe_c or args.only_plots
                 or args.only_summary or args.only_invariants):
@@ -1461,6 +1444,26 @@ def main() -> int:
                 )
                 n_total_done += d
                 n_total_failed += f
+
+        # ---------------- INVARIANTS ----------------
+        # Tourne APRES toutes les passes (A, B, C) pour que I7/I8
+        # (entails_match_z3, enumerate_count_match) voient les lignes
+        # runner='dp_query' produites par la passe C.
+        if not (args.only_passe_a or args.only_passe_b or args.only_passe_c
+                or args.only_plots or args.only_summary):
+            try:
+                state.update(phase="invariants")
+                inv_summary = invariants_mod.check_all_invariants(
+                    structure_csv=output_dir / "structure.csv",
+                    z3_csv=output_dir / "z3.csv" if cfg.z3.get("enabled", True) else None,
+                    instances={i.id: i for i in instances},
+                    output_csv=output_dir / "invariants.csv",
+                    failures_log=output_dir / "failures.log",
+                    notifier=notifier,
+                )
+                logger.info("Invariants : %s", inv_summary)
+            except Exception as e:
+                logger.exception("Invariants ont echoue : %s", e)
 
         # ---------------- PLOTS ----------------
         if not (args.only_passe_a or args.only_passe_b or args.only_passe_c

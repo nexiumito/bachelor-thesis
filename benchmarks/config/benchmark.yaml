@@ -103,7 +103,7 @@ passe_c:
   # Cap sur dnnf_enumerate(all) : si dnnf_count > ce seuil, skip enumerate(all)
   # (sinon timeout garanti sur instances a 2^n modeles).
   enumerate_count_cap: 1000000
-  default_timeout_s: 600
+  default_timeout_s: 1800
 
 # ----------------------------------------------------------------------------
 # Echantillonnage du mode arbre random
