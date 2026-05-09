@@ -1,0 +1,137 @@
+# instances.yaml — inventaire des formules CNF a benchmarker.
+#
+# Chaque entree decrit une instance avec son chemin (relatif a src/), sa famille,
+# ses parametres, sa borne psw theorique attendue et la severite associee.
+#
+# Champs :
+#   id                       identifiant unique snake_case (sert de cle CSV)
+#   path                     chemin DIMACS relatif au cwd ``src/``
+#   family                   type1 | type2 | type3 | random | tseytin |
+#                            factorization | misc
+#   n_vars, n_clauses        renseignes si connus, sinon lus dans le DIMACS
+#   params                   parametres famille-specifiques (informatif)
+#   expected_psw_max         borne psw theorique attendue (null si pas de borne)
+#   expected_psw_severity    hard | soft | none
+#   timeout_s                override du timeout pour cette instance
+#   enabled                  defaut true ; mettre false pour skipper
+#   notes                    commentaire libre
+#
+# Tous les chemins commencent par "../data/" car l'orchestrateur lance sat_solver
+# depuis src/. Les bornes psw sont issues des papiers Saether/Telle/Vatshelle 2015
+# (Section 6.1) pour les types 1-3, et calibrees empiriquement pour t=5 s=3.
+
+instances:
+  # ===========================================================================
+  # type1/ — Interval ordering (Saether Sect. 6.1, borne loose psw <= m+1, soft)
+  # ===========================================================================
+  - {id: type1_v20_c25,             path: data/type1/type1_v20_c25.cnf,             family: type1, n_vars:  20, n_clauses:  25, expected_psw_max: 26,   expected_psw_severity: soft}
+  - {id: type1_v20_c25_ordered,     path: data/type1/type1_v20_c25_ordered.cnf,     family: type1, n_vars:  20, n_clauses:  25, expected_psw_max: 26,   expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v30_c40,             path: data/type1/type1_v30_c40.cnf,             family: type1, n_vars:  30, n_clauses:  40, expected_psw_max: 41,   expected_psw_severity: soft}
+  - {id: type1_v30_c40_ordered,     path: data/type1/type1_v30_c40_ordered.cnf,     family: type1, n_vars:  30, n_clauses:  40, expected_psw_max: 41,   expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v50_c60,             path: data/type1/type1_v50_c60.cnf,             family: type1, n_vars:  50, n_clauses:  60, expected_psw_max: 61,   expected_psw_severity: soft}
+  - {id: type1_v50_c60_ordered,     path: data/type1/type1_v50_c60_ordered.cnf,     family: type1, n_vars:  50, n_clauses:  60, expected_psw_max: 61,   expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v80_c100,            path: data/type1/type1_v80_c100.cnf,            family: type1, n_vars:  80, n_clauses: 100, expected_psw_max: 101,  expected_psw_severity: soft}
+  - {id: type1_v80_c100_ordered,    path: data/type1/type1_v80_c100_ordered.cnf,    family: type1, n_vars:  80, n_clauses: 100, expected_psw_max: 101,  expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v150_c180,           path: data/type1/type1_v150_c180.cnf,           family: type1, n_vars: 150, n_clauses: 180, expected_psw_max: 181,  expected_psw_severity: soft}
+  - {id: type1_v150_c180_ordered,   path: data/type1/type1_v150_c180_ordered.cnf,   family: type1, n_vars: 150, n_clauses: 180, expected_psw_max: 181,  expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v200_c250,           path: data/type1/type1_v200_c250.cnf,           family: type1, n_vars: 200, n_clauses: 250, expected_psw_max: 251,  expected_psw_severity: soft}
+  - {id: type1_v200_c250_ordered,   path: data/type1/type1_v200_c250_ordered.cnf,   family: type1, n_vars: 200, n_clauses: 250, expected_psw_max: 251,  expected_psw_severity: soft, params: {ordered: true}}
+  - {id: type1_v500_c600,           path: data/type1/type1_v500_c600.cnf,           family: type1, n_vars: 500, n_clauses: 600, expected_psw_max: 601,  expected_psw_severity: soft}
+  - {id: type1_v500_c600_ordered,   path: data/type1/type1_v500_c600_ordered.cnf,   family: type1, n_vars: 500, n_clauses: 600, expected_psw_max: 601,  expected_psw_severity: soft, params: {ordered: true}}
+
+  # ===========================================================================
+  # type2/ — Interval ordering taille fixe (psw <= 32 pour t=3, 64 pour t=4, soft)
+  # ===========================================================================
+  - {id: type2_v25_c100_t3,             path: data/type2/type2_v25_c100_t3.cnf,             family: type2, n_vars:   25, n_clauses:  100, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v25_c100_t3_ordered,     path: data/type2/type2_v25_c100_t3_ordered.cnf,     family: type2, n_vars:   25, n_clauses:  100, params: {t: 3, ordered: true},  expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v25_c100_t4,             path: data/type2/type2_v25_c100_t4.cnf,             family: type2, n_vars:   25, n_clauses:  100, params: {t: 4, ordered: false}, expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v25_c100_t4_ordered,     path: data/type2/type2_v25_c100_t4_ordered.cnf,     family: type2, n_vars:   25, n_clauses:  100, params: {t: 4, ordered: true},  expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v50_c200_t3,             path: data/type2/type2_v50_c200_t3.cnf,             family: type2, n_vars:   50, n_clauses:  200, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v50_c200_t3_ordered,     path: data/type2/type2_v50_c200_t3_ordered.cnf,     family: type2, n_vars:   50, n_clauses:  200, params: {t: 3, ordered: true},  expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v50_c200_t4,             path: data/type2/type2_v50_c200_t4.cnf,             family: type2, n_vars:   50, n_clauses:  200, params: {t: 4, ordered: false}, expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v50_c200_t4_ordered,     path: data/type2/type2_v50_c200_t4_ordered.cnf,     family: type2, n_vars:   50, n_clauses:  200, params: {t: 4, ordered: true},  expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v100_c400_t3,            path: data/type2/type2_v100_c400_t3.cnf,            family: type2, n_vars:  100, n_clauses:  400, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v100_c400_t3_ordered,    path: data/type2/type2_v100_c400_t3_ordered.cnf,    family: type2, n_vars:  100, n_clauses:  400, params: {t: 3, ordered: true},  expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v100_c400_t4,            path: data/type2/type2_v100_c400_t4.cnf,            family: type2, n_vars:  100, n_clauses:  400, params: {t: 4, ordered: false}, expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v100_c400_t4_ordered,    path: data/type2/type2_v100_c400_t4_ordered.cnf,    family: type2, n_vars:  100, n_clauses:  400, params: {t: 4, ordered: true},  expected_psw_max: 64, expected_psw_severity: soft}
+  - {id: type2_v200_c800_t3,            path: data/type2/type2_v200_c800_t3.cnf,            family: type2, n_vars:  200, n_clauses:  800, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v200_c800_t3_ordered,    path: data/type2/type2_v200_c800_t3_ordered.cnf,    family: type2, n_vars:  200, n_clauses:  800, params: {t: 3, ordered: true},  expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v500_c2000_t3,           path: data/type2/type2_v500_c2000_t3.cnf,           family: type2, n_vars:  500, n_clauses: 2000, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v500_c2000_t3_ordered,   path: data/type2/type2_v500_c2000_t3_ordered.cnf,   family: type2, n_vars:  500, n_clauses: 2000, params: {t: 3, ordered: true},  expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v1000_c4000_t3,          path: data/type2/type2_v1000_c4000_t3.cnf,          family: type2, n_vars: 1000, n_clauses: 4000, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+  - {id: type2_v2000_c8000_t3,          path: data/type2/type2_v2000_c8000_t3.cnf,          family: type2, n_vars: 2000, n_clauses: 8000, params: {t: 3, ordered: false}, expected_psw_max: 32, expected_psw_severity: soft}
+
+  # ===========================================================================
+  # type3/ — XOR circulaire (psw <= 8 pour t=3 s=2, hard ; psw ~60 pour t=5 s=3, soft)
+  # ===========================================================================
+  - {id: type3_n30_t3_s2,           path: data/type3/type3_n30_t3_s2.cnf,           family: type3, n_vars:    30, params: {n:    30, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n30_t3_s2_ordered,   path: data/type3/type3_n30_t3_s2_ordered.cnf,   family: type3, n_vars:    30, params: {n:    30, t: 3, s: 2, ordered: true},  expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n60_t3_s2,           path: data/type3/type3_n60_t3_s2.cnf,           family: type3, n_vars:    60, params: {n:    60, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n60_t3_s2_ordered,   path: data/type3/type3_n60_t3_s2_ordered.cnf,   family: type3, n_vars:    60, params: {n:    60, t: 3, s: 2, ordered: true},  expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n100_t3_s2,          path: data/type3/type3_n100_t3_s2.cnf,          family: type3, n_vars:   100, params: {n:   100, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n100_t3_s2_ordered,  path: data/type3/type3_n100_t3_s2_ordered.cnf,  family: type3, n_vars:   100, params: {n:   100, t: 3, s: 2, ordered: true},  expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n200_t3_s2,          path: data/type3/type3_n200_t3_s2.cnf,          family: type3, n_vars:   200, params: {n:   200, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n200_t3_s2_ordered,  path: data/type3/type3_n200_t3_s2_ordered.cnf,  family: type3, n_vars:   200, params: {n:   200, t: 3, s: 2, ordered: true},  expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n1000_t3_s2,         path: data/type3/type3_n1000_t3_s2.cnf,         family: type3, n_vars:  1000, params: {n:  1000, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard}
+  - {id: type3_n5000_t3_s2,         path: data/type3/type3_n5000_t3_s2.cnf,         family: type3, n_vars:  5000, params: {n:  5000, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard, timeout_s: 3600}
+  - {id: type3_n10000_t3_s2,        path: data/type3/type3_n10000_t3_s2.cnf,        family: type3, n_vars: 10000, params: {n: 10000, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard, timeout_s: 3600}
+  - {id: type3_n50000_t3_s2,        path: data/type3/type3_n50000_t3_s2.cnf,        family: type3, n_vars: 50000, params: {n: 50000, t: 3, s: 2, ordered: false}, expected_psw_max: 8,  expected_psw_severity: hard, timeout_s: 3600, enabled: false, notes: "trop gros, desactive par defaut, activer manuellement"}
+  - {id: type3_n100000_t3_s2,       path: data/type3/type3_n100000_t3_s2.cnf,       family: type3, n_vars: 100000, params: {n: 100000, t: 3, s: 2, ordered: false}, expected_psw_max: 8, expected_psw_severity: hard, timeout_s: 3600, enabled: false}
+  - {id: type3_n60_t5_s3,           path: data/type3/type3_n60_t5_s3.cnf,           family: type3, n_vars:    60, params: {n:    60, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n60_t5_s3_ordered,   path: data/type3/type3_n60_t5_s3_ordered.cnf,   family: type3, n_vars:    60, params: {n:    60, t: 5, s: 3, ordered: true},  expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n90_t5_s3,           path: data/type3/type3_n90_t5_s3.cnf,           family: type3, n_vars:    90, params: {n:    90, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n90_t5_s3_ordered,   path: data/type3/type3_n90_t5_s3_ordered.cnf,   family: type3, n_vars:    90, params: {n:    90, t: 5, s: 3, ordered: true},  expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n120_t5_s3,          path: data/type3/type3_n120_t5_s3.cnf,          family: type3, n_vars:   120, params: {n:   120, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n120_t5_s3_ordered,  path: data/type3/type3_n120_t5_s3_ordered.cnf,  family: type3, n_vars:   120, params: {n:   120, t: 5, s: 3, ordered: true},  expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n150_t5_s3,          path: data/type3/type3_n150_t5_s3.cnf,          family: type3, n_vars:   150, params: {n:   150, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n150_t5_s3_ordered,  path: data/type3/type3_n150_t5_s3_ordered.cnf,  family: type3, n_vars:   150, params: {n:   150, t: 5, s: 3, ordered: true},  expected_psw_max: 60, expected_psw_severity: soft}
+  - {id: type3_n1000_t5_s3,         path: data/type3/type3_n1000_t5_s3.cnf,         family: type3, n_vars:  1000, params: {n:  1000, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft, timeout_s: 3600}
+  - {id: type3_n5000_t5_s3,         path: data/type3/type3_n5000_t5_s3.cnf,         family: type3, n_vars:  5000, params: {n:  5000, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft, timeout_s: 3600, enabled: false}
+  - {id: type3_n10000_t5_s3,        path: data/type3/type3_n10000_t5_s3.cnf,        family: type3, n_vars: 10000, params: {n: 10000, t: 5, s: 3, ordered: false}, expected_psw_max: 60, expected_psw_severity: soft, timeout_s: 3600, enabled: false}
+
+  # ===========================================================================
+  # random/ — Random k-SAT (pas de borne, baseline DP lent)
+  # ===========================================================================
+  - {id: random_k3_v7_c50,                          path: data/random/random_k3_v7_c50.cnf,                          family: random, n_vars:   7, n_clauses:  50, params: {k: 3, ratio: 7.14}}
+  - {id: random_k3_v8_c20,                          path: data/random/random_k3_v8_c20.cnf,                          family: random, n_vars:   8, n_clauses:  20, params: {k: 3, ratio: 2.50}}
+  - {id: random_k3_v8_c50,                          path: data/random/random_k3_v8_c50.cnf,                          family: random, n_vars:   8, n_clauses:  50, params: {k: 3, ratio: 6.25}}
+  - {id: random_k3_v9_c50,                          path: data/random/random_k3_v9_c50.cnf,                          family: random, n_vars:   9, n_clauses:  50, params: {k: 3, ratio: 5.56}}
+  - {id: random_k3_v10_c50,                         path: data/random/random_k3_v10_c50.cnf,                         family: random, n_vars:  10, n_clauses:  50, params: {k: 3, ratio: 5.00}}
+  - {id: random_k3_v11_c50,                         path: data/random/random_k3_v11_c50.cnf,                         family: random, n_vars:  11, n_clauses:  50, params: {k: 3, ratio: 4.55}}
+  - {id: random_k3_v12_c50,                         path: data/random/random_k3_v12_c50.cnf,                         family: random, n_vars:  12, n_clauses:  50, params: {k: 3, ratio: 4.17}}
+  - {id: random_k3_v15_c64_difficile,               path: data/random/random_k3_v15_c64_difficile.cnf,               family: random, n_vars:  15, n_clauses:  64, params: {k: 3, ratio: 4.27, difficile: true}}
+  - {id: random_k3_v20_c85_difficile,               path: data/random/random_k3_v20_c85_difficile.cnf,               family: random, n_vars:  20, n_clauses:  85, params: {k: 3, ratio: 4.25, difficile: true}}
+  - {id: random_k3_v30_c60_difficile,               path: data/random/random_k3_v30_c60_difficile.cnf,               family: random, n_vars:  30, n_clauses:  60, params: {k: 3, ratio: 2.00, difficile: true}}
+  - {id: random_k3_v30_c128_difficile,              path: data/random/random_k3_v30_c128_difficile.cnf,              family: random, n_vars:  30, n_clauses: 128, params: {k: 3, ratio: 4.27, difficile: true}}
+  - {id: random_k3_v30_c240_difficile,              path: data/random/random_k3_v30_c240_difficile.cnf,              family: random, n_vars:  30, n_clauses: 240, params: {k: 3, ratio: 8.00, difficile: true}}
+  - {id: random_k3_v40_c100,                        path: data/random/random_k3_v40_c100.cnf,                        family: random, n_vars:  40, n_clauses: 100, params: {k: 3, ratio: 2.50}}
+  - {id: random_k3_v50_c100_difficile,              path: data/random/random_k3_v50_c100_difficile.cnf,              family: random, n_vars:  50, n_clauses: 100, params: {k: 3, ratio: 2.00, difficile: true}}
+  - {id: random_k3_v50_c213_difficile,              path: data/random/random_k3_v50_c213_difficile.cnf,              family: random, n_vars:  50, n_clauses: 213, params: {k: 3, ratio: 4.26, difficile: true}}
+  - {id: random_k3_v50_c400_difficile,              path: data/random/random_k3_v50_c400_difficile.cnf,              family: random, n_vars:  50, n_clauses: 400, params: {k: 3, ratio: 8.00, difficile: true}}
+  - {id: random_k3_v80_c200,                        path: data/random/random_k3_v80_c200.cnf,                        family: random, n_vars:  80, n_clauses: 200, params: {k: 3, ratio: 2.50}}
+  - {id: random_k3_v100_c200_difficile,             path: data/random/random_k3_v100_c200_difficile.cnf,             family: random, n_vars: 100, n_clauses: 200, params: {k: 3, ratio: 2.00, difficile: true}, timeout_s: 1800}
+  - {id: random_k3_v100_c426_difficile,             path: data/random/random_k3_v100_c426_difficile.cnf,             family: random, n_vars: 100, n_clauses: 426, params: {k: 3, ratio: 4.26, difficile: true}, timeout_s: 1800}
+  - {id: random_k3_v200_c852_difficile,             path: data/random/random_k3_v200_c852_difficile.cnf,             family: random, n_vars: 200, n_clauses: 852, params: {k: 3, ratio: 4.26, difficile: true}, timeout_s: 1800}
+  - {id: random_k4_v20_c50,                         path: data/random/random_k4_v20_c50.cnf,                         family: random, n_vars:  20, n_clauses:  50, params: {k: 4, ratio: 2.50}}
+  - {id: random_k4_v40_c100,                        path: data/random/random_k4_v40_c100.cnf,                        family: random, n_vars:  40, n_clauses: 100, params: {k: 4, ratio: 2.50}}
+
+  # ===========================================================================
+  # tseytin/ — Circuits multiplication (de Loic Bardi). Lourd, pas de borne.
+  # ===========================================================================
+  - {id: tseytin_3x3,         path: data/tseytin/3x3.dimacs,         family: tseytin, params: {size: 3, pure: false}, timeout_s: 3600}
+  - {id: tseytin_pure_3x3,    path: data/tseytin/pure_3x3.dimacs,    family: tseytin, params: {size: 3, pure: true},  timeout_s: 3600}
+  - {id: tseytin_4x4,         path: data/tseytin/4x4.dimacs,         family: tseytin, params: {size: 4, pure: false}, timeout_s: 3600}
+  - {id: tseytin_pure_4x4,    path: data/tseytin/pure_4x4.dimacs,    family: tseytin, params: {size: 4, pure: true},  timeout_s: 3600}
+  - {id: tseytin_5x5,         path: data/tseytin/5x5.dimacs,         family: tseytin, params: {size: 5, pure: false}, timeout_s: 3600}
+  - {id: tseytin_pure_5x5,    path: data/tseytin/pure_5x5.dimacs,    family: tseytin, params: {size: 5, pure: true},  timeout_s: 3600}
+  - {id: tseytin_7x7,         path: data/tseytin/7x7.dimacs,         family: tseytin, params: {size: 7, pure: false}, timeout_s: 3600, enabled: false, notes: "tres lourd, activer manuellement"}
+  - {id: tseytin_pure_7x7,    path: data/tseytin/pure_7x7.dimacs,    family: tseytin, params: {size: 7, pure: true},  timeout_s: 3600, enabled: false}
+  - {id: tseytin_10x10,       path: data/tseytin/10x10.dimacs,       family: tseytin, params: {size: 10, pure: false}, timeout_s: 3600, enabled: false}
+  - {id: tseytin_pure_10x10,  path: data/tseytin/pure_10x10.dimacs,  family: tseytin, params: {size: 10, pure: true},  timeout_s: 3600, enabled: false}
+
+  # ===========================================================================
+  # factorization/ — Instances factorisation 5x5 (de Loic Bardi). Lourd.
+  # ===========================================================================
+  - {id: factorization_5x5_464d,             path: data/factorization/5x5_464d.dimacs,             family: factorization, params: {size: 5, z: 464}, timeout_s: 3600}
+  - {id: factorization_5x5_464d_simplified,  path: data/factorization/5x5_464d_simplified.dimacs,  family: factorization, params: {size: 5, z: 464, simplified: true}, timeout_s: 3600}
+

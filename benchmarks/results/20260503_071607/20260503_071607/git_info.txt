@@ -1,0 +1,15 @@
+# git_info.txt - genere le 2026-05-03T07:16:08.139737+00:00
+
+## git rev-parse HEAD
+249ddd5d8a76398a0190c5bf8f2029fa5c642c8f
+
+## git rev-parse --abbrev-ref HEAD
+main
+
+## git status -s
+?? .venv-bench/
+
+## git log -3 --oneline
+249ddd5 fix benchmark
+e1e8d83 fix benchmark
+699b979 fix bench: --resume targets in Makefile + path corrections in START.md

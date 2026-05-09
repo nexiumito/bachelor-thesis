@@ -116,25 +116,40 @@ Sortie standard : nombre de modèles (`#SAT`), valeur MaxSAT, taille du DAG d-DN
 
 5. **Requêtes sur le DAG compilé** (optionnel) :
 
-Une fois la formule compilée en d-DNNF (*Knowledge Compilation*), on peut interroger ce DAG en temps polynomial en sa taille. Le solveur expose les 3 requêtes suivantes (cf. *A Knowledge Compilation Map*, Darwiche & Marquis 2002, Table 5) :
+Une fois la formule compilée en d-DNNF (*Knowledge Compilation*), on peut interroger ce DAG en temps polynomial en sa taille. Le solveur expose les **6 requêtes polytime** sur d-DNNF (cf. *A Knowledge Compilation Map*, Darwiche & Marquis 2002, Table 5) :
 
-| Requête CLI | Sigle (Darwiche-Marquis) | Effet |
+| Requête CLI | Sigle | Effet |
 | :--- | :---: | :--- |
 | `consistency` | **CO** | F est-elle satisfaisable ? |
 | `validity` | **VA** | F est-elle une tautologie ? |
-| `find_model` | (variante de **ME**) | Affiche une affectation satisfaisante (ou indique UNSAT). |
+| `find_model` | **ME** (1 modèle) | Affiche une affectation satisfaisante (ou indique UNSAT) |
+| `entails L1 L2 ...` | **CE** | F entraîne-t-elle la clause `(L1 ∨ L2 ∨ …)` ? (littéraux DIMACS) |
+| `is_implicant L1 L2 ...` | **IM** | Le terme `(L1 ∧ L2 ∧ …)` est-il implicant de F ? |
+| `enumerate [LIMIT]` | **ME** (multi) | Énumère tous les modèles via callback, capés à `LIMIT` (défaut 10⁶) |
 
 Le model counting (**CT**, `#SAT`) est inclus de base dans la sortie standard du solveur, sans option à activer.
 
 **Exemples** :
 
 ```bash
-./sat_solver data/exemple1.cnf manual consistency   # SAT ?
-./sat_solver data/exemple1.cnf manual validity      # tautologie ?
-./sat_solver data/exemple1.cnf manual find_model    # un modèle
+./sat_solver data/exemple1.cnf greedy consistency        # SAT ?
+./sat_solver data/exemple1.cnf greedy validity           # tautologie ?
+./sat_solver data/exemple1.cnf greedy find_model         # un modèle
+./sat_solver data/exemple1.cnf greedy entails 1 2        # F |= (x1 ∨ x2) ?
+./sat_solver data/exemple1.cnf greedy is_implicant 1     # x1 |= F ?
+./sat_solver data/exemple1.cnf greedy enumerate 5        # 5 premiers modèles
 ```
 
 Si aucune requête n'est passée, le solveur affiche uniquement le résumé standard (#SAT, MaxSAT, taille du DAG).
+
+**Sortie machine-readable** : deux flags JSON sont disponibles.
+
+```bash
+./sat_solver data/exemple1.cnf greedy --json                 # JSON minimal (rétro-compatible runs 1-3)
+./sat_solver data/exemple1.cnf greedy --json-with-queries    # JSON enrichi avec timings query_*_ms
+```
+
+Le mode `--json-with-queries` mesure en interne le temps de chaque requête sur le DAG **déjà compilé** (médiane sur 5 répétitions, 1ère jetée pour warm-up). Champs ajoutés : `query_co_ms`, `query_va_ms`, `query_ct_ms`, `query_me_ms`, `query_ce_ms`, `query_im_ms`, `query_enum_first_ms`, `query_enum_all_ms`, `query_enum_count`, `query_*_result`.
 
 6. **Aide en ligne de commande** :
 
