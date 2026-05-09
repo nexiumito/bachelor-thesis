@@ -1,0 +1,49 @@
+# git_info.txt - genere le 2026-05-09T10:23:38.809244+00:00
+
+## git rev-parse HEAD
+2348ee642a9e7277a90010af1b63ae033613ada0
+
+## git rev-parse --abbrev-ref HEAD
+main
+
+## git status -s
+?? .venv-bench/
+?? benchmarks/results/20260502_103818/
+?? benchmarks/results/20260502_104725/
+?? benchmarks/results/20260502_105157/
+?? benchmarks/results/20260502_105207/
+?? benchmarks/results/20260502_111329/SUMMARY.md
+?? benchmarks/results/20260502_111329/env.txt
+?? benchmarks/results/20260502_111329/figures/
+?? benchmarks/results/20260502_111329/git_info.txt
+?? benchmarks/results/20260502_111329/invariants.csv
+?? benchmarks/results/20260502_111329/structure.csv
+?? benchmarks/results/20260502_111329/timings.csv
+?? benchmarks/results/20260502_111329/z3.csv
+?? benchmarks/results/20260502_161448/
+?? benchmarks/results/20260502_161528/
+?? benchmarks/results/20260502_162229/SUMMARY.md
+?? benchmarks/results/20260502_162229/env.txt
+?? benchmarks/results/20260502_162229/figures/
+?? benchmarks/results/20260502_162229/git_info.txt
+?? benchmarks/results/20260502_162229/invariants.csv
+?? benchmarks/results/20260502_162229/structure.csv
+?? benchmarks/results/20260502_162229/timings.csv
+?? benchmarks/results/20260502_162229/z3.csv
+?? benchmarks/results/20260503_071451/
+?? benchmarks/results/20260503_071607/SUMMARY.md
+?? benchmarks/results/20260503_071607/env.txt
+?? benchmarks/results/20260503_071607/figures/
+?? benchmarks/results/20260503_071607/git_info.txt
+?? benchmarks/results/20260503_071607/invariants.csv
+?? benchmarks/results/20260503_071607/structure.csv
+?? benchmarks/results/20260503_071607/timings.csv
+?? benchmarks/results/20260503_071607/z3.csv
+?? benchmarks/results/20260504_165416/
+?? benchmarks/results/20260509_102207/
+?? benchmarks/results/20260509_102338/
+
+## git log -3 --oneline
+2348ee6 benchmarks
+a250888 abort compress
+885b01c màj gitignore
