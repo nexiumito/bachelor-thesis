@@ -10,7 +10,20 @@
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 \usepackage{amsmath, amssymb, amsthm}
-\usepackage{microtype}      
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Procédure}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Théorème}[chapter]
+\newtheorem{lemma}[theorem]{Lemme}
+\newtheorem{corollary}[theorem]{Corollaire}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Définition}
+\renewcommand{\proofname}{Preuve}
 
 % --- Packages pour le design ---
 \usepackage{eso-pic}       
@@ -144,7 +157,8 @@ synthèse de programmes et la cryptanalyse.
 Ce succès a naturellement suscité un intérêt croissant pour des variantes plus
 expressives : le \emph{comptage de modèles} (\#SAT) et la \emph{maximisation de
 clauses satisfaites} (MaxSAT). Le problème \#SAT consiste à déterminer le nombre
-exact d'affectations satisfaisant une formule CNF donnée. Il généralise la
+exact d'affectations satisfaisant une formule donnée en forme normale
+conjonctive (CNF). Il généralise la
 décision de satisfaisabilité en quantifiant la cardinalité de l'ensemble des
 modèles, et intervient naturellement dans le raisonnement probabiliste,
 l'inférence dans les réseaux bayésiens et la vérification probabiliste
@@ -165,18 +179,20 @@ orienté acyclique de type d-DNNF, sur laquelle un large éventail de requêtes
 \emph{compilation de connaissances} \cite{darwiche2002} amortit le coût
 hors-ligne sur de multiples interrogations ultérieures, et est devenue le
 standard pour l'inférence probabiliste exacte et la vérification quantitative.
-Elle constitue le second axe abordé dans ce mémoire, aux côtés de la
-résolution paramétrée par la structure de la formule.
+Elle constitue le second pilier de ce mémoire, aux côtés de la résolution
+paramétrée par la structure de la formule.
 
 \section{Approche structurelle et décomposition arborescente}
 
 Plusieurs familles d'algorithmes ont émergé pour résoudre \#SAT et MaxSAT :
-solveurs généraux fondés sur DPLL et CDCL, outils SMT comme \texttt{Z3}
+solveurs généraux fondés sur DPLL (Davis-Putnam-Logemann-Loveland) et CDCL,
+outils SMT (\emph{satisfiability modulo theories}) comme \texttt{Z3}
 \cite{moura2008}, solveurs de comptage avec cache de composantes comme
 \texttt{sharpSAT} \cite{thurley2006}, ou encore la compilation de connaissances
 déjà évoquée. Ce travail combine deux perspectives complémentaires : la
 \emph{complexité paramétrée structurelle}, qui exploite la structure du graphe
-d'incidence pour résoudre \#SAT et MaxSAT en temps polynomial dès que le
+d'incidence (graphe biparti reliant chaque variable aux clauses où elle
+apparaît) pour résoudre \#SAT et MaxSAT en temps polynomial dès que le
 paramètre est borné ; et la \emph{compilation de connaissances}, qui transforme
 cette même structure en un objet polynomialement interrogeable.
 
@@ -194,8 +210,8 @@ fondés sur la \emph{mim-width} \cite{vatshelle2012} et la \emph{ps-width}
 strictement plus larges. L'algorithme de Sæther, Telle et Vatshelle
 \cite{saether2015} résout simultanément \#SAT et MaxSAT en temps
 $O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width de la décomposition.
-Il constitue le premier pilier de ce mémoire. Son extension par Bova, Capelli,
-Mengel et Slivovsky \cite{bova2016} en forme le second : ces auteurs
+Il constitue le premier pilier de ce mémoire de bachelor. Son extension par Bova, Capelli,
+Mengel et Slivovsky \cite{bova2015} en forme le second : ces auteurs
 l'instrumentent pour produire en parallèle un DAG d-DNNF, faisant ainsi le pont
 avec la compilation de connaissances.
 
@@ -213,11 +229,9 @@ sous-jacentes (bitsets 64-bit, trie binaire, tables DP).
 
 Le second objectif est l'\textbf{extension à la compilation de connaissances}
 fondée sur le résultat de Bova, Capelli, Mengel et Slivovsky
-\cite{bova2016}. Leur algorithme s'obtient comme une instrumentation de la
+\cite{bova2015}. Leur algorithme s'obtient comme une instrumentation de la
 programmation dynamique précédente et produit, à coût marginal, un DAG
-d-DNNF de taille polynomiale en la ps-width et la taille de la formule. À
-notre connaissance, aucune implémentation publique ne suit aujourd'hui
-cette voie de compilation pilotée par la ps-width. Sur le DAG produit,
+d-DNNF de taille polynomiale en la ps-width et la taille de la formule. Sur le DAG produit,
 l'ensemble des requêtes que la carte de compilation de Darwiche et Marquis
 \cite{darwiche2002} rend polynomiales sur d-DNNF est implémenté.
 
@@ -238,8 +252,9 @@ Ce chapitre positionne notre travail dans la littérature. Nous présentons
 successivement les problèmes SAT, \#SAT et MaxSAT, les principales familles
 d'algorithmes de résolution, les paramètres de décomposition structurelle
 qui gouvernent leur complexité, l'algorithme de Sæther, Telle et Vatshelle
-qui constitue le socle de notre implémentation, et la compilation de
-connaissances CNF $\to$ d-DNNF qui constitue le second axe de ce mémoire.
+sur lequel repose notre implémentation, et la compilation de connaissances
+CNF $\to$ d-DNNF par Bova, Capelli, Mengel et Slivovsky qui en constitue
+l'extension naturelle.
 
 % ---------------------------------------------------------------------------
 \section{SAT, \#SAT et MaxSAT}
@@ -266,25 +281,24 @@ CDCL \cite{moskewicz2001,een2003} décrit à la section~\ref{sec:cdcl}.
 
 Le problème \#SAT (\emph{model counting}) demande non plus si un modèle
 existe, mais \emph{combien} il en existe. Ce problème est \#P-complet
-\cite{valiant1979}, une classe de complexité qui capture les problèmes
-de comptage associés aux décisions NP. Valiant a notamment montré que même
-sur des fragments syntaxiques pour lesquels la décision est facile (2-CNF,
-Horn), le comptage reste \#P-complet.
+\cite{valiant1979}, classe de complexité qui capture le comptage associé
+aux décisions NP. Valiant a montré que même sur des fragments syntaxiques
+pour lesquels la décision est facile (2-CNF, Horn), le comptage reste
+\#P-complet.
 
-\#SAT intervient naturellement dans l'inférence probabiliste sur des réseaux
-bayésiens \cite{darwiche2002}, le model checking quantitatif, et l'analyse
-de fiabilité de systèmes. Sa résolution exacte exige d'explorer l'intégralité
-de l'espace de solutions, ce qui le distingue fondamentalement du problème
-de décision.
+\#SAT intervient dans l'inférence probabiliste sur des réseaux bayésiens
+\cite{darwiche2002}, le model checking quantitatif et l'analyse de fiabilité
+de systèmes. Sa résolution exacte demande d'explorer l'intégralité de
+l'espace des affectations.
 
 \subsection{MaxSAT}
 
 Le problème MaxSAT cherche une affectation qui maximise le nombre de clauses
 satisfaites, même si la formule est globalement insatisfaisable. Il est
 NP-difficile et modélise des problèmes d'optimisation à contraintes souples
-- ordonnancement, configuration, bioinformatique. Des variantes importantes
-incluent le \emph{Partial MaxSAT} (clauses dures obligatoires + clauses
-souples à maximiser) et le \emph{Weighted MaxSAT} (poids par clause).
+en ordonnancement, configuration ou bioinformatique. Sa variante \emph{Weighted
+MaxSAT}, où chaque clause porte un poids et l'on maximise la somme des poids
+satisfaits, est celle que résout l'algorithme étudié dans ce mémoire.
 
 % ---------------------------------------------------------------------------
 \section{Algorithmes de résolution}
@@ -294,20 +308,13 @@ souples à maximiser) et le \emph{Weighted MaxSAT} (poids par clause).
 \subsection{DPLL et CDCL}
 \label{sec:cdcl}
 
-L'algorithme DPLL (Davis-Putnam-Logemann-Loveland) constitue le fondement
-historique de la résolution SAT : il parcourt en profondeur l'espace des
-affectations partielles en s'appuyant sur deux règles d'inférence, la
-\emph{propagation unitaire} (BCP), qui force la valeur d'un littéral dès
-qu'il est le dernier non falsifié d'une clause, et la \emph{règle du
-littéral pur}. L'architecture CDCL (Conflict-Driven Clause Learning),
-popularisée par zChaff \cite{moskewicz2001} puis MiniSAT \cite{een2003},
-étend DPLL par l'\emph{apprentissage de clauses} : à chaque conflit, le
-solveur extrait une nouvelle clause résumant la cause de l'échec, et
-peut ensuite effectuer un \emph{backjumping} non chronologique. Couplée
-à des heuristiques de branchement orientées par l'activité des conflits
-(notamment VSIDS \cite{moskewicz2001}), CDCL est aujourd'hui le standard
-industriel et traite couramment des instances de plusieurs millions de
-variables.
+L'architecture CDCL (\emph{Conflict-Driven Clause Learning}) étend
+l'algorithme historique DPLL (Davis-Putnam-Logemann-Loveland) par
+l'\emph{apprentissage de clauses} : à chaque conflit, le solveur extrait
+une nouvelle clause qui résume la cause de l'échec et qu'il ajoute à la
+formule. Popularisée par zChaff \cite{moskewicz2001} puis MiniSAT
+\cite{een2003}, CDCL est aujourd'hui le standard industriel et traite
+couramment des instances de plusieurs millions de variables.
 
 \subsection{Extensions pour \#SAT et MaxSAT}
 
@@ -315,24 +322,22 @@ Pour le comptage de modèles, les solveurs étendent DPLL par le \emph{cache
 de composantes} : lorsque l'affectation partielle déconnecte le graphe
 d'incidence, les comptes des composantes disjointes sont calculés
 indépendamment puis multipliés. Ce mécanisme, popularisé par
-\texttt{sharpSAT} \cite{thurley2006}, est combiné dans \texttt{D4}
-\cite{lagniez2017} avec la compilation vers d-DNNF, rendant les requêtes
-ultérieures polynomiales. Pour la maximisation, les solveurs MaxSAT
-modernes (\texttt{MaxHS}, \texttt{RC2}, \texttt{Open-WBO}) abandonnent
-le \emph{branch-and-bound} traditionnel au profit d'approches
-\emph{core-guided}, qui résolvent itérativement des noyaux insatisfaisables
-au lieu d'explorer naïvement l'espace des affectations.
+\texttt{sharpSAT} \cite{thurley2006}, est repris par \texttt{D4}
+\cite{lagniez2017} qui compile en plus la formule vers d-DNNF.
+Pour la maximisation, les solveurs MaxSAT modernes reposent sur des
+approches \emph{core-guided}, qui résolvent itérativement des noyaux
+insatisfaisables.
 
-\subsection{SMT et compilation de connaissances}
+\subsection{Compilation de connaissances}
 
-Les solveurs SMT (\emph{satisfiability modulo theories}), dont \texttt{Z3}
-\cite{moura2008}, étendent CDCL en intégrant des théories arithmétiques via
-l'architecture DPLL(T) ; sur des instances purement propositionnelles, les
-solveurs SAT dédiés restent toutefois plus rapides. Une approche
-alternative, la \emph{compilation de connaissances}, transforme hors-ligne
-la formule en une représentation polynomialement interrogeable ; elle fait
-l'objet de la section~\ref{sec:kc}, où elle est articulée avec l'algorithme
-de Sæther via l'extension de Bova et al.~\cite{bova2016}.
+Une approche orthogonale à la résolution en ligne, la \emph{compilation de
+connaissances}, transforme hors-ligne la formule en une représentation
+polynomialement interrogeable et fait l'objet de la
+section~\ref{sec:kc}.
+
+Toutes ces approches ont en commun de ne pas exploiter directement la
+structure topologique de la formule. La section suivante présente une
+famille d'algorithmes qui en fait le paramètre central.
 
 % ---------------------------------------------------------------------------
 \section{Décompositions arborescentes et paramètres de largeur}
@@ -340,72 +345,67 @@ de Sæther via l'extension de Bova et al.~\cite{bova2016}.
 % ---------------------------------------------------------------------------
 
 Pour les formules issues du monde réel, la difficulté pratique dépend
-moins de la taille brute que de la structure de connectivité du graphe
-d'incidence. Plusieurs paramètres ont été proposés pour quantifier cette
-structure et fournir des algorithmes de programmation dynamique tractables
-quand le paramètre est borné.
+moins de la taille brute que de la structure de connectivité du
+\emph{graphe d'incidence} de la formule : il s'agit du graphe biparti
+$I(F)$ dont les sommets sont d'un côté les variables $\mathsf{var}(F)$,
+de l'autre les clauses $\mathsf{cla}(F)$, avec une arête entre une
+variable $x$ et une clause $C$ chaque fois que $x$ apparaît dans $C$.
+Plusieurs paramètres ont été proposés pour quantifier cette structure et
+fournir des algorithmes de programmation dynamique tractables quand le
+paramètre est borné.
 
 Le plus étudié est la \emph{treewidth}, introduite par Robertson et
 Seymour dans leur théorie des mineurs de graphes : on représente le
-graphe par une famille de petits sous-ensembles de sommets (\emph{sacs})
-connectés en arbre, et la largeur est la taille du plus grand sac.
-Samer et Szeider \cite{samer2010} puis Slivovsky et Szeider
-\cite{slivovsky2020} ont obtenu des algorithmes de DP pour \#SAT
-paramétrés par la treewidth du graphe d'incidence. Toutefois, la
-treewidth n'est bornée que sur des graphes globalement clairsemés, ce
-qui en limite la portée sur les classes denses.
+graphe par une famille de sous-ensembles de sommets (\emph{sacs})
+connectés en arbre, et la largeur de la décomposition est la taille
+du plus grand sac diminuée de un. Samer et Szeider \cite{samer2010}
+puis Slivovsky et Szeider \cite{slivovsky2020} ont obtenu des algorithmes
+de DP pour \#SAT paramétrés par la treewidth du graphe d'incidence.
+Toutefois, la treewidth n'est bornée que sur des graphes globalement
+clairsemés, ce qui en limite la portée sur les classes denses.
 
 Pour dépasser cette limitation, des paramètres plus généraux ont été
-introduits, notamment la \emph{mim-width} (\emph{maximum induced
-matching width}) de Vatshelle \cite{vatshelle2012}, qui reste bornée
-sur des classes à treewidth non bornée (graphes d'intervalles ou de
-permutation, par exemple). En contrepartie, calculer la mim-width est
-intractable : Bergougnoux, Bonnet et Duron \cite{bergougnoux2025} ont
-récemment montré que le problème est paraNP-complet, ce qui impose
-le recours à des heuristiques dans toute mise en œuvre pratique.
+introduits, dont la \emph{mim-width} (\emph{maximum induced
+matching width}) de Vatshelle \cite{vatshelle2012}. Elle se définit
+via une décomposition arborescente du graphe : à chaque coupe, on
+mesure la taille du plus grand \emph{couplage induit} traversant
+cette coupe (un couplage induit étant un ensemble d'arêtes deux à deux
+non adjacentes, sans autre arête du graphe entre leurs extrémités) ;
+la mim-width est le minimum sur toutes les décompositions du maximum
+de cette quantité. Elle reste bornée sur des classes à treewidth non
+bornée (graphes d'intervalles ou de permutation, par exemple). En
+contrepartie, calculer la mim-width est intractable : Bergougnoux,
+Bonnet et Duron \cite{bergougnoux2025} ont montré que le problème est
+paraNP-complet, c'est-à-dire NP-difficile même pour des graphes de
+mim-width bornée par une constante. Cela impose le recours à des
+heuristiques dans toute mise en oeuvre pratique.
 
 % ---------------------------------------------------------------------------
 \section{PS-width et l'algorithme de Sæther-Telle-Vatshelle}
 \label{sec:pswidth}
 % ---------------------------------------------------------------------------
 
-Sæther, Telle et Vatshelle \cite{saether2015} introduisent un paramètre
-défini directement sur les formules CNF, la \emph{ps-width}, fondé sur une
-\emph{branch decomposition} de $F$ : un arbre binaire dont les feuilles sont
-en bijection avec $\mathit{var}(F) \cup \mathit{cla}(F)$. À chaque nœud $v$
-de l'arbre, on observe les ensembles de clauses extérieures satisfaisables
-par les affectations partielles locales à $v$ ; la ps-width de la
-décomposition est la cardinalité maximale de ces ensembles, et la ps-width
-de $F$ le minimum sur toutes les décompositions possibles.
+Sæther, Telle et Vatshelle \cite{saether2015} introduisent la
+\emph{ps-width} (\emph{projection-satisfiability width}), un paramètre
+défini directement sur les formules CNF à partir d'une \emph{branch
+decomposition} de la formule. Il domine la mim-width du graphe
+d'incidence : pour des clauses de taille bornée, une mim-width bornée
+entraîne une ps-width polynomiale en le nombre de clauses, ce qui étend
+strictement les classes tractables au-delà de la treewidth. Les auteurs
+établissent que \#SAT et MaxSAT se résolvent par programmation dynamique
+sur la décomposition en temps $O(k^3 \cdot m \cdot (m+n))$, ramené à
+$O(k^2 \cdot m \cdot (m+n))$ dans le cas linéaire.
 
-Ce paramètre domine la mim-width du graphe d'incidence : si la mim-width
-est bornée et les clauses de taille bornée, la ps-width est polynomiale
-en le nombre de clauses. Or une mim-width bornée n'implique pas une
-treewidth bornée ; la ps-width étend donc strictement les classes de
-formules tractables couvertes par les algorithmes paramétrés par la
-treewidth.
-
-Les auteurs donnent un algorithme par programmation dynamique en trois
-procédures séquentielles le long de la décomposition (calcul bottom-up des
-PS-sets, propagation top-down, puis remplissage d'une table d'états
-combinant les enfants), résolvant simultanément \#SAT et MaxSAT en
-$O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width. Pour une
-décomposition linéaire (chaque nœud interne a au moins une feuille pour
-enfant), la complexité chute à $O(k^2 \cdot m \cdot (m+n))$. La
-construction détaillée des trois procédures, ainsi que la définition
-formelle de la ps-width et de ses relations avec les autres paramètres
-de largeur, fait l'objet du chapitre~\ref{chap:theorie} de ce rapport.
-
-Comme minimiser la ps-width est intractable en général, les auteurs
-proposent l'heuristique gloutonne \emph{GreedyOrder}, qui construit un
-ordre linéaire des sommets du graphe d'incidence en privilégiant à chaque
-étape ceux qui ont le plus grand nombre de voisins déjà choisis. Pour
-valider l'algorithme, ils introduisent trois familles d'instances
-synthétiques (\emph{Type~1}, graphes bipartis d'intervalles ;
-\emph{Type~2}, mêmes structures avec clauses courtes ; \emph{Type~3},
-fonctions XOR cycliques formant des graphes d'arcs circulaires) sur
-lesquelles le DP paramétré par la ps-width surpasse nettement les
-solveurs CDCL \cite{saether2015}.
+Comme minimiser la ps-width est intractable, ils proposent l'heuristique
+gloutonne \emph{GreedyOrder} et valident l'algorithme sur trois familles
+synthétiques d'instances à ps-width contrôlée : \texttt{sharpSAT} et les
+solveurs MaxSAT modernes restent plus rapides sur la plupart des entrées,
+mais sur les familles construites pour favoriser le DP leur prototype les
+bat nettement \cite{saether2015}. La définition formelle du paramètre,
+la description des trois procédures de l'algorithme et le fonctionnement
+de l'heuristique font l'objet du chapitre~\ref{chap:theorie} ; les
+familles d'instances servent de banc de test au
+chapitre~\ref{chap:resultats}.
 
 % ---------------------------------------------------------------------------
 \section{Compilation de connaissances CNF \texorpdfstring{$\to$}{vers} d-DNNF}
@@ -414,14 +414,14 @@ solveurs CDCL \cite{saether2015}.
 
 La \emph{compilation de connaissances} (\emph{knowledge compilation}, KC)
 transforme une formule CNF hors-ligne en une représentation structurée,
-typiquement un DAG, sur laquelle certaines requêtes (comptage,
-conditionnement, projection partielle) deviennent polynomiales. Le coût
-de compilation est amorti dès qu'une même base est interrogée de multiples
-fois, et les progrès de la décennie ont placé la compilation au centre de
-l'inférence probabiliste exacte et de la vérification quantitative.
-Cette section résume la hiérarchie des langages cibles, les compilateurs
-contemporains, puis détaille le résultat de Bova, Capelli, Mengel et
-Slivovsky (BCMS 2016) qui constitue le fondement théorique de l'extension
+typiquement un graphe orienté acyclique (DAG), sur laquelle certaines
+requêtes (comptage, conditionnement, projection partielle) deviennent
+polynomiales. Le coût
+de compilation est amorti dès qu'une même base est interrogée plusieurs
+fois ; la compilation est aujourd'hui un outil standard de l'inférence
+probabiliste exacte. Cette section présente la hiérarchie des langages
+cibles, les requêtes tractables sur d-DNNF, puis le résultat de Bova,
+Capelli, Mengel et Slivovsky (BCMS 2015) sur lequel repose l'extension
 KC de notre implémentation.
 
 \subsection{Langages cibles}
@@ -431,67 +431,1064 @@ compilation} qui classe les représentations selon deux axes : la
 \emph{succinctitude} (taille relative) et la \emph{tractabilité} des
 requêtes supportées en temps polynomial. La hiérarchie pertinente pour
 notre travail va de la NNF (\emph{Negation Normal Form} : DAG dont les
-feuilles sont des littéraux et les nœuds internes des ET et OU) à la
-DNNF (\emph{Decomposable NNF} : enfants de tout ET à portées disjointes),
-puis au \textbf{d-DNNF} (\emph{Deterministic DNNF} : enfants de tout OU
-à ensembles de modèles disjoints). Cette dernière propriété rend le
-comptage \#SAT polynomial par un parcours qui remplace OU par somme et
-ET par produit, et fait du d-DNNF le langage cible de notre implémentation.
-D'autres variantes notables existent, notamment le SDD \cite{darwiche2011}
-(d-DNNF contraint par un \emph{vtree}) et l'OBDD \cite{bryant1986}
-(précurseur historique), plus restrictives mais non utilisées dans ce
+feuilles sont des littéraux et les noeuds internes des ET et OU) à la
+DNNF (\emph{Decomposable NNF} : enfants de tout ET à portées variables
+disjointes), puis au \textbf{d-DNNF} (\emph{Deterministic DNNF} : enfants
+de tout OU à ensembles de modèles disjoints). Cette dernière propriété
+rend le comptage \#SAT polynomial par un parcours qui remplace OU par
+somme et ET par produit, et fait du d-DNNF le langage cible de notre
+implémentation. Le SDD (\emph{Sentential Decision Diagram}
+\cite{darwiche2011}) est un d-DNNF dont la structure est dictée par un
+\emph{vtree}, un arbre binaire qui fixe l'ordre des variables aux
+feuilles. L'OBDD (\emph{Ordered Binary Decision Diagram}
+\cite{bryant1986}) est le précurseur historique. Ces deux variantes
+sont plus restrictives que d-DNNF et ne sont pas utilisées dans ce
 travail.
+
+Au sein de la classe d-DNNF, deux sous-langages distincts se sont
+développés en parallèle. Les compilateurs DPLL-based, dont \texttt{c2d}
+puis \texttt{D4} \cite{lagniez2017}, produisent des
+\emph{decision-DNNF} via une recherche CDCL avec cache de composantes :
+les noeuds OU correspondent à des branchements sur une variable et la
+taille du DAG résultant n'est pas bornée a priori en termes de paramètres
+structurels de la formule. Les \emph{d-DNNF structurés}, à l'inverse,
+imposent un schéma global (typiquement une branch decomposition fixée
+en amont) qui structure les noeuds AND et permet d'établir des bornes
+théoriques sur la taille de la représentation. La construction de
+Bova, Capelli, Mengel et Slivovsky (section~\ref{subsec:bcms}) appartient
+à cette seconde famille et fournit une borne théorique sur la taille du
+DAG paramétrée par la ps-width.
 
 \subsection{Requêtes tractables sur d-DNNF}
 \label{subsec:queries-ddnnf}
 
-L'intérêt pratique d'un langage cible se mesure aux requêtes qu'il admet
-en temps polynomial dans la taille de la représentation. Darwiche et
-Marquis \cite{darwiche2002} établissent que la classe d-DNNF rend
-polynomiales six requêtes standard : \textbf{CO} (\emph{consistency},
-$F$ est-elle satisfaisable ?), \textbf{VA} (\emph{validity}, $F$
-est-elle une tautologie ?), \textbf{CE} (\emph{clausal entailment}, $F$
-implique-t-elle une clause donnée ?), \textbf{IM} (\emph{implicant
-check}, un terme est-il un implicant de $F$ ?), \textbf{CT}
-(\emph{model counting}, le \#SAT) et \textbf{ME} (\emph{model
-enumeration}, énumération des modèles avec un délai polynomial entre
-modèles consécutifs).
+Darwiche et Marquis \cite{darwiche2002} établissent que la classe d-DNNF
+rend polynomiales six requêtes standard : \textbf{CO}
+(\emph{consistency}), \textbf{VA} (\emph{validity}), \textbf{CE}
+(\emph{clausal entailment}), \textbf{IM} (\emph{implicant check}),
+\textbf{CT} (\emph{model counting}, le \#SAT) et \textbf{ME}
+(\emph{model enumeration}, énumération avec délai polynomial entre
+modèles consécutifs). Le DAG produit par la construction de la
+section~\ref{subsec:bcms} satisfait les hypothèses requises et ces
+six requêtes y sont donc directement disponibles. Leur algorithmique
+précise est décrite au chapitre~\ref{chap:theorie}.
 
-Cette tractabilité tient à la combinaison de deux propriétés
-caractéristiques du langage, la \emph{décomposabilité} (sous-arbres
-disjoints sous chaque ET) et le \emph{déterminisme} (sous-arbres
-mutuellement exclusifs sous chaque OU) ; une troisième propriété, la
-\emph{lissité}, est requise spécifiquement pour CT et VA et peut
-s'obtenir en temps polynomial. Le DAG produit par la construction
-BCMS 2016 (section~\ref{subsec:bcms}) est lisse par construction, et
-ces six requêtes sont donc directement disponibles sur le résultat
-compilé. Leur algorithmique précise sur d-DNNF fait l'objet du
-chapitre~\ref{chap:theorie}.
-
-\subsection{Compilation explicite pilotée par la ps-width : BCMS 2016}
+\subsection{Compilation explicite pilotée par la ps-width : BCMS 2015}
 \label{subsec:bcms}
 
-Bova, Capelli, Mengel et Slivovsky \cite{bova2016} prolongent
+Bova, Capelli, Mengel et Slivovsky \cite{bova2015} prolongent
 l'algorithme de Sæther, Telle et Vatshelle en montrant que toute formule
 CNF $F$ dotée d'une branch decomposition de ps-width $k$ peut être
 compilée en un d-DNNF structuré de taille
 \[
   |D| \leq 7 \cdot k^3 \cdot (n + m),
 \]
-en temps polynomial en $n + m$. L'algorithme s'obtient comme une
-\emph{instrumentation} de la programmation dynamique de Sæther : les
-produits et sommes du DP deviennent respectivement des ET et OU dans le
-DAG, de sorte que parcourir ce dernier en substituant $\lor$ par $+$ et
-$\land$ par $\times$ redonne exactement le nombre de modèles calculé par
-la DP. Le résultat est une voie de compilation paramétrée polynomiale
-en $n+m$ dès que la ps-width est bornée, sans recourir à la recherche
-DPLL. La construction détaillée et les invariants structurels du DAG
-ainsi produit relèvent du cadre théorique (chapitre~\ref{chap:theorie}).
+en temps polynomial en $n + m$. À la différence des compilateurs
+DPLL-based (\texttt{c2d}, \texttt{D4}), la construction n'effectue
+aucune recherche : la décomposition fournit le squelette du DAG, le DP
+fournit son contenu, et la borne $7 \cdot k^3 \cdot (n+m)$ donne une
+garantie de taille théorique paramétrée par la ps-width, absente des
+compilateurs top-down. La construction détaillée du DAG est décrite au
+chapitre~\ref{chap:theorie}.
 
 
 \chapter{Cadre théorique}
 \label{chap:theorie}
-% À rédiger
+
+Les sections~\ref{sec:theo-prelim} et~\ref{sec:theo-pswidth} fixent les
+notations et définissent la branch decomposition puis la ps-width. La
+section~\ref{sec:theo-dp} expose la programmation dynamique de Sæther,
+Telle et Vatshelle \cite{saether2015} qui résout \#SAT et MaxSAT en
+temps polynomial pour ps-width bornée, et la section~\ref{sec:theo-greedy}
+l'heuristique gloutonne GreedyOrder qui lui fournit une décomposition.
+Bova, Capelli, Mengel et Slivovsky \cite{bova2015}
+(section~\ref{sec:theo-bcms}) instrumentent ce DP pour produire un
+d-DNNF structuré, sur lequel la section~\ref{sec:theo-queries} décrit
+les six requêtes polytimes.
+
+% -----------------------------------------------------------------------------
+\section{Notations et préliminaires}
+\label{sec:theo-prelim}
+% -----------------------------------------------------------------------------
+
+On considère une formule $F$ en CNF, vue comme un multi-ensemble de
+clauses, chaque clause étant un ensemble de littéraux (une variable
+ou sa négation). On note $\mathsf{var}(F)$ l'ensemble des variables
+apparaissant dans $F$ et $\mathsf{cla}(F)$ son ensemble de clauses.
+Une affectation d'un ensemble de variables $X$ est une fonction
+$\tau : X \to \{0,1\}$, étendue aux littéraux par
+$\tau(\neg x) = 1 - \tau(x)$. Elle satisfait une clause $C$ s'il
+existe un littéral $\ell \in C$ tel que $\tau(\ell) = 1$, et satisfait
+la formule $F$ si elle satisfait toutes les clauses de
+$\mathsf{cla}(F)$.
+
+Pour $\mathcal{C} \subseteq \mathsf{cla}(F)$ et
+$X \subseteq \mathsf{var}(F)$, la \emph{sous-formule induite}
+$F_{\mathcal{C},X}$ s'obtient en retirant de $F$ toute clause hors de
+$\mathcal{C}$, puis tout littéral dont la variable n'appartient pas
+à $X$. Cette construction décrira les sous-formules de part et
+d'autre d'une coupe de la décomposition (section~\ref{sec:theo-pswidth}).
+
+Le graphe d'incidence $I(F)$ a été défini au
+chapitre~\ref{chap:etat_art}, section~\ref{sec:decomp}. Ses sommets
+sont les variables et clauses de $F$, avec une arête entre $x$ et $C$
+si et seulement si $x$ apparaît dans $C$. On suit l'hypothèse de
+Sæther, Telle et Vatshelle \cite{saether2015} en supposant $I(F)$
+connexe : sinon le problème se résout indépendamment sur chaque
+composante connexe.
+
+% -----------------------------------------------------------------------------
+\section{Branch decomposition et ps-width}
+\label{sec:theo-pswidth}
+% -----------------------------------------------------------------------------
+
+\subsection{Branch decomposition d'une formule}
+\label{ssec:theo-branch-decomp}
+
+Une \emph{branch decomposition} d'une formule $F$ est un couple
+$(T, \delta)$ où $T$ est un arbre binaire enraciné et $\delta$ une
+bijection entre les feuilles de $T$ et l'ensemble
+$\mathsf{var}(F) \cup \mathsf{cla}(F)$ \cite{saether2015}. Chaque
+variable et chaque clause de $F$ apparaît ainsi exactement une fois
+comme étiquette d'une feuille. Pour un noeud non-feuille $v$ de $T$,
+on note $\delta(v)$ l'ensemble des étiquettes des feuilles du
+sous-arbre enraciné en $v$ :
+\[
+  \delta(v) = \{\, \delta(l) : l \text{ feuille du sous-arbre enraciné en } v\,\}.
+\]
+Le noeud $v$ partage $\mathsf{var}(F) \cup \mathsf{cla}(F)$ en deux,
+$\delta(v)$ et son complément. Cette partition est appelée la
+\emph{coupe} associée à $v$.
+
+À chaque noeud $v$ sont associées deux sous-formules. En écrivant
+$\delta(v) = \mathcal{C} \cup X$ avec
+$\mathcal{C} \subseteq \mathsf{cla}(F)$ et $X \subseteq \mathsf{var}(F)$,
+on pose
+\[
+  F_v = F_{\overline{\mathcal{C}}, X}
+  \qquad \text{et} \qquad
+  F_{\overline{v}} = F_{\mathcal{C}, \overline{X}},
+\]
+où $\overline{\mathcal{C}} = \mathsf{cla}(F) \setminus \mathcal{C}$ et
+$\overline{X} = \mathsf{var}(F) \setminus X$, et où la notation
+$F_{\mathcal{C}, X}$ a été fixée en section~\ref{sec:theo-prelim}.
+L'asymétrie est volontaire : la sous-formule $F_v$ rassemble les
+clauses extérieures à la coupe restreintes aux variables locales, et
+décrit précisément ce qu'une affectation des seules variables de $X$
+peut satisfaire parmi les clauses du complément.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  level distance=10mm,
+  level 1/.style={sibling distance=58mm},
+  level 2/.style={sibling distance=22mm},
+  level 3/.style={sibling distance=11mm},
+  every node/.style={font=\small},
+  internal/.style={circle, fill=black, inner sep=1pt},
+  vnode/.style={circle, draw=black, thick, fill=white,
+                inner sep=1pt, minimum size=5mm, font=\itshape\small},
+  leaf/.style={draw, rectangle, rounded corners=2pt, fill=gray!10,
+               inner sep=3pt, minimum height=4mm, font=\small},
+]
+\node[internal] {}
+  child {node[vnode] {$v$}
+    child {node[internal] {}
+      child {node[leaf] {$x_1$}}
+      child {node[leaf] {$x_2$}}
+    }
+    child {node[internal] {}
+      child {node[leaf] {$c_1$}}
+      child {node[leaf] {$c_3$}}
+    }
+  }
+  child {node[internal] {}
+    child {node[internal] {}
+      child {node[leaf] {$x_3$}}
+      child {node[leaf] {$c_4$}}
+    }
+    child {node[internal] {}
+      child {node[internal] {}
+        child {node[leaf] {$x_5$}}
+        child {node[leaf] {$c_2$}}
+      }
+      child {node[leaf] {$x_4$}}
+    }
+  };
+\end{tikzpicture}
+\caption{Une branch decomposition $(T, \delta)$ d'une formule $F$
+sur cinq variables et quatre clauses, reprise de la Figure~2 de
+\cite{saether2015}. La formule a pour variables
+$\mathsf{var}(F) = \{x_1, x_2, x_3, x_4, x_5\}$ et pour clauses
+$c_1 = \{x_1, x_2\}$, $c_2 = \{x_1, \neg x_2, x_3\}$,
+$c_3 = \{x_2, \neg x_4, x_5\}$, $c_4 = \{x_2, x_3, x_5\}$. Le
+noeud $v$ marqué définit la coupe
+$\delta(v) = \{x_1, x_2, c_1, c_3\}$, soit
+$\mathcal{C} = \{c_1, c_3\}$ et $X = \{x_1, x_2\}$. Les deux
+sous-formules croisées sont
+$F_v = \{\{x_1, \neg x_2\}, \{x_2\}\}$ (versions de $c_2$ et $c_4$
+restreintes aux variables de $X$) et
+$F_{\overline{v}} = \{\emptyset, \{\neg x_4, x_5\}\}$ (versions de
+$c_1$ et $c_3$ restreintes aux variables de $\overline{X}$).}
+\label{fig:branch-decomp-example}
+\end{figure}
+
+Quand tous les noeuds internes de $T$ se trouvent sur un même chemin
+(autrement dit, chaque noeud interne a au moins une feuille pour
+enfant), on parle de \emph{décomposition linéaire}. Ce cas particulier
+admet une analyse de complexité plus fine, traitée en
+section~\ref{ssec:theo-th23}.
+
+\subsection{Coupes et PS-sets}
+\label{ssec:theo-cuts-psset}
+
+Soient $\mathcal{C} \subseteq \mathsf{cla}(F)$ et
+$X \subseteq \mathsf{var}(F)$. L'ensemble $S = \mathcal{C} \cup X$ est
+une \emph{coupe} de $F$. Chaque noeud non-feuille $v$ d'une branch
+decomposition en définit une via $\delta(v)$. Une coupe sépare $F$ en
+quatre sous-formules induites $F_{\mathcal{C},X}$,
+$F_{\overline{\mathcal{C}},X}$, $F_{\mathcal{C},\overline{X}}$ et
+$F_{\overline{\mathcal{C}},\overline{X}}$, chacune obtenue en
+restreignant clauses et variables aux sous-ensembles qui composent $S$
+ou son complément.
+
+Pour une affectation $\tau$ d'un sous-ensemble de variables, on note
+$\mathsf{sat}(F, \tau)$ l'ensemble inclusion-maximal des clauses de $F$
+satisfaites par $\tau$. Un sous-ensemble
+$\mathcal{C} \subseteq \mathsf{cla}(F)$ est dit
+\emph{projection-satisfiable} dans $F$ s'il existe une affectation
+$\tau$ portant sur l'ensemble complet $\mathsf{var}(F)$ telle que
+$\mathsf{sat}(F, \tau) = \mathcal{C}$. On dit alors que $\mathcal{C}$
+est une \emph{projection} de $F$ par $\tau$.
+
+La famille des sous-ensembles projection-satisfiables de $F$ se note
+\[
+  \mathsf{PS}(F) = \{\, \mathsf{sat}(F, \tau) : \tau \text{ est une affectation de } \mathsf{var}(F)\,\}.
+\]
+Sa cardinalité $|\mathsf{PS}(F)|$ est la \emph{ps-value} de $F$. C'est
+à partir de cette quantité, calculée sur les sous-formules $F_v$ et
+$F_{\overline{v}}$ associées aux noeuds d'une branch decomposition, que
+la section~\ref{ssec:theo-pswidth-def} définira la ps-width.
+
+\subsection{ps-value et ps-width}
+\label{ssec:theo-pswidth-def}
+
+Pour un noeud $v$ d'une branch decomposition $(T, \delta)$, la
+\emph{ps-value} de la coupe associée se définit par
+\[
+  \mathsf{ps}(\delta(v)) = \max\bigl(|\mathsf{PS}(F_v)|,\
+  |\mathsf{PS}(F_{\overline{v}})|\bigr).
+\]
+La \emph{ps-width} de la décomposition est la plus grande de ces
+ps-values sur tous les noeuds de $T$ :
+\[
+  \mathsf{psw}(T, \delta) = \max\,\bigl\{\,\mathsf{ps}(\delta(v)) :
+  v \in T\,\bigr\}.
+\]
+La \emph{ps-width} de la formule $F$ est le minimum atteint sur
+toutes ses branch decompositions :
+\[
+  \mathsf{psw}(F) = \min\,\bigl\{\,\mathsf{psw}(T, \delta) : (T, \delta)
+  \text{ branch decomposition de } F\,\bigr\}.
+\]
+
+Pour une clause $c$ et un ensemble de variables $Y$, on note $c|_Y$
+la clause obtenue en ne gardant que les littéraux dont la variable est
+dans $Y$ : $c|_Y = \{\, \ell \in c : \mathsf{var}(\ell) \in Y\,\}$.
+Détaillons le calcul de $|\mathsf{PS}(F_v)|$ sur l'exemple de la
+Figure~\ref{fig:branch-decomp-example}. La sous-formule $F_v$ contient
+les versions restreintes de $c_2$ et $c_4$ aux variables de $X = \{x_1, x_2\}$ :
+\[
+  D_1 = c_2|_X = \{x_1, \neg x_2\},
+  \qquad
+  D_2 = c_4|_X = \{x_2\}.
+\]
+Les quatre affectations possibles sur $\mathsf{var}(F_v) = \{x_1, x_2\}$
+donnent :
+
+\begin{center}
+\begin{tabular}{cc|cc|c}
+\hline
+$x_1$ & $x_2$ & $D_1$ & $D_2$ & $\mathsf{sat}(F_v, \tau)$ \\
+\hline
+0 & 0 & satisfaite & non satisfaite & $\{D_1\}$ \\
+0 & 1 & non satisfaite & satisfaite & $\{D_2\}$ \\
+1 & 0 & satisfaite & non satisfaite & $\{D_1\}$ \\
+1 & 1 & satisfaite & satisfaite & $\{D_1, D_2\}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+Les quatre affectations produisent trois ensembles satisfaits distincts,
+d'où $\mathsf{PS}(F_v) = \{\{D_1\}, \{D_2\}, \{D_1, D_2\}\}$ et
+$|\mathsf{PS}(F_v)| = 3$. Du côté de
+$F_{\overline{v}} = \{\emptyset, \{\neg x_4, x_5\}\}$, la clause vide
+n'est jamais satisfaite, et les affectations sur $\{x_4, x_5\}$ qui
+satisfont $\{\neg x_4, x_5\}$ donnent
+$\mathsf{sat} = \{c_3|_{\overline{X}}\}$, les autres donnent
+$\mathsf{sat} = \emptyset$. D'où
+$\mathsf{PS}(F_{\overline{v}}) = \{\emptyset, \{c_3|_{\overline{X}}\}\}$
+et $|\mathsf{PS}(F_{\overline{v}})| = 2$. La ps-value de la coupe vaut
+donc $\mathsf{ps}(\delta(v)) = \max(3, 2) = 3$.
+
+La programmation dynamique de la section~\ref{sec:theo-dp} manipule
+plus naturellement les clauses originales de $F$ que leurs versions
+restreintes. Le papier introduit pour cela une variante de notation :
+$\mathsf{PS}'(F_v)$ désigne la famille des sous-ensembles
+$\mathcal{D} \subseteq \mathsf{cla}(F) \setminus \delta(v)$ dont la
+restriction aux variables de $F_v$ appartient à $\mathsf{PS}(F_v)$, et
+$\mathsf{sat}'(F_v, \tau)$ est définie de manière analogue à partir de
+$\mathsf{sat}(F_v, \tau)$. Sur notre exemple,
+$\mathsf{PS}'(F_v) = \{\{c_2\}, \{c_4\}, \{c_2, c_4\}\}$ : chaque
+élément de $\mathsf{PS}(F_v)$ est remplacé par le sous-ensemble
+correspondant de clauses originales de $F$. La correspondance entre
+$\mathsf{PS}$ et $\mathsf{PS}'$ est bijective :
+$|\mathsf{PS}'(F_v)| = |\mathsf{PS}(F_v)|$ et la ps-value est
+inchangée.
+
+Sæther, Telle et Vatshelle établissent par ailleurs (Lemme~1 de
+\cite{saether2015}) que pour des clauses de taille bornée,
+$|\mathsf{PS}(F)|$ reste polynomial en le nombre de clauses dès que la
+mim-width du graphe d'incidence (définie en
+section~\ref{sec:decomp}) est bornée : la ps-width est donc un
+paramètre tractable sur les classes de formules pour lesquelles cette
+mim-width l'est.
+
+% -----------------------------------------------------------------------------
+\section{Programmation dynamique pour \#SAT et MaxSAT}
+\label{sec:theo-dp}
+% -----------------------------------------------------------------------------
+
+\subsection{Stratégie d'ensemble}
+\label{ssec:theo-dp-strategy}
+
+Le calcul de \#SAT et MaxSAT exploite la structure récursive de la
+branch decomposition $(T, \delta)$. À chaque nœud $v$ de $T$, la coupe
+$\delta(v)$ délimite les sous-formules $F_v$ et $F_{\overline{v}}$, et
+toute affectation $\tau$ de $\mathsf{var}(F)$ se décompose en sa
+restriction $\tau|_v$ aux variables de $F_v$ et sa restriction
+$\tau|_{\overline{v}}$ aux variables de $F_{\overline{v}}$. Comme une
+clause peut être satisfaite par des littéraux situés des deux côtés de
+la coupe, la programmation dynamique de Sæther, Telle et
+Vatshelle~\cite{saether2015} retient à chaque coupe l'ensemble des
+clauses déjà satisfaites par chaque moitié, ce qui permet de combiner
+les contributions des deux côtés sans énumérer toutes les
+affectations. Les PS-sets introduits en
+section~\ref{ssec:theo-pswidth-def} fournissent l'espace d'états
+adapté : la ps-width $k$ borne leur cardinal à chaque coupe, et les
+boucles internes du DP restent polynomiales en $k$.
+
+L'algorithme s'organise en trois procédures successives. La
+\emph{Procédure~1} calcule, par parcours bottom-up de $T$, les
+ensembles $\mathsf{PS}'(F_v)$. La \emph{Procédure~2} calcule, par
+parcours top-down, les ensembles duaux
+$\mathsf{PS}'(F_{\overline{v}})$. Ces deux passes sont des
+pré-traitements obligatoires : la \emph{Procédure~3}, qui effectue le
+DP proprement dit en remontant l'arbre, a besoin en chaque nœud des
+PS-sets des deux côtés de la coupe pour indexer ses tables. La valeur
+cherchée se lit ensuite à la racine, où la table se réduit à une
+unique cellule. Les sections~\ref{ssec:theo-proc1}
+à~\ref{ssec:theo-th23} en formalisent successivement chaque étape.
+
+\subsection{Procédure 1 : calcul bottom-up des PS'(F\textsubscript{v})}
+\label{ssec:theo-proc1}
+
+La Procédure~1 calcule $\mathsf{PS}'(F_v)$ pour tous les nœuds de la
+branch decomposition par parcours bottom-up de $T$. À chaque nœud, le
+résultat dépend uniquement des PS-sets calculés aux deux enfants, et
+la récursion atteint les feuilles, où le calcul est explicite.
+
+Aux feuilles, $\mathsf{var}(F_\ell)$ contient au plus une variable et
+$\mathsf{PS}'(F_\ell)$ se construit directement. Si $\ell$ est étiquetée
+par une variable $x$, les deux affectations $\tau(x) = 1$ et
+$\tau(x) = 0$ produisent
+\[
+  \mathsf{sat}'(F_\ell, \tau{=}1) = \{c \in \mathsf{cla}(F) : x \in c\},
+  \qquad
+  \mathsf{sat}'(F_\ell, \tau{=}0) = \{c \in \mathsf{cla}(F) : \neg x \in c\},
+\]
+qui sont les deux éléments candidats de $\mathsf{PS}'(F_\ell)$. Le
+cardinal de $\mathsf{PS}'(F_\ell)$ vaut $1$ ou $2$ selon que ces deux
+ensembles coïncident ou non. Si $\ell$ est étiquetée par une clause
+$c$, alors $\mathsf{var}(F_\ell) = \emptyset$, l'unique affectation
+$\varepsilon$ (sur l'ensemble vide de variables) ne satisfait aucune
+clause restreinte à $\emptyset$, et $\mathsf{PS}'(F_\ell) =
+\{\emptyset\}$.
+
+Pour un nœud interne $v$ d'enfants $c_1$ et $c_2$, le PS-set se
+reconstruit récursivement par
+\[
+  \mathsf{PS}'(F_v) = \bigl\{\,(C_1 \cup C_2) \cap \mathsf{cla}(F_v) :
+  C_1 \in \mathsf{PS}'(F_{c_1}),\ C_2 \in \mathsf{PS}'(F_{c_2})\,\bigr\}.
+\]
+La formule reflète la décomposition $\mathsf{var}(F_v) =
+\mathsf{var}(F_{c_1}) \sqcup \mathsf{var}(F_{c_2})$ : une affectation
+$\tau$ de $\mathsf{var}(F_v)$ se sépare en $\tau_1 =
+\tau|_{\mathsf{var}(F_{c_1})}$ et $\tau_2 = \tau|_{\mathsf{var}(F_{c_2})}$,
+et une clause $c \in \mathsf{cla}(F_v)$ est satisfaite par $\tau$ si et
+seulement si $\tau_1$ ou $\tau_2$ y satisfait un littéral. L'intersection
+avec $\mathsf{cla}(F_v) = \mathsf{cla}(F) \setminus \delta(v)$ écarte les
+clauses étiquetant les feuilles du sous-arbre, qui sortent du domaine
+de $F_v$.
+
+\begin{algorithm}[H]
+\caption{Génération de $\mathsf{PS}'(F_v)$}
+\label{algo:proc1}
+\begin{algorithmic}[1]
+\Require $\mathsf{PS}'(F_{c_1})$, $\mathsf{PS}'(F_{c_2})$ pour les enfants $c_1, c_2$ de $v$
+\Ensure $\mathsf{PS}'(F_v)$
+\State $L \leftarrow \emptyset$
+\ForAll{$(C_1, C_2) \in \mathsf{PS}'(F_{c_1}) \times \mathsf{PS}'(F_{c_2})$}
+  \State ajouter $(C_1 \cup C_2) \cap \mathsf{cla}(F_v)$ à $L$
+\EndFor
+\State \Return $L$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[Théorème~1 de \cite{saether2015}]
+\label{thm:proc1-complexity}
+Soit $F$ une formule CNF avec $n = |\mathsf{var}(F)|$ et
+$m = |\mathsf{cla}(F)|$, et soit $(T, \delta)$ une branch decomposition
+de $F$ de ps-width $k$. L'ensemble des $\mathsf{PS}'(F_v)$ et des
+$\mathsf{PS}'(F_{\overline{v}})$ pour tous les nœuds $v$ de $T$ se calcule
+en temps $O(k^2\, m\, (m + n))$.
+\end{theorem}
+
+\subsection{Procédure 2 : calcul top-down des PS'(F\textsubscript{$\overline{v}$})}
+\label{ssec:theo-proc2}
+
+La Procédure~2 calcule $\mathsf{PS}'(F_{\overline{v}})$ pour tous les
+nœuds $v$ de $T$ par parcours top-down. Elle remplit le rôle symétrique
+de la Procédure~1 sur l'autre côté de chaque coupe : la récursion
+descend de la racine vers les feuilles, et chaque calcul à un nœud
+non-racine combine deux PS-sets déjà disponibles, celui du frère $s$
+produit par la Procédure~1 et celui du parent $p$ obtenu plus haut dans
+la descente.
+
+À la racine $r$, $\mathsf{var}(F_{\overline{r}}) = \emptyset$ et l'unique
+affectation $\varepsilon$ ne satisfait aucune clause restreinte à
+$\emptyset$. On a donc $\mathsf{PS}(F_{\overline{r}}) = \{\emptyset\}$,
+d'où le cas de base
+\[
+  \mathsf{PS}'(F_{\overline{r}}) = \{\emptyset\}.
+\]
+
+Pour un nœud non-racine $v$ de frère $s$ et de parent $p$, le PS-set
+s'obtient par
+\[
+  \mathsf{PS}'(F_{\overline{v}}) = \bigl\{\,(C_s \cup C_p) \cap \mathsf{cla}(F_{\overline{v}}) :
+  C_s \in \mathsf{PS}'(F_s),\ C_p \in \mathsf{PS}'(F_{\overline{p}})\,\bigr\}.
+\]
+La formule reflète la décomposition $\mathsf{var}(F_{\overline{v}}) =
+\mathsf{var}(F_s) \sqcup \mathsf{var}(F_{\overline{p}})$ : les variables
+hors de $\delta(v)$ proviennent soit du sous-arbre du frère
+($\mathsf{var}(F_s) \subseteq \delta(s)$), soit de l'extérieur du
+sous-arbre du parent ($\mathsf{var}(F_{\overline{p}}) \subseteq
+\overline{\delta(p)}$). Une affectation de $\mathsf{var}(F_{\overline{v}})$
+se sépare donc en deux moitiés indépendantes, et l'intersection avec
+$\mathsf{cla}(F_{\overline{v}}) = \mathsf{cla}(F) \cap \delta(v)$ écarte
+les clauses étiquetant des feuilles extérieures au sous-arbre de $v$,
+qui sortent du domaine de $F_{\overline{v}}$.
+
+\begin{algorithm}[H]
+\caption{Génération de $\mathsf{PS}'(F_{\overline{v}})$}
+\label{algo:proc2}
+\begin{algorithmic}[1]
+\Require $\mathsf{PS}'(F_s)$, $\mathsf{PS}'(F_{\overline{p}})$ pour le frère $s$ et le parent $p$ de $v$
+\Ensure $\mathsf{PS}'(F_{\overline{v}})$
+\State $L \leftarrow \emptyset$
+\ForAll{$(C_s, C_p) \in \mathsf{PS}'(F_s) \times \mathsf{PS}'(F_{\overline{p}})$}
+  \State ajouter $(C_s \cup C_p) \cap \mathsf{cla}(F_{\overline{v}})$ à $L$
+\EndFor
+\State \Return $L$
+\end{algorithmic}
+\end{algorithm}
+
+La Procédure~2 a la même structure que la Procédure~1 et s'analyse de
+la même manière, d'où l'énoncé conjoint du
+Théorème~\ref{thm:proc1-complexity}.
+
+\subsection{Procédure 3 : table DP $\mathsf{Tab}_v(C, C')$}
+\label{ssec:theo-proc3}
+
+La Procédure~3 calcule la table de programmation dynamique en chaque
+nœud par parcours bottom-up de $T$. C'est l'étape qui exploite les
+PS-sets produits par les Procédures~1 et~2 pour obtenir, à la racine,
+la solution de MaxSAT et de \#SAT.
+
+Soit $v$ un nœud de $T$ et
+$(C, C') \in \mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}})$. Une
+affectation $\tau$ de $\mathsf{var}(F)$ \emph{rencontre l'expectation}
+$(C, C')$ si elle vérifie simultanément
+\begin{description}
+  \item[(A)] $\mathsf{sat}'(F_v, \tau|_{\mathsf{var}(F_v)}) = C$,
+  \item[(B)] $\mathsf{sat}'(F_{\overline{v}}, \tau|_{\mathsf{var}(F_{\overline{v}})}) = C'$.
+\end{description}
+La condition (A) fixe la trace que les variables intérieures à
+$\delta(v)$ laissent sur les clauses extérieures, et la condition (B)
+fixe la trace symétrique des variables extérieures sur les clauses
+intérieures. La table de programmation dynamique attachée à $v$ est
+l'application
+\[
+  \mathsf{Tab}_v : \mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}}) \to \mathbb{N},
+\]
+où $\mathsf{Tab}_v(C, C')$ est le nombre maximal de clauses de $\delta(v)$
+satisfaites par une affectation rencontrant l'expectation $(C, C')$.
+Comme les variables hors de $\delta(v)$ y satisfont exactement les
+clauses de $C'$, cette définition équivaut à la Constraint~(1)
+de~\cite{saether2015} :
+\begin{equation}
+  \mathsf{Tab}_v(C, C') = \max_{\tau} \bigl|\,(\mathsf{sat}'(F, \tau) \cap \delta(v)) \cup C'\,\bigr|,
+  \label{eq:tab-constraint}
+\end{equation}
+où $\tau$ parcourt les affectations de $\mathsf{var}(F) \cap \delta(v)$
+telles que $\mathsf{sat}'(F_v, \tau) = C$.
+
+Pour un nœud interne $v$ d'enfants $c_1$ et $c_2$, la valeur de
+$\mathsf{Tab}_v(C_v, C'_v)$ se reconstruit à partir des tables filles
+$\mathsf{Tab}_{c_1}$ et $\mathsf{Tab}_{c_2}$. Chaque table fille étant
+indexée par un couple, une mise à jour fait intervenir six indices au
+total. Une astuce due à Bui-Xuan, Telle et Vatshelle réduit la boucle
+de six à trois indices : on itère sur les triplets
+$(C_{c_1}, C_{c_2}, C'_v) \in \mathsf{PS}'(F_{c_1}) \times \mathsf{PS}'(F_{c_2}) \times \mathsf{PS}'(F_{\overline{v}})$,
+et l'on dérive canoniquement
+\[
+  C'_{c_1} = (C_{c_2} \cup C'_v) \cap \delta(c_1),
+  \qquad
+  C'_{c_2} = (C_{c_1} \cup C'_v) \cap \delta(c_2),
+  \qquad
+  C_v = (C_{c_1} \cup C_{c_2}) \setminus \delta(v).
+\]
+Ces trois identités expriment les relations entre les couples
+d'expectation qu'une même affectation rencontre aux coupes de $c_1$,
+$c_2$ et $v$. La cellule $\mathsf{Tab}_v(C_v, C'_v)$ se met alors à jour
+par le maximum des sommes
+$\mathsf{Tab}_{c_1}(C_{c_1}, C'_{c_1}) + \mathsf{Tab}_{c_2}(C_{c_2}, C'_{c_2})$
+ainsi obtenues.
+
+\begin{algorithm}[H]
+\caption{Calcul de $\mathsf{Tab}_v$ pour un nœud interne $v$ d'enfants $c_1, c_2$ (MaxSAT)}
+\label{algo:proc3}
+\begin{algorithmic}[1]
+\Require $\mathsf{Tab}_{c_1}$, $\mathsf{Tab}_{c_2}$
+\Ensure $\mathsf{Tab}_v$
+\State $\mathsf{Tab}_v(C, C') \leftarrow -1$ pour tout $(C, C') \in \mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}})$
+\ForAll{$(C_{c_1}, C_{c_2}, C'_v) \in \mathsf{PS}'(F_{c_1}) \times \mathsf{PS}'(F_{c_2}) \times \mathsf{PS}'(F_{\overline{v}})$}
+  \State $C'_{c_1} \leftarrow (C_{c_2} \cup C'_v) \cap \delta(c_1)$
+  \State $C'_{c_2} \leftarrow (C_{c_1} \cup C'_v) \cap \delta(c_2)$
+  \State $C_v \leftarrow (C_{c_1} \cup C_{c_2}) \setminus \delta(v)$
+  \State $t \leftarrow \mathsf{Tab}_{c_1}(C_{c_1}, C'_{c_1}) + \mathsf{Tab}_{c_2}(C_{c_2}, C'_{c_2})$
+  \If{$\mathsf{Tab}_v(C_v, C'_v) < t$}
+    \State $\mathsf{Tab}_v(C_v, C'_v) \leftarrow t$
+  \EndIf
+\EndFor
+\State \Return $\mathsf{Tab}_v$
+\end{algorithmic}
+\end{algorithm}
+
+Pour \#SAT, la cellule $\mathsf{Tab}_v(C, C')$ compte plutôt le nombre
+d'affectations $\tau$ de $\mathsf{var}(F) \cap \delta(v)$ telles que
+$\mathsf{sat}'(F_v, \tau) = C$ et que toute clause de $\delta(v)$ soit
+satisfaite par $\tau$ ou figure dans $C'$. La Procédure~3 s'adapte de
+la manière suivante : la table s'initialise à $0$ partout, les feuilles
+reçoivent les valeurs $0$, $1$ ou $2$ données par la définition, et les
+lignes 6 et 7 du pseudocode sont remplacées par
+\[
+  \mathsf{Tab}_v(C_v, C'_v) \leftarrow \mathsf{Tab}_v(C_v, C'_v)
+  + \mathsf{Tab}_{c_1}(C_{c_1}, C'_{c_1}) \cdot \mathsf{Tab}_{c_2}(C_{c_2}, C'_{c_2}).
+\]
+La somme cumulée remplace le maximum, et le produit des deux tables
+filles dénombre les combinaisons compatibles à chaque itération.
+
+\begin{lemma}[Lemme~2 de \cite{saether2015}]
+\label{lem:proc3-complexity}
+Soit $F$ une formule CNF de $m$ clauses et $v$ un nœud interne d'une
+branch decomposition $(T, \delta)$ de ps-width $k$. La Procédure~3
+calcule $\mathsf{Tab}_v$ vérifiant l'équation~\eqref{eq:tab-constraint}
+en temps $O(k^3\, m)$.
+\end{lemma}
+
+\subsection{Théorèmes 2 et 3}
+\label{ssec:theo-th23}
+
+Une fois les trois procédures exécutées sur $T$, le résultat du DP se
+lit en une seule cellule à la racine. Comme noté en
+section~\ref{ssec:theo-dp-strategy}, à la racine $r$ on a
+$\mathsf{PS}'(F_r) = \mathsf{PS}'(F_{\overline{r}}) = \{\emptyset\}$, et
+la table $\mathsf{Tab}_r$ se réduit à l'unique cellule
+$\mathsf{Tab}_r(\emptyset, \emptyset)$.
+
+\begin{theorem}[Théorème~2 de \cite{saether2015}]
+\label{thm:dp-total}
+Soit $F$ une formule CNF de $n$ variables et $m$ clauses, et
+$(T, \delta)$ une branch decomposition de $F$ de ps-width $k$. Le DP
+calcule MaxSAT et \#SAT en temps $O(k^3\, m\, (m + n))$, la valeur
+cherchée se lisant à la racine en $\mathsf{Tab}_r(\emptyset, \emptyset)$.
+\end{theorem}
+
+La validité vient de l'équation~\eqref{eq:tab-constraint} : à la racine,
+$\mathsf{cla}(F) \cap \delta(r) = \mathsf{cla}(F)$, donc
+$\mathsf{Tab}_r(\emptyset, \emptyset)$ vaut le maximum du nombre de
+clauses satisfiables par une affectation de $\mathsf{var}(F)$ (MaxSAT).
+La variante additive de la Procédure~3 produit, au même endroit, le
+nombre d'affectations qui satisfont toutes les clauses (\#SAT). La
+complexité s'obtient en sommant le coût du pré-traitement
+(Théorème~\ref{thm:proc1-complexity}, $O(k^2\, m\, (m + n))$) et celui
+de la Procédure~3 sur les $O(m + n)$ nœuds internes
+(Lemme~\ref{lem:proc3-complexity}, $O(k^3\, m)$ par nœud).
+
+Le facteur $k^3$ provient du triplet sur lequel boucle la Procédure~3 à
+chaque nœud interne. Sur une décomposition \emph{linéaire} (chaque nœud
+interne a au moins un enfant feuille), le PS-set de cet enfant est de
+cardinal au plus $2$, soit constant. Le triplet se réduit donc à
+$O(k^2)$ termes, et la borne globale tombe d'un facteur $k$.
+
+\begin{theorem}[Théorème~3 de \cite{saether2015}]
+\label{thm:dp-linear}
+Sous les hypothèses du Théorème~\ref{thm:dp-total}, si $(T, \delta)$ est
+une décomposition linéaire, alors MaxSAT et \#SAT se résolvent en temps
+$O(k^2\, m\, (m + n))$.
+\end{theorem}
+
+Cette amélioration ne demande aucune modification de l'algorithme : la
+boucle de la Procédure~3 itère sur les tailles effectives des PS-sets
+des enfants, et l'un d'eux étant constant sur une décomposition
+linéaire, le compte d'itérations par nœud passe à $O(k^2)$. Les
+décompositions produites par l'heuristique GreedyOrder, présentée en
+section~\ref{sec:theo-greedy}, sont précisément de ce type.
+
+% -----------------------------------------------------------------------------
+\section{Heuristique GreedyOrder}
+\label{sec:theo-greedy}
+% -----------------------------------------------------------------------------
+
+L'algorithme du DP exposé en section~\ref{sec:theo-dp} prend en entrée
+une branch decomposition $(T, \delta)$. Pour minimiser le facteur $k$
+dans la complexité, il faudrait disposer de la ps-width minimale parmi
+toutes les branch decompositions de $F$. Calculer cette quantité est
+probablement intractable~\cite{saether2015}, mais aucune démonstration
+formelle n'en a été donnée. En pratique, le DP s'exécute donc sur une
+décomposition produite par une heuristique, sans garantie d'optimalité.
+
+GreedyOrder est l'heuristique élémentaire proposée par le papier pour
+cet usage. Elle prend en entrée le graphe d'incidence $I(F)$ et produit
+un ordre linéaire $\sigma$ sur ses sommets (variables et clauses
+confondues). À chaque étape, elle choisit comme prochain sommet celui
+ayant le plus grand nombre de voisins \emph{déjà choisis}, en
+départageant les ex æquo par le plus petit degré total.
+
+\begin{algorithm}[H]
+\caption{GreedyOrder}
+\label{algo:greedyorder}
+\begin{algorithmic}[1]
+\Require Graphe biparti $G = (V, E)$
+\Ensure Ordre linéaire $\sigma$ sur $V$
+\State $L \leftarrow \emptyset$, $R \leftarrow V$, $i \leftarrow 1$
+\ForAll{$v \in V$} \State $\mathit{Ldegree}(v) \leftarrow 0$ \EndFor
+\While{$R \neq \emptyset$}
+  \State choisir $v$ : parmi les sommets de $R$ de $\mathit{Ldegree}$ maximal, prendre un de plus petit degré total
+  \State $\sigma(i) \leftarrow v$, $i \leftarrow i + 1$, transférer $v$ de $R$ vers $L$
+  \ForAll{$w \in R$ tel que $vw \in E$}
+    \State $\mathit{Ldegree}(w) \leftarrow \mathit{Ldegree}(w) + 1$
+  \EndFor
+\EndWhile
+\State \Return $\sigma$
+\end{algorithmic}
+\end{algorithm}
+
+L'ordre $\sigma$ se traduit en une branch decomposition linéaire
+$(T, \delta)$ : $T$ est un arbre binaire dont les nœuds internes
+forment un chemin enraciné à une extrémité, et $\delta$ envoie la
+$i$-ème feuille rencontrée par un parcours en largeur partant de la
+racine sur le sommet $\sigma(i)$. La structure résultante est un
+\emph{caterpillar} : chaque nœud interne a une feuille pour enfant, à
+l'exception du nœud le plus profond qui en a deux. C'est précisément
+la forme d'arbre où la borne $O(k^2\, m\, (m+n))$ du
+Théorème~\ref{thm:dp-linear} s'applique.
+
+GreedyOrder n'offre aucune garantie théorique sur la ps-width de la
+décomposition produite : les auteurs la qualifient eux-mêmes de
+« very simple heuristic » et la présentent comme une simple preuve de
+concept. Son intérêt réside dans la simplicité de mise en œuvre et dans
+les performances empiriques observées au chapitre~\ref{chap:resultats}.
+
+% -----------------------------------------------------------------------------
+\section{Compilation de F en d-DNNF structuré (BCMS)}
+\label{sec:theo-bcms}
+% -----------------------------------------------------------------------------
+
+Bova, Capelli, Mengel et Slivovsky~\cite{bova2015} (BCMS dans la suite)
+montrent qu'à partir de la programmation dynamique de Sæther, on peut
+construire en parallèle un DAG d-DNNF qui calcule la formule $F$. Leur
+papier introduit pour cela un objet appelé \emph{shape}, noté
+$\mathbf{S} = (S, S')$. Comme cette notion coïncide avec les paires
+$(C, C')$ déjà utilisées en section~\ref{sec:theo-dp} (mêmes ensembles
+sous-jacents, et même sémantique que la variante \#SAT du DP de
+Sæther, section~\ref{ssec:theo-proc3}), nous conservons la notation
+$(C, C')$ dans tout ce qui suit pour préserver l'unité de lecture du
+chapitre. Les écarts ponctuels avec la nomenclature BCMS seront
+signalés explicitement.
+
+\subsection{Construction du DAG par récurrence}
+\label{ssec:theo-bcms-construction}
+
+BCMS associe à chaque nœud $v$ et chaque paire $(C, C') \in
+\mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}})$ un d-DNNF
+$\varphi_v(C, C')$ construit récursivement à partir de ses enfants. La
+récurrence repose sur les mêmes dérivations à trois indices que la
+Procédure~3 (section~\ref{ssec:theo-proc3}), vues comme une relation
+de \emph{génération} entre une paire-parent et un couple de
+paires-enfants : $(C_1, C_1')$ et $(C_2, C_2')$ \emph{génèrent}
+$(C, C')$ si
+\[
+  C = (C_1 \cup C_2) \setminus \delta(v),
+  \quad
+  C_1' = (C' \cup C_2) \cap \delta(v_1),
+  \quad
+  C_2' = (C' \cup C_1) \cap \delta(v_2).
+\]
+On note $G(C, C')$ l'ensemble des couples qui génèrent $(C, C')$ en
+$v$, et $N_v(C, C')$ l'ensemble des affectations
+$\tau : \mathsf{var}(F_v) \to \{0, 1\}$ satisfaisant les conditions de
+la variante \#SAT du DP (section~\ref{ssec:theo-proc3}).
+
+Aux feuilles de $T$, les ensembles $N_v(C, C')$ sont explicites et les
+fragments $\varphi_v$ se réduisent à des littéraux ou des constantes.
+Pour une \textbf{feuille variable} $\delta(v) = \{x\}$, soient
+$\tau_x, \tau_{\neg x}$ les deux affectations de $\{x\}$ et
+$C_\ell = \mathsf{sat}'(F_v, \tau_\ell)$ pour $\ell \in \{x, \neg x\}$.
+Les paires admises sont $(C_x, \emptyset)$ et $(C_{\neg x}, \emptyset)$,
+et l'on pose
+\[
+  \varphi_v(C_x, \emptyset) \equiv x,
+  \qquad
+  \varphi_v(C_{\neg x}, \emptyset) \equiv \neg x.
+\]
+Pour une \textbf{feuille clause} $\delta(v) = \{c\}$, l'unique
+affectation $\varepsilon$ sur l'ensemble vide de variables ne satisfait
+aucune clause. Les paires admises sont $(\emptyset, \emptyset)$ et
+$(\emptyset, \{c\})$. Comme $\varepsilon \in N_v(\emptyset, \{c\})$
+mais $\varepsilon \notin N_v(\emptyset, \emptyset)$, on pose
+\[
+  \varphi_v(\emptyset, \emptyset) \equiv \bot,
+  \qquad
+  \varphi_v(\emptyset, \{c\}) \equiv \top.
+\]
+
+Pour un nœud interne $v$ d'enfants $v_1$ et $v_2$, et une paire
+$(C, C')$ en $v$, on combine les fragments des enfants via
+\begin{equation}
+  \varphi_v(C, C') \equiv
+  \bigvee_{((C_1, C_1'), (C_2, C_2')) \in G(C, C')}
+  \varphi_{v_1}(C_1, C_1') \wedge \varphi_{v_2}(C_2, C_2').
+  \label{eq:bcms-construction}
+\end{equation}
+Un nœud AND conjugue les fragments des deux enfants pour chaque couple
+générateur, et tous ces nœuds AND alimentent un même nœud OR qui forme
+la racine de $\varphi_v(C, C')$. Les constantes $\bot$ et $\top$ sont
+propagées en cours de construction et les sous-termes triviaux
+supprimés.
+
+Le d-DNNF $\varphi_v(C, C')$ ainsi obtenu a deux propriétés : ses
+variables sont contenues dans $\mathsf{var}(F_v)$, et ses modèles sont
+exactement les affectations de $N_v(C, C')$. C'est le contenu du
+Lemme~4 de BCMS, énoncé en
+section~\ref{ssec:theo-bcms-properties}.
+
+À la racine $r$ de $T$, l'unique paire est $(\emptyset, \emptyset)$, et
+la compilation de $F$ s'obtient comme $\varphi_r(\emptyset, \emptyset)$
+par évaluation de la récurrence~\eqref{eq:bcms-construction} en
+remontant l'arbre. La correction de cette compilation est formalisée
+en section~\ref{ssec:theo-bcms-properties}.
+
+\subsection{Propriétés du DAG produit}
+\label{ssec:theo-bcms-properties}
+
+La construction décrite à la
+section~\ref{ssec:theo-bcms-construction} est correcte comme
+compilateur de $F$ en d-DNNF structuré. Sa justification s'organise
+autour de trois lemmes du papier BCMS, que l'on énonce sans
+démonstration.
+
+\begin{lemma}[Lemme~4 de \cite{bova2015}]
+\label{lem:bcms-correctness}
+Pour tout nœud $v$ de $T$ et toute paire $(C, C')$ admise en $v$, le
+DAG $\varphi_v(C, C')$ est un d-DNNF dont les variables sont incluses
+dans $\mathsf{var}(F_v)$. Une affectation
+$\tau : \mathsf{var}(F_v) \to \{0,1\}$ satisfait $\varphi_v(C, C')$ si
+et seulement si $\tau \in N_v(C, C')$.
+\end{lemma}
+
+Pour énoncer la structuration, on associe à chaque nœud $v$ un
+\emph{vtree} de $\mathsf{var}(F_v)$, noté $\mathsf{vtree}(T, v)$. C'est
+le sous-arbre $T_v$ dans lequel on supprime les feuilles étiquetées
+par une clause, puis dans lequel on contracte les arêtes pendantes
+pour restaurer la binarité (Figure~1 de~\cite{bova2015}). Le résultat
+est une branch decomposition de $\mathsf{var}(F_v)$ et joue le rôle
+d'arbre de référence pour la structuration du d-DNNF.
+
+\begin{lemma}[Lemme~5 de \cite{bova2015}]
+\label{lem:bcms-structured}
+Pour tout nœud $v$ et toute paire $(C, C')$ admise en $v$, le d-DNNF
+$\varphi_v(C, C')$ respecte $\mathsf{vtree}(T, v)$. Le DAG construit
+est donc un d-DNNF structuré.
+\end{lemma}
+
+\begin{lemma}[Lemme~6 de \cite{bova2015}]
+\label{lem:bcms-root}
+À la racine $r$ de $T$, la seule paire admise est
+$(\emptyset, \emptyset)$, et $\varphi_r(\emptyset, \emptyset)$ est un
+d-DNNF structuré dont les modèles sont exactement les affectations de
+$\mathsf{var}(F)$ satisfaisant $F$.
+\end{lemma}
+
+Les trois lemmes ci-dessus assemblent un compilateur de $F$ en d-DNNF
+structuré, sur lequel les requêtes polytimes étudiées en
+section~\ref{sec:theo-queries} sont directement applicables. La taille
+du DAG produit fait l'objet de la section suivante.
+
+\subsection{Borne de taille (Lemme 7 et Théorème 1)}
+\label{ssec:theo-bcms-bound}
+
+\begin{lemma}[Lemme~7 de \cite{bova2015}]
+\label{lem:bcms-size}
+Soit $F$ une formule CNF de $n$ variables et $m$ clauses, et
+$(T, \delta)$ une branch decomposition de $F$ de ps-width $k$. Le
+d-DNNF $\varphi_r(\emptyset, \emptyset)$ produit par la construction
+de la section~\ref{ssec:theo-bcms-construction} a une taille bornée
+par
+\[
+  |\varphi_r(\emptyset, \emptyset)| \leq 7\, k^3\, (n + m).
+\]
+\end{lemma}
+
+La borne se justifie par décompte. Chaque triplet $(C_1, C_2, C')$ de
+la section~\ref{ssec:theo-proc3} ajoute au plus cinq nœuds et arêtes
+au DAG : un nœud AND, deux arêtes vers les fragments des enfants, une
+arête vers le nœud OR de la paire-parent, et éventuellement un nouveau
+nœud OR à allouer. Avec au plus $k^3$ triplets par nœud interne et
+$n + m - 1$ nœuds internes dans $T$, on obtient $5 k^3 (n + m - 1)$
+nœuds et arêtes au plus. Chaque feuille ajoute au plus deux fragments
+mono-nœuds (littéraux ou constantes), soit $2 (n + m)$ au total. La
+somme $5 k^3 (n + m - 1) + 2 (n + m)$ se majore par $7 k^3 (n + m)$
+pour $k \geq 1$.
+
+\begin{theorem}[Théorème~1 de \cite{bova2015}]
+\label{thm:bcms-main}
+Toute formule CNF $F$ de $n$ variables, $m$ clauses et de ps-width $k$
+admet une compilation en d-DNNF structuré de taille
+$O(k^3 (n + m))$. L'algorithme de compilation associé s'exécute en
+temps $O(k^3\, m\, (n + m))$.
+\end{theorem}
+
+La borne en taille reprend le Lemme~\ref{lem:bcms-size}. Le temps
+incorpore le coût $O(m)$ par opération ensembliste, déjà présent dans
+la complexité du DP de Sæther (Théorème~\ref{thm:dp-total}). La
+validation empirique de cette borne sur les instances de test fait
+l'objet du chapitre~\ref{chap:resultats}.
+
+Le d-DNNF produit appartient à la classe d-DNNF générale, plus large
+que celle des decision-DNNF
+(chapitre~\ref{chap:etat_art}, section~\ref{sec:kc}). Ce point n'a
+pas d'incidence sur l'applicabilité des requêtes polytimes étudiées
+au chapitre suivant.
+
+% -----------------------------------------------------------------------------
+\section{Requêtes polytimes sur d-DNNF}
+\label{sec:theo-queries}
+% -----------------------------------------------------------------------------
+
+La compilation BCMS (section~\ref{sec:theo-bcms}) produit un d-DNNF
+qui sert de support à six requêtes calculables en temps polynomial,
+déjà nommées au chapitre~\ref{chap:etat_art},
+section~\ref{subsec:queries-ddnnf} : consistance (CO), validité (VA),
+implication clausale (CE), test d'implicant (IM), comptage des
+modèles (CT, c'est-à-dire \#SAT) et énumération des modèles (ME). Le
+résultat fondateur est dû à Darwiche et Marquis~\cite{darwiche2002},
+qui établissent que chacune de ces requêtes se réduit à un parcours
+du DAG dont la complexité est polynomiale en sa taille, dès que
+celui-ci satisfait certaines propriétés structurelles
+(sous-section~\ref{ssec:theo-properties}).
+
+\subsection{Trois propriétés clés (rappel synthétique)}
+\label{ssec:theo-properties}
+
+Les trois propriétés clés du d-DNNF sont la \emph{décomposabilité}
+(enfants d'un AND à portées variables disjointes), le
+\emph{déterminisme} (enfants d'un OR à ensembles de modèles disjoints)
+et la \emph{lissité} (enfants d'un OR à portées variables identiques).
+Les deux premières définissent la classe d-DNNF, déjà introduite au
+chapitre~\ref{chap:etat_art}, section~\ref{sec:kc}. La lissité, qui
+n'y figure pas, simplifie plusieurs des requêtes en garantissant que
+tous les sous-DAGs d'un OR parlent du même ensemble de variables.
+
+Par le Lemme~\ref{lem:bcms-correctness}, le DAG construit en
+section~\ref{sec:theo-bcms} est décomposable et déterministe. Il n'est
+pas nécessairement lisse, mais peut être rendu tel à la demande par
+l'opération de lissage décrite en sous-section~\ref{ssec:theo-trans}.
+
+\subsection{CT : model counting}
+\label{ssec:theo-ct}
+
+Le comptage des modèles d'un d-DNNF $\varphi$ se calcule par un
+parcours post-ordre du DAG. La fonction $\mathsf{ct}(\varphi)$ se
+définit récursivement par
+\[
+  \mathsf{ct}(\bot) = 0,
+  \quad
+  \mathsf{ct}(\top) = 1,
+  \quad
+  \mathsf{ct}(\ell) = 1 \text{ pour un littéral } \ell,
+\]
+\[
+  \mathsf{ct}\Bigl(\bigwedge_{i=1}^{k} \varphi_i\Bigr) = \prod_{i=1}^{k} \mathsf{ct}(\varphi_i),
+  \qquad
+  \mathsf{ct}\Bigl(\bigvee_{i=1}^{k} \varphi_i\Bigr) = \sum_{i=1}^{k} \mathsf{ct}(\varphi_i).
+\]
+La règle multiplicative aux nœuds AND est correcte par
+décomposabilité : les enfants ont des variables disjointes, leurs
+modèles se combinent indépendamment. La règle additive aux nœuds OR
+est correcte par déterminisme : les enfants ont des ensembles de
+modèles disjoints, leur somme ne double aucun compte. La mémoisation
+sur les identifiants des nœuds donne un parcours en temps $O(|D|)$, où
+$|D|$ désigne la taille du DAG (nombre de nœuds plus arêtes).
+
+Appliqué à la racine $\varphi_r(\emptyset, \emptyset)$ du DAG produit
+par la compilation BCMS (section~\ref{sec:theo-bcms}), $\mathsf{ct}$
+livre directement \#SAT$(F)$ : par le Lemme~\ref{lem:bcms-root}, les
+modèles de $\varphi_r(\emptyset, \emptyset)$ sur $\mathsf{var}(F)$ sont
+précisément les affectations satisfaisantes de $F$.
+
+\subsection{CO, VA et ME}
+\label{ssec:theo-co-va-me1}
+
+Trois requêtes se déduisent directement du comptage de
+sous-section~\ref{ssec:theo-ct}.
+
+La consistance (CO) revient à
+$\mathsf{ct}(\varphi_r(\emptyset, \emptyset)) > 0$ : le DAG est
+consistant si et seulement s'il a au moins un modèle. La décomposabilité
+seule suffit pour cette requête, car on s'intéresse à la positivité du
+compte et non à sa valeur.
+
+La validité (VA) compare le compte au cardinal de l'espace
+d'affectations : $\varphi_r$ est valide si et seulement si
+$\mathsf{ct}(\varphi_r(\emptyset, \emptyset)) = 2^n$, où
+$n = |\mathsf{var}(F)|$. Cette requête exige déterminisme et lissité
+pour que le compte soit exact sur l'espace total des affectations de
+$\mathsf{var}(F)$.
+
+L'énumération des modèles (ME) procède top-down par descente dans le
+DAG, guidée par le compte $\mathsf{ct}$ déjà calculé en
+sous-section~\ref{ssec:theo-ct}. À chaque nœud AND, on collecte les
+choix de tous les enfants (variables disjointes par décomposabilité).
+À chaque nœud OR, on choisit un enfant à compte non nul. Aux feuilles
+littérales, on enregistre la valeur du littéral dans l'affectation en
+construction. La descente produit un modèle complet en $O(|D|)$.
+
+Le même squelette donne l'énumération de \emph{tous} les modèles : à
+chaque nœud OR, au lieu de choisir un enfant on itère sur tous les
+enfants à compte non nul, et à chaque nœud AND, le produit cartésien
+des sous-énumérations remplace la simple union des choix. Le délai entre
+deux modèles consécutifs reste $O(|D|)$, mais le nombre total de
+modèles peut être exponentiel. Sur un DAG non lisse, l'énumération
+peut produire le même modèle plusieurs fois, et l'opération de
+lissage de la section~\ref{ssec:theo-trans} y remédie.
+
+\subsection{Transformations internes : conditionnement et lissage}
+\label{ssec:theo-trans}
+
+Deux transformations internes sur le d-DNNF préparent le DAG pour les
+requêtes CE (section~\ref{ssec:theo-ce}) et IM
+(section~\ref{ssec:theo-im}).
+
+Le \emph{conditionnement} de $\varphi$ par un littéral $\ell$, noté
+$\varphi \mid \ell$, remplace chaque occurrence de $\ell$ par $\top$
+et chaque occurrence de $\neg \ell$ par $\bot$ dans le DAG, puis
+propage les constantes par les règles habituelles
+($\top \wedge X \equiv X$, $\bot \wedge X \equiv \bot$,
+$\top \vee X \equiv \top$, $\bot \vee X \equiv X$). Pour un terme
+$\gamma = \ell_1 \wedge \cdots \wedge \ell_k$, on applique le
+conditionnement littéral par littéral. Le résultat $\varphi \mid \gamma$
+a pour modèles les affectations
+$\tau : \mathsf{var}(\varphi) \setminus \mathsf{var}(\gamma) \to \{0, 1\}$
+telles que $\tau \cup \{\ell_i \mapsto 1\}_{i=1}^{k}$ satisfait
+$\varphi$.
+
+Le conditionnement préserve la décomposabilité et le déterminisme. Il
+ne préserve pas en général la lissité, car la propagation des
+constantes peut faire disparaître asymétriquement certaines variables
+des sous-DAGs d'un même OR, créant un OR à scopes hétérogènes.
+
+Le \emph{lissage} d'un d-DNNF rétablit la lissité quand elle a été
+perdue. Pour chaque nœud OR dont les enfants ont des scopes différents,
+on remplace chaque enfant $\psi_i$ par
+$\psi_i \wedge \bigwedge_{x \in \mathit{missing}_i} (x \vee \neg x)$,
+où $\mathit{missing}_i$ est l'ensemble des variables présentes dans au
+moins un autre enfant mais absentes de $\psi_i$. Les termes
+$(x \vee \neg x)$ sont identiquement vrais, donc les modèles du DAG
+sont inchangés et la lissité est restaurée.
+
+Le lissage est nécessaire chaque fois qu'une requête compare le compte
+à une valeur absolue sur l'espace total des affectations (par exemple
+le test $\mathsf{ct} = 2^{n-k}$ de IM, section~\ref{ssec:theo-im}).
+Pour CE en revanche (section~\ref{ssec:theo-ce}), le test se réduit
+à $\mathsf{ct} = 0$, qui est invariant par lissage : on peut omettre
+cette étape.
+
+\subsection{CE : clausal entailment}
+\label{ssec:theo-ce}
+
+L'implication clausale teste si une clause
+$C = \ell_1 \vee \cdots \vee \ell_k$ est conséquence logique de la
+formule $F$ représentée par $\varphi_r(\emptyset, \emptyset)$. La
+réduction standard passe par la négation : $F \models C$ équivaut à
+dire qu'aucun modèle de $F$ ne satisfait
+$\neg C = \neg \ell_1 \wedge \cdots \wedge \neg \ell_k$. Cette
+condition s'écrit
+\[
+  F \models C
+  \quad \Longleftrightarrow \quad
+  \mathsf{ct}\bigl(\varphi_r(\emptyset, \emptyset) \mid \neg C\bigr) = 0.
+\]
+On conditionne donc le DAG par le terme $\neg C$
+(section~\ref{ssec:theo-trans}) puis on calcule le compte du résultat
+(section~\ref{ssec:theo-ct}). La clause $C$ est conséquence de $F$ si
+et seulement si ce compte est nul.
+
+Le test étant fondé sur la nullité du compte, le lissage n'est pas
+requis : pour tout d-DNNF $\psi$, $\mathsf{ct}(\psi) = 0$ équivaut à
+$\psi \equiv \bot$, indépendamment de la lissité. L'ensemble de la
+procédure (conditionnement par $k$ littéraux et comptage) est en
+temps polynomial en $|D|$ et $k$.
+
+\subsection{IM : implicant check}
+\label{ssec:theo-im}
+
+Le test d'implicant prend en entrée un terme
+$\gamma = \ell_1 \wedge \cdots \wedge \ell_k$ portant sur $k$ variables
+distinctes, et détermine si toute affectation qui satisfait $\gamma$
+satisfait aussi $F$. La réduction passe par le conditionnement et un
+test d'égalité sur le compte :
+\[
+  \gamma \text{ implicant de } F
+  \quad \Longleftrightarrow \quad
+  \mathsf{ct}(\varphi') = 2^{n-k},
+\]
+où $n = |\mathsf{var}(F)|$ et $\varphi'$ désigne le lissage de
+$\varphi_r(\emptyset, \emptyset) \mid \gamma$. Après conditionnement,
+le DAG résiduel encode $F \mid \gamma$ sur les $n - k$ variables
+restantes. Le terme $\gamma$ est implicant si et seulement si toutes
+les $2^{n - k}$ affectations possibles de ces variables satisfont la
+formule, ce qui équivaut à compter exactement $2^{n - k}$ modèles.
+
+À la différence de CE, le test compare le compte à une valeur absolue
+sur l'espace total, et non à zéro. Le compte doit donc être exact
+relativement à $\mathsf{var}(F) \setminus \mathsf{var}(\gamma)$, ce qui
+impose le lissage du DAG résiduel après conditionnement
+(section~\ref{ssec:theo-trans}). L'enchaînement complet
+(conditionnement, lissage, comptage) est en temps polynomial en $|D|$
+et $k$.
 
 \chapter{Implémentation}
 \label{chap:implementation}
@@ -604,10 +1601,10 @@ ainsi produit relèvent du cadre théorique (chapitre~\ref{chap:theorie}).
   \newblock In \emph{Proc.\ 52nd International Colloquium on Automata, Languages, and Programming (ICALP 2025)}, LIPIcs, 2025.
   \newblock DOI: 10.4230/LIPIcs.ICALP.2025.25.
 
-\bibitem{bova2016}
+\bibitem{bova2015}
   S.~Bova, F.~Capelli, S.~Mengel, and F.~Slivovsky.
   \newblock On compiling CNFs into structured deterministic DNNFs.
-  \newblock In \emph{Proc.\ 19th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 9710, pp.~199--214. Springer, 2016.
+  \newblock In \emph{Proc.\ 18th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 9340, pp.~199--214. Springer, 2015.
 
 \bibitem{bryant2023}
   R.~E. Bryant, W.~Nawrocki, J.~Avigad, and M.~J.~H. Heule.
