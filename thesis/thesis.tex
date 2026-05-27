@@ -10,6 +10,7 @@
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 \usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
 \usepackage{microtype}
 \usepackage{float}
 \usepackage{algorithm}
@@ -124,6 +125,20 @@
 % Résumé / Abstract 
 \chapter*{Résumé}
 \addcontentsline{toc}{chapter}{Résumé}
+
+Nous implémentons en C le comptage de modèles (\#SAT) et la
+maximisation de clauses (MaxSAT) par programmation dynamique sur
+branch decomposition, dont la complexité est paramétrée par la
+ps-width (algorithme de Saether, Telle et Vatshelle). L'implémentation
+est étendue de manière à produire, au cours de la même exécution, un
+DAG d-DNNF structuré (construction de Bova, Capelli, Mengel et
+Slivovsky), sur lequel six requêtes polytimes sont évaluées.
+L'évaluation empirique montre qu'un solveur de production reste plus
+rapide en résolution unique, mais que le DAG compilé s'amortit dès
+qu'une même formule est interrogée de nombreuses fois, ce qui place la
+contribution du côté de la compilation de connaissances plutôt que de
+la résolution.
+
 \clearpage
 
 % Table des matières
@@ -207,7 +222,7 @@ Parmi ces paramètres, la \emph{treewidth} du graphe d'incidence de la formule
 est le plus étudié \cite{samer2010,slivovsky2020}. Des résultats plus récents,
 fondés sur la \emph{mim-width} \cite{vatshelle2012} et la \emph{ps-width}
 \cite{saether2015}, étendent la tractabilité à des classes de formules
-strictement plus larges. L'algorithme de Sæther, Telle et Vatshelle
+strictement plus larges. L'algorithme de Saether, Telle et Vatshelle
 \cite{saether2015} résout simultanément \#SAT et MaxSAT en temps
 $O(k^3 \cdot m \cdot (m+n))$, où $k$ est la ps-width de la décomposition.
 Il constitue le premier pilier de ce mémoire de bachelor. Son extension par Bova, Capelli,
@@ -219,7 +234,7 @@ avec la compilation de connaissances.
 
 Ce mémoire de bachelor poursuit deux objectifs complémentaires.
 
-Le premier est l'\textbf{implémentation complète} de l'algorithme de Sæther,
+Le premier est l'\textbf{implémentation complète} de l'algorithme de Saether,
 Telle et Vatshelle \cite{saether2015} en langage C. Cette implémentation comprend
 le parseur de formules DIMACS CNF, trois stratégies de construction de l'arbre
 de décomposition (dont l'heuristique GreedyOrder décrite dans le papier), les
@@ -251,7 +266,7 @@ structurelle apporte un avantage décisif.
 Ce chapitre positionne notre travail dans la littérature. Nous présentons
 successivement les problèmes SAT, \#SAT et MaxSAT, les principales familles
 d'algorithmes de résolution, les paramètres de décomposition structurelle
-qui gouvernent leur complexité, l'algorithme de Sæther, Telle et Vatshelle
+qui gouvernent leur complexité, l'algorithme de Saether, Telle et Vatshelle
 sur lequel repose notre implémentation, et la compilation de connaissances
 CNF $\to$ d-DNNF par Bova, Capelli, Mengel et Slivovsky qui en constitue
 l'extension naturelle.
@@ -275,16 +290,15 @@ nombreux problèmes combinatoires classiques s'y réduisent en temps
 polynomial \cite{karp1972}. Malgré cette intractabilité théorique, les
 solveurs industriels modernes traitent couramment des instances de plusieurs
 millions de variables et clauses, grâce à l'algorithme
-CDCL \cite{moskewicz2001,een2003} décrit à la section~\ref{sec:cdcl}.
+CDCL \cite{moskewicz2001,een2003} décrit à la section \ref{sec:cdcl}.
 
 \subsection{\#SAT : comptage de modèles}
 
 Le problème \#SAT (\emph{model counting}) demande non plus si un modèle
 existe, mais \emph{combien} il en existe. Ce problème est \#P-complet
 \cite{valiant1979}, classe de complexité qui capture le comptage associé
-aux décisions NP. Valiant a montré que même sur des fragments syntaxiques
-pour lesquels la décision est facile (2-CNF, Horn), le comptage reste
-\#P-complet.
+aux décisions NP. Le comptage reste \#P-complet même sur des fragments
+syntaxiques pour lesquels la décision est facile (2-CNF, Horn).
 
 \#SAT intervient dans l'inférence probabiliste sur des réseaux bayésiens
 \cite{darwiche2002}, le model checking quantitatif et l'analyse de fiabilité
@@ -333,7 +347,7 @@ insatisfaisables.
 Une approche orthogonale à la résolution en ligne, la \emph{compilation de
 connaissances}, transforme hors-ligne la formule en une représentation
 polynomialement interrogeable et fait l'objet de la
-section~\ref{sec:kc}.
+section \ref{sec:kc}.
 
 Toutes ces approches ont en commun de ne pas exploiter directement la
 structure topologique de la formule. La section suivante présente une
@@ -381,11 +395,11 @@ mim-width bornée par une constante. Cela impose le recours à des
 heuristiques dans toute mise en oeuvre pratique.
 
 % ---------------------------------------------------------------------------
-\section{PS-width et l'algorithme de Sæther-Telle-Vatshelle}
+\section{ps-width et l'algorithme de Saether-Telle-Vatshelle}
 \label{sec:pswidth}
 % ---------------------------------------------------------------------------
 
-Sæther, Telle et Vatshelle \cite{saether2015} introduisent la
+Saether, Telle et Vatshelle \cite{saether2015} introduisent la
 \emph{ps-width} (\emph{projection-satisfiability width}), un paramètre
 défini directement sur les formules CNF à partir d'une \emph{branch
 decomposition} de la formule. Il domine la mim-width du graphe
@@ -403,9 +417,9 @@ solveurs MaxSAT modernes restent plus rapides sur la plupart des entrées,
 mais sur les familles construites pour favoriser le DP leur prototype les
 bat nettement \cite{saether2015}. La définition formelle du paramètre,
 la description des trois procédures de l'algorithme et le fonctionnement
-de l'heuristique font l'objet du chapitre~\ref{chap:theorie} ; les
+de l'heuristique font l'objet du chapitre \ref{chap:theorie} ; les
 familles d'instances servent de banc de test au
-chapitre~\ref{chap:resultats}.
+chapitre \ref{chap:resultats}.
 
 % ---------------------------------------------------------------------------
 \section{Compilation de connaissances CNF \texorpdfstring{$\to$}{vers} d-DNNF}
@@ -455,7 +469,7 @@ structurels de la formule. Les \emph{d-DNNF structurés}, à l'inverse,
 imposent un schéma global (typiquement une branch decomposition fixée
 en amont) qui structure les noeuds AND et permet d'établir des bornes
 théoriques sur la taille de la représentation. La construction de
-Bova, Capelli, Mengel et Slivovsky (section~\ref{subsec:bcms}) appartient
+Bova, Capelli, Mengel et Slivovsky (section \ref{subsec:bcms}) appartient
 à cette seconde famille et fournit une borne théorique sur la taille du
 DAG paramétrée par la ps-width.
 
@@ -469,15 +483,15 @@ rend polynomiales six requêtes standard : \textbf{CO}
 \textbf{CT} (\emph{model counting}, le \#SAT) et \textbf{ME}
 (\emph{model enumeration}, énumération avec délai polynomial entre
 modèles consécutifs). Le DAG produit par la construction de la
-section~\ref{subsec:bcms} satisfait les hypothèses requises et ces
+section \ref{subsec:bcms} satisfait les hypothèses requises et ces
 six requêtes y sont donc directement disponibles. Leur algorithmique
-précise est décrite au chapitre~\ref{chap:theorie}.
+précise est décrite au chapitre \ref{chap:theorie}.
 
 \subsection{Compilation explicite pilotée par la ps-width : BCMS 2015}
 \label{subsec:bcms}
 
 Bova, Capelli, Mengel et Slivovsky \cite{bova2015} prolongent
-l'algorithme de Sæther, Telle et Vatshelle en montrant que toute formule
+l'algorithme de Saether, Telle et Vatshelle en montrant que toute formule
 CNF $F$ dotée d'une branch decomposition de ps-width $k$ peut être
 compilée en un d-DNNF structuré de taille
 \[
@@ -489,21 +503,21 @@ aucune recherche : la décomposition fournit le squelette du DAG, le DP
 fournit son contenu, et la borne $7 \cdot k^3 \cdot (n+m)$ donne une
 garantie de taille théorique paramétrée par la ps-width, absente des
 compilateurs top-down. La construction détaillée du DAG est décrite au
-chapitre~\ref{chap:theorie}.
+chapitre \ref{chap:theorie}.
 
 
 \chapter{Cadre théorique}
 \label{chap:theorie}
 
-Les sections~\ref{sec:theo-prelim} et~\ref{sec:theo-pswidth} fixent les
+Les sections \ref{sec:theo-prelim} et \ref{sec:theo-pswidth} fixent les
 notations et définissent la branch decomposition puis la ps-width. La
-section~\ref{sec:theo-dp} expose la programmation dynamique de Sæther,
+section \ref{sec:theo-dp} expose la programmation dynamique de Saether,
 Telle et Vatshelle \cite{saether2015} qui résout \#SAT et MaxSAT en
-temps polynomial pour ps-width bornée, et la section~\ref{sec:theo-greedy}
+temps polynomial pour ps-width bornée, et la section \ref{sec:theo-greedy}
 l'heuristique gloutonne GreedyOrder qui lui fournit une décomposition.
 Bova, Capelli, Mengel et Slivovsky \cite{bova2015}
-(section~\ref{sec:theo-bcms}) instrumentent ce DP pour produire un
-d-DNNF structuré, sur lequel la section~\ref{sec:theo-queries} décrit
+(section \ref{sec:theo-bcms}) instrumentent ce DP pour produire un
+d-DNNF structuré, sur lequel la section \ref{sec:theo-queries} décrit
 les six requêtes polytimes.
 
 % -----------------------------------------------------------------------------
@@ -527,13 +541,13 @@ $X \subseteq \mathsf{var}(F)$, la \emph{sous-formule induite}
 $F_{\mathcal{C},X}$ s'obtient en retirant de $F$ toute clause hors de
 $\mathcal{C}$, puis tout littéral dont la variable n'appartient pas
 à $X$. Cette construction décrira les sous-formules de part et
-d'autre d'une coupe de la décomposition (section~\ref{sec:theo-pswidth}).
+d'autre d'une coupe de la décomposition (section \ref{sec:theo-pswidth}).
 
 Le graphe d'incidence $I(F)$ a été défini au
-chapitre~\ref{chap:etat_art}, section~\ref{sec:decomp}. Ses sommets
+chapitre \ref{chap:etat_art}, section \ref{sec:decomp}. Ses sommets
 sont les variables et clauses de $F$, avec une arête entre $x$ et $C$
 si et seulement si $x$ apparaît dans $C$. On suit l'hypothèse de
-Sæther, Telle et Vatshelle \cite{saether2015} en supposant $I(F)$
+Saether, Telle et Vatshelle \cite{saether2015} en supposant $I(F)$
 connexe : sinon le problème se résout indépendamment sur chaque
 composante connexe.
 
@@ -571,7 +585,7 @@ on pose
 \]
 où $\overline{\mathcal{C}} = \mathsf{cla}(F) \setminus \mathcal{C}$ et
 $\overline{X} = \mathsf{var}(F) \setminus X$, et où la notation
-$F_{\mathcal{C}, X}$ a été fixée en section~\ref{sec:theo-prelim}.
+$F_{\mathcal{C}, X}$ a été fixée en section \ref{sec:theo-prelim}.
 L'asymétrie est volontaire : la sous-formule $F_v$ rassemble les
 clauses extérieures à la coupe restreintes aux variables locales, et
 décrit précisément ce qu'une affectation des seules variables de $X$
@@ -617,7 +631,7 @@ peut satisfaire parmi les clauses du complément.
   };
 \end{tikzpicture}
 \caption{Une branch decomposition $(T, \delta)$ d'une formule $F$
-sur cinq variables et quatre clauses, reprise de la Figure~2 de
+sur cinq variables et quatre clauses, reprise de la Figure 2 de
 \cite{saether2015}. La formule a pour variables
 $\mathsf{var}(F) = \{x_1, x_2, x_3, x_4, x_5\}$ et pour clauses
 $c_1 = \{x_1, x_2\}$, $c_2 = \{x_1, \neg x_2, x_3\}$,
@@ -637,7 +651,7 @@ Quand tous les noeuds internes de $T$ se trouvent sur un même chemin
 (autrement dit, chaque noeud interne a au moins une feuille pour
 enfant), on parle de \emph{décomposition linéaire}. Ce cas particulier
 admet une analyse de complexité plus fine, traitée en
-section~\ref{ssec:theo-th23}.
+section \ref{ssec:theo-th23}.
 
 \subsection{Coupes et PS-sets}
 \label{ssec:theo-cuts-psset}
@@ -668,7 +682,7 @@ La famille des sous-ensembles projection-satisfiables de $F$ se note
 Sa cardinalité $|\mathsf{PS}(F)|$ est la \emph{ps-value} de $F$. C'est
 à partir de cette quantité, calculée sur les sous-formules $F_v$ et
 $F_{\overline{v}}$ associées aux noeuds d'une branch decomposition, que
-la section~\ref{ssec:theo-pswidth-def} définira la ps-width.
+la section \ref{ssec:theo-pswidth-def} définira la ps-width.
 
 \subsection{ps-value et ps-width}
 \label{ssec:theo-pswidth-def}
@@ -696,7 +710,7 @@ Pour une clause $c$ et un ensemble de variables $Y$, on note $c|_Y$
 la clause obtenue en ne gardant que les littéraux dont la variable est
 dans $Y$ : $c|_Y = \{\, \ell \in c : \mathsf{var}(\ell) \in Y\,\}$.
 Détaillons le calcul de $|\mathsf{PS}(F_v)|$ sur l'exemple de la
-Figure~\ref{fig:branch-decomp-example}. La sous-formule $F_v$ contient
+Figure \ref{fig:branch-decomp-example}. La sous-formule $F_v$ contient
 les versions restreintes de $c_2$ et $c_4$ aux variables de $X = \{x_1, x_2\}$ :
 \[
   D_1 = c_2|_X = \{x_1, \neg x_2\},
@@ -720,7 +734,7 @@ $x_1$ & $x_2$ & $D_1$ & $D_2$ & $\mathsf{sat}(F_v, \tau)$ \\
 \end{center}
 
 Les quatre affectations produisent trois ensembles satisfaits distincts,
-d'où $\mathsf{PS}(F_v) = \{\{D_1\}, \{D_2\}, \{D_1, D_2\}\}$ et
+d'où $\mathsf{PS}(F_v) = \{\{D_1\}, \\ \{D_2\}, \{D_1, D_2\}\}$ et
 $|\mathsf{PS}(F_v)| = 3$. Du côté de
 $F_{\overline{v}} = \{\emptyset, \{\neg x_4, x_5\}\}$, la clause vide
 n'est jamais satisfaite, et les affectations sur $\{x_4, x_5\}$ qui
@@ -731,7 +745,7 @@ $\mathsf{PS}(F_{\overline{v}}) = \{\emptyset, \{c_3|_{\overline{X}}\}\}$
 et $|\mathsf{PS}(F_{\overline{v}})| = 2$. La ps-value de la coupe vaut
 donc $\mathsf{ps}(\delta(v)) = \max(3, 2) = 3$.
 
-La programmation dynamique de la section~\ref{sec:theo-dp} manipule
+La programmation dynamique de la section \ref{sec:theo-dp} manipule
 plus naturellement les clauses originales de $F$ que leurs versions
 restreintes. Le papier introduit pour cela une variante de notation :
 $\mathsf{PS}'(F_v)$ désigne la famille des sous-ensembles
@@ -746,13 +760,13 @@ $\mathsf{PS}$ et $\mathsf{PS}'$ est bijective :
 $|\mathsf{PS}'(F_v)| = |\mathsf{PS}(F_v)|$ et la ps-value est
 inchangée.
 
-Sæther, Telle et Vatshelle établissent par ailleurs (Lemme~1 de
+Saether, Telle et Vatshelle établissent par ailleurs (Lemme 1 de
 \cite{saether2015}) que pour des clauses de taille bornée,
 $|\mathsf{PS}(F)|$ reste polynomial en le nombre de clauses dès que la
-mim-width du graphe d'incidence (définie en
-section~\ref{sec:decomp}) est bornée : la ps-width est donc un
-paramètre tractable sur les classes de formules pour lesquelles cette
-mim-width l'est.
+taille maximale d'un couplage induit du graphe d'incidence $I(F)$ est
+bornée : la ps-width est donc un paramètre tractable sur les classes
+de formules dont la mim-width (définie en section \ref{sec:decomp})
+est bornée.
 
 % -----------------------------------------------------------------------------
 \section{Programmation dynamique pour \#SAT et MaxSAT}
@@ -763,38 +777,38 @@ mim-width l'est.
 \label{ssec:theo-dp-strategy}
 
 Le calcul de \#SAT et MaxSAT exploite la structure récursive de la
-branch decomposition $(T, \delta)$. À chaque nœud $v$ de $T$, la coupe
+branch decomposition $(T, \delta)$. À chaque noeud $v$ de $T$, la coupe
 $\delta(v)$ délimite les sous-formules $F_v$ et $F_{\overline{v}}$, et
 toute affectation $\tau$ de $\mathsf{var}(F)$ se décompose en sa
 restriction $\tau|_v$ aux variables de $F_v$ et sa restriction
 $\tau|_{\overline{v}}$ aux variables de $F_{\overline{v}}$. Comme une
 clause peut être satisfaite par des littéraux situés des deux côtés de
-la coupe, la programmation dynamique de Sæther, Telle et
-Vatshelle~\cite{saether2015} retient à chaque coupe l'ensemble des
+la coupe, la programmation dynamique de Saether, Telle et
+Vatshelle \cite{saether2015} retient à chaque coupe l'ensemble des
 clauses déjà satisfaites par chaque moitié, ce qui permet de combiner
 les contributions des deux côtés sans énumérer toutes les
 affectations. Les PS-sets introduits en
-section~\ref{ssec:theo-pswidth-def} fournissent l'espace d'états
+section \ref{ssec:theo-pswidth-def} fournissent l'espace d'états
 adapté : la ps-width $k$ borne leur cardinal à chaque coupe, et les
 boucles internes du DP restent polynomiales en $k$.
 
 L'algorithme s'organise en trois procédures successives. La
-\emph{Procédure~1} calcule, par parcours bottom-up de $T$, les
-ensembles $\mathsf{PS}'(F_v)$. La \emph{Procédure~2} calcule, par
+\emph{Procédure 1} calcule, par parcours bottom-up de $T$, les
+ensembles $\mathsf{PS}'(F_v)$. La \emph{Procédure 2} calcule, par
 parcours top-down, les ensembles duaux
 $\mathsf{PS}'(F_{\overline{v}})$. Ces deux passes sont des
-pré-traitements obligatoires : la \emph{Procédure~3}, qui effectue le
-DP proprement dit en remontant l'arbre, a besoin en chaque nœud des
+pré-traitements obligatoires : la \emph{Procédure 3}, qui effectue le
+DP proprement dit en remontant l'arbre, a besoin en chaque noeud des
 PS-sets des deux côtés de la coupe pour indexer ses tables. La valeur
 cherchée se lit ensuite à la racine, où la table se réduit à une
-unique cellule. Les sections~\ref{ssec:theo-proc1}
-à~\ref{ssec:theo-th23} en formalisent successivement chaque étape.
+unique cellule. Les sections \ref{ssec:theo-proc1}
+à \ref{ssec:theo-th23} en formalisent successivement chaque étape.
 
 \subsection{Procédure 1 : calcul bottom-up des PS'(F\textsubscript{v})}
 \label{ssec:theo-proc1}
 
-La Procédure~1 calcule $\mathsf{PS}'(F_v)$ pour tous les nœuds de la
-branch decomposition par parcours bottom-up de $T$. À chaque nœud, le
+La Procédure 1 calcule $\mathsf{PS}'(F_v)$ pour tous les noeuds de la
+branch decomposition par parcours bottom-up de $T$. À chaque noeud, le
 résultat dépend uniquement des PS-sets calculés aux deux enfants, et
 la récursion atteint les feuilles, où le calcul est explicite.
 
@@ -815,7 +829,7 @@ $\varepsilon$ (sur l'ensemble vide de variables) ne satisfait aucune
 clause restreinte à $\emptyset$, et $\mathsf{PS}'(F_\ell) =
 \{\emptyset\}$.
 
-Pour un nœud interne $v$ d'enfants $c_1$ et $c_2$, le PS-set se
+Pour un noeud interne $v$ d'enfants $c_1$ et $c_2$, le PS-set se
 reconstruit récursivement par
 \[
   \mathsf{PS}'(F_v) = \bigl\{\,(C_1 \cup C_2) \cap \mathsf{cla}(F_v) :
@@ -845,24 +859,24 @@ de $F_v$.
 \end{algorithmic}
 \end{algorithm}
 
-\begin{theorem}[Théorème~1 de \cite{saether2015}]
+\begin{theorem}[Théorème 1 de \cite{saether2015}]
 \label{thm:proc1-complexity}
 Soit $F$ une formule CNF avec $n = |\mathsf{var}(F)|$ et
 $m = |\mathsf{cla}(F)|$, et soit $(T, \delta)$ une branch decomposition
 de $F$ de ps-width $k$. L'ensemble des $\mathsf{PS}'(F_v)$ et des
-$\mathsf{PS}'(F_{\overline{v}})$ pour tous les nœuds $v$ de $T$ se calcule
+$\mathsf{PS}'(F_{\overline{v}})$ pour tous les noeuds $v$ de $T$ se calcule
 en temps $O(k^2\, m\, (m + n))$.
 \end{theorem}
 
 \subsection{Procédure 2 : calcul top-down des PS'(F\textsubscript{$\overline{v}$})}
 \label{ssec:theo-proc2}
 
-La Procédure~2 calcule $\mathsf{PS}'(F_{\overline{v}})$ pour tous les
-nœuds $v$ de $T$ par parcours top-down. Elle remplit le rôle symétrique
-de la Procédure~1 sur l'autre côté de chaque coupe : la récursion
-descend de la racine vers les feuilles, et chaque calcul à un nœud
+La Procédure 2 calcule $\mathsf{PS}'(F_{\overline{v}})$ pour tous les
+noeuds $v$ de $T$ par parcours top-down. Elle remplit le rôle symétrique
+de la Procédure 1 sur l'autre côté de chaque coupe : la récursion
+descend de la racine vers les feuilles, et chaque calcul à un noeud
 non-racine combine deux PS-sets déjà disponibles, celui du frère $s$
-produit par la Procédure~1 et celui du parent $p$ obtenu plus haut dans
+produit par la Procédure 1 et celui du parent $p$ obtenu plus haut dans
 la descente.
 
 À la racine $r$, $\mathsf{var}(F_{\overline{r}}) = \emptyset$ et l'unique
@@ -873,7 +887,7 @@ d'où le cas de base
   \mathsf{PS}'(F_{\overline{r}}) = \{\emptyset\}.
 \]
 
-Pour un nœud non-racine $v$ de frère $s$ et de parent $p$, le PS-set
+Pour un noeud non-racine $v$ de frère $s$ et de parent $p$, le PS-set
 s'obtient par
 \[
   \mathsf{PS}'(F_{\overline{v}}) = \bigl\{\,(C_s \cup C_p) \cap \mathsf{cla}(F_{\overline{v}}) :
@@ -904,19 +918,19 @@ qui sortent du domaine de $F_{\overline{v}}$.
 \end{algorithmic}
 \end{algorithm}
 
-La Procédure~2 a la même structure que la Procédure~1 et s'analyse de
+La Procédure 2 a la même structure que la Procédure 1 et s'analyse de
 la même manière, d'où l'énoncé conjoint du
-Théorème~\ref{thm:proc1-complexity}.
+Théorème \ref{thm:proc1-complexity}.
 
 \subsection{Procédure 3 : table DP $\mathsf{Tab}_v(C, C')$}
 \label{ssec:theo-proc3}
 
-La Procédure~3 calcule la table de programmation dynamique en chaque
-nœud par parcours bottom-up de $T$. C'est l'étape qui exploite les
-PS-sets produits par les Procédures~1 et~2 pour obtenir, à la racine,
+La Procédure 3 calcule la table de programmation dynamique en chaque
+noeud par parcours bottom-up de $T$. C'est l'étape qui exploite les
+PS-sets produits par les Procédures 1 et 2 pour obtenir, à la racine,
 la solution de MaxSAT et de \#SAT.
 
-Soit $v$ un nœud de $T$ et
+Soit $v$ un noeud de $T$ et
 $(C, C') \in \mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}})$. Une
 affectation $\tau$ de $\mathsf{var}(F)$ \emph{rencontre l'expectation}
 $(C, C')$ si elle vérifie simultanément
@@ -935,8 +949,8 @@ l'application
 où $\mathsf{Tab}_v(C, C')$ est le nombre maximal de clauses de $\delta(v)$
 satisfaites par une affectation rencontrant l'expectation $(C, C')$.
 Comme les variables hors de $\delta(v)$ y satisfont exactement les
-clauses de $C'$, cette définition équivaut à la Constraint~(1)
-de~\cite{saether2015} :
+clauses de $C'$, cette définition équivaut à la Constraint (1)
+de \cite{saether2015} :
 \begin{equation}
   \mathsf{Tab}_v(C, C') = \max_{\tau} \bigl|\,(\mathsf{sat}'(F, \tau) \cap \delta(v)) \cup C'\,\bigr|,
   \label{eq:tab-constraint}
@@ -944,7 +958,7 @@ de~\cite{saether2015} :
 où $\tau$ parcourt les affectations de $\mathsf{var}(F) \cap \delta(v)$
 telles que $\mathsf{sat}'(F_v, \tau) = C$.
 
-Pour un nœud interne $v$ d'enfants $c_1$ et $c_2$, la valeur de
+Pour un noeud interne $v$ d'enfants $c_1$ et $c_2$, la valeur de
 $\mathsf{Tab}_v(C_v, C'_v)$ se reconstruit à partir des tables filles
 $\mathsf{Tab}_{c_1}$ et $\mathsf{Tab}_{c_2}$. Chaque table fille étant
 indexée par un couple, une mise à jour fait intervenir six indices au
@@ -967,7 +981,7 @@ $\mathsf{Tab}_{c_1}(C_{c_1}, C'_{c_1}) + \mathsf{Tab}_{c_2}(C_{c_2}, C'_{c_2})$
 ainsi obtenues.
 
 \begin{algorithm}[H]
-\caption{Calcul de $\mathsf{Tab}_v$ pour un nœud interne $v$ d'enfants $c_1, c_2$ (MaxSAT)}
+\caption{Calcul de $\mathsf{Tab}_v$ pour un noeud interne $v$ d'enfants $c_1, c_2$ (MaxSAT)}
 \label{algo:proc3}
 \begin{algorithmic}[1]
 \Require $\mathsf{Tab}_{c_1}$, $\mathsf{Tab}_{c_2}$
@@ -989,7 +1003,7 @@ ainsi obtenues.
 Pour \#SAT, la cellule $\mathsf{Tab}_v(C, C')$ compte plutôt le nombre
 d'affectations $\tau$ de $\mathsf{var}(F) \cap \delta(v)$ telles que
 $\mathsf{sat}'(F_v, \tau) = C$ et que toute clause de $\delta(v)$ soit
-satisfaite par $\tau$ ou figure dans $C'$. La Procédure~3 s'adapte de
+satisfaite par $\tau$ ou figure dans $C'$. La Procédure 3 s'adapte de
 la manière suivante : la table s'initialise à $0$ partout, les feuilles
 reçoivent les valeurs $0$, $1$ ou $2$ données par la définition, et les
 lignes 6 et 7 du pseudocode sont remplacées par
@@ -1000,11 +1014,11 @@ lignes 6 et 7 du pseudocode sont remplacées par
 La somme cumulée remplace le maximum, et le produit des deux tables
 filles dénombre les combinaisons compatibles à chaque itération.
 
-\begin{lemma}[Lemme~2 de \cite{saether2015}]
+\begin{lemma}[Lemme 2 de \cite{saether2015}]
 \label{lem:proc3-complexity}
-Soit $F$ une formule CNF de $m$ clauses et $v$ un nœud interne d'une
-branch decomposition $(T, \delta)$ de ps-width $k$. La Procédure~3
-calcule $\mathsf{Tab}_v$ vérifiant l'équation~\eqref{eq:tab-constraint}
+Soit $F$ une formule CNF de $m$ clauses et $v$ un noeud interne d'une
+branch decomposition $(T, \delta)$ de ps-width $k$. La Procédure 3
+calcule $\mathsf{Tab}_v$ vérifiant l'équation \eqref{eq:tab-constraint}
 en temps $O(k^3\, m)$.
 \end{lemma}
 
@@ -1013,12 +1027,12 @@ en temps $O(k^3\, m)$.
 
 Une fois les trois procédures exécutées sur $T$, le résultat du DP se
 lit en une seule cellule à la racine. Comme noté en
-section~\ref{ssec:theo-dp-strategy}, à la racine $r$ on a
+section \ref{ssec:theo-dp-strategy}, à la racine $r$ on a
 $\mathsf{PS}'(F_r) = \mathsf{PS}'(F_{\overline{r}}) = \{\emptyset\}$, et
 la table $\mathsf{Tab}_r$ se réduit à l'unique cellule
 $\mathsf{Tab}_r(\emptyset, \emptyset)$.
 
-\begin{theorem}[Théorème~2 de \cite{saether2015}]
+\begin{theorem}[Théorème 2 de \cite{saether2015}]
 \label{thm:dp-total}
 Soit $F$ une formule CNF de $n$ variables et $m$ clauses, et
 $(T, \delta)$ une branch decomposition de $F$ de ps-width $k$. Le DP
@@ -1026,47 +1040,47 @@ calcule MaxSAT et \#SAT en temps $O(k^3\, m\, (m + n))$, la valeur
 cherchée se lisant à la racine en $\mathsf{Tab}_r(\emptyset, \emptyset)$.
 \end{theorem}
 
-La validité vient de l'équation~\eqref{eq:tab-constraint} : à la racine,
+La validité vient de l'équation \eqref{eq:tab-constraint} : à la racine,
 $\mathsf{cla}(F) \cap \delta(r) = \mathsf{cla}(F)$, donc
 $\mathsf{Tab}_r(\emptyset, \emptyset)$ vaut le maximum du nombre de
 clauses satisfiables par une affectation de $\mathsf{var}(F)$ (MaxSAT).
-La variante additive de la Procédure~3 produit, au même endroit, le
+La variante additive de la Procédure 3 produit, au même endroit, le
 nombre d'affectations qui satisfont toutes les clauses (\#SAT). La
 complexité s'obtient en sommant le coût du pré-traitement
-(Théorème~\ref{thm:proc1-complexity}, $O(k^2\, m\, (m + n))$) et celui
-de la Procédure~3 sur les $O(m + n)$ nœuds internes
-(Lemme~\ref{lem:proc3-complexity}, $O(k^3\, m)$ par nœud).
+(Théorème \ref{thm:proc1-complexity}, $O(k^2\, m\, (m + n))$) et celui
+de la Procédure 3 sur les $O(m + n)$ noeuds internes
+(Lemme \ref{lem:proc3-complexity}, $O(k^3\, m)$ par noeud).
 
-Le facteur $k^3$ provient du triplet sur lequel boucle la Procédure~3 à
-chaque nœud interne. Sur une décomposition \emph{linéaire} (chaque nœud
+Le facteur $k^3$ provient du triplet sur lequel boucle la Procédure 3 à
+chaque noeud interne. Sur une décomposition \emph{linéaire} (chaque noeud
 interne a au moins un enfant feuille), le PS-set de cet enfant est de
 cardinal au plus $2$, soit constant. Le triplet se réduit donc à
 $O(k^2)$ termes, et la borne globale tombe d'un facteur $k$.
 
-\begin{theorem}[Théorème~3 de \cite{saether2015}]
+\begin{theorem}[Théorème 3 de \cite{saether2015}]
 \label{thm:dp-linear}
-Sous les hypothèses du Théorème~\ref{thm:dp-total}, si $(T, \delta)$ est
+Sous les hypothèses du Théorème \ref{thm:dp-total}, si $(T, \delta)$ est
 une décomposition linéaire, alors MaxSAT et \#SAT se résolvent en temps
 $O(k^2\, m\, (m + n))$.
 \end{theorem}
 
 Cette amélioration ne demande aucune modification de l'algorithme : la
-boucle de la Procédure~3 itère sur les tailles effectives des PS-sets
+boucle de la Procédure 3 itère sur les tailles effectives des PS-sets
 des enfants, et l'un d'eux étant constant sur une décomposition
-linéaire, le compte d'itérations par nœud passe à $O(k^2)$. Les
+linéaire, le compte d'itérations par noeud passe à $O(k^2)$. Les
 décompositions produites par l'heuristique GreedyOrder, présentée en
-section~\ref{sec:theo-greedy}, sont précisément de ce type.
+section \ref{sec:theo-greedy}, sont précisément de ce type.
 
 % -----------------------------------------------------------------------------
 \section{Heuristique GreedyOrder}
 \label{sec:theo-greedy}
 % -----------------------------------------------------------------------------
 
-L'algorithme du DP exposé en section~\ref{sec:theo-dp} prend en entrée
+L'algorithme du DP exposé en section \ref{sec:theo-dp} prend en entrée
 une branch decomposition $(T, \delta)$. Pour minimiser le facteur $k$
 dans la complexité, il faudrait disposer de la ps-width minimale parmi
 toutes les branch decompositions de $F$. Calculer cette quantité est
-probablement intractable~\cite{saether2015}, mais aucune démonstration
+probablement intractable \cite{saether2015}, mais aucune démonstration
 formelle n'en a été donnée. En pratique, le DP s'exécute donc sur une
 décomposition produite par une heuristique, sans garantie d'optimalité.
 
@@ -1075,7 +1089,7 @@ cet usage. Elle prend en entrée le graphe d'incidence $I(F)$ et produit
 un ordre linéaire $\sigma$ sur ses sommets (variables et clauses
 confondues). À chaque étape, elle choisit comme prochain sommet celui
 ayant le plus grand nombre de voisins \emph{déjà choisis}, en
-départageant les ex æquo par le plus petit degré total.
+départageant les ex aequo par le plus petit degré total.
 
 \begin{algorithm}[H]
 \caption{GreedyOrder}
@@ -1097,34 +1111,34 @@ départageant les ex æquo par le plus petit degré total.
 \end{algorithm}
 
 L'ordre $\sigma$ se traduit en une branch decomposition linéaire
-$(T, \delta)$ : $T$ est un arbre binaire dont les nœuds internes
+$(T, \delta)$ : $T$ est un arbre binaire dont les noeuds internes
 forment un chemin enraciné à une extrémité, et $\delta$ envoie la
 $i$-ème feuille rencontrée par un parcours en largeur partant de la
 racine sur le sommet $\sigma(i)$. La structure résultante est un
-\emph{caterpillar} : chaque nœud interne a une feuille pour enfant, à
-l'exception du nœud le plus profond qui en a deux. C'est précisément
+\emph{caterpillar} : chaque noeud interne a une feuille pour enfant, à
+l'exception du noeud le plus profond qui en a deux. C'est précisément
 la forme d'arbre où la borne $O(k^2\, m\, (m+n))$ du
-Théorème~\ref{thm:dp-linear} s'applique.
+Théorème \ref{thm:dp-linear} s'applique.
 
 GreedyOrder n'offre aucune garantie théorique sur la ps-width de la
 décomposition produite : les auteurs la qualifient eux-mêmes de
 « very simple heuristic » et la présentent comme une simple preuve de
-concept. Son intérêt réside dans la simplicité de mise en œuvre et dans
-les performances empiriques observées au chapitre~\ref{chap:resultats}.
+concept. Son intérêt réside dans la simplicité de mise en oeuvre et dans
+les performances empiriques observées au chapitre \ref{chap:resultats}.
 
 % -----------------------------------------------------------------------------
 \section{Compilation de F en d-DNNF structuré (BCMS)}
 \label{sec:theo-bcms}
 % -----------------------------------------------------------------------------
 
-Bova, Capelli, Mengel et Slivovsky~\cite{bova2015} (BCMS dans la suite)
-montrent qu'à partir de la programmation dynamique de Sæther, on peut
+Bova, Capelli, Mengel et Slivovsky \cite{bova2015} (BCMS dans la suite)
+montrent qu'à partir de la programmation dynamique de Saether, on peut
 construire en parallèle un DAG d-DNNF qui calcule la formule $F$. Leur
 papier introduit pour cela un objet appelé \emph{shape}, noté
 $\mathbf{S} = (S, S')$. Comme cette notion coïncide avec les paires
-$(C, C')$ déjà utilisées en section~\ref{sec:theo-dp} (mêmes ensembles
+$(C, C')$ déjà utilisées en section \ref{sec:theo-dp} (mêmes ensembles
 sous-jacents, et même sémantique que la variante \#SAT du DP de
-Sæther, section~\ref{ssec:theo-proc3}), nous conservons la notation
+Saether, section \ref{ssec:theo-proc3}), nous conservons la notation
 $(C, C')$ dans tout ce qui suit pour préserver l'unité de lecture du
 chapitre. Les écarts ponctuels avec la nomenclature BCMS seront
 signalés explicitement.
@@ -1132,25 +1146,25 @@ signalés explicitement.
 \subsection{Construction du DAG par récurrence}
 \label{ssec:theo-bcms-construction}
 
-BCMS associe à chaque nœud $v$ et chaque paire $(C, C') \in
+BCMS associe à chaque noeud $v$ et chaque paire $(C, C') \in
 \mathsf{PS}'(F_v) \times \mathsf{PS}'(F_{\overline{v}})$ un d-DNNF
 $\varphi_v(C, C')$ construit récursivement à partir de ses enfants. La
 récurrence repose sur les mêmes dérivations à trois indices que la
-Procédure~3 (section~\ref{ssec:theo-proc3}), vues comme une relation
+Procédure 3 (section \ref{ssec:theo-proc3}), vues comme une relation
 de \emph{génération} entre une paire-parent et un couple de
 paires-enfants : $(C_1, C_1')$ et $(C_2, C_2')$ \emph{génèrent}
 $(C, C')$ si
 \[
   C = (C_1 \cup C_2) \setminus \delta(v),
   \quad
-  C_1' = (C' \cup C_2) \cap \delta(v_1),
+  C_1' = (C' \cup C_2) \cap \delta(c_1),
   \quad
-  C_2' = (C' \cup C_1) \cap \delta(v_2).
+  C_2' = (C' \cup C_1) \cap \delta(c_2).
 \]
 On note $G(C, C')$ l'ensemble des couples qui génèrent $(C, C')$ en
 $v$, et $N_v(C, C')$ l'ensemble des affectations
 $\tau : \mathsf{var}(F_v) \to \{0, 1\}$ satisfaisant les conditions de
-la variante \#SAT du DP (section~\ref{ssec:theo-proc3}).
+la variante \#SAT du DP (section \ref{ssec:theo-proc3}).
 
 Aux feuilles de $T$, les ensembles $N_v(C, C')$ sont explicites et les
 fragments $\varphi_v$ se réduisent à des littéraux ou des constantes.
@@ -1175,16 +1189,16 @@ mais $\varepsilon \notin N_v(\emptyset, \emptyset)$, on pose
   \varphi_v(\emptyset, \{c\}) \equiv \top.
 \]
 
-Pour un nœud interne $v$ d'enfants $v_1$ et $v_2$, et une paire
+Pour un noeud interne $v$ d'enfants $c_1$ et $c_2$, et une paire
 $(C, C')$ en $v$, on combine les fragments des enfants via
 \begin{equation}
   \varphi_v(C, C') \equiv
   \bigvee_{((C_1, C_1'), (C_2, C_2')) \in G(C, C')}
-  \varphi_{v_1}(C_1, C_1') \wedge \varphi_{v_2}(C_2, C_2').
+  \varphi_{c_1}(C_1, C_1') \wedge \varphi_{c_2}(C_2, C_2').
   \label{eq:bcms-construction}
 \end{equation}
-Un nœud AND conjugue les fragments des deux enfants pour chaque couple
-générateur, et tous ces nœuds AND alimentent un même nœud OR qui forme
+Un noeud AND conjugue les fragments des deux enfants pour chaque couple
+générateur, et tous ces noeuds AND alimentent un même noeud OR qui forme
 la racine de $\varphi_v(C, C')$. Les constantes $\bot$ et $\top$ sont
 propagées en cours de construction et les sous-termes triviaux
 supprimés.
@@ -1192,49 +1206,49 @@ supprimés.
 Le d-DNNF $\varphi_v(C, C')$ ainsi obtenu a deux propriétés : ses
 variables sont contenues dans $\mathsf{var}(F_v)$, et ses modèles sont
 exactement les affectations de $N_v(C, C')$. C'est le contenu du
-Lemme~4 de BCMS, énoncé en
-section~\ref{ssec:theo-bcms-properties}.
+Lemme 4 de BCMS, énoncé en
+section \ref{ssec:theo-bcms-properties}.
 
 À la racine $r$ de $T$, l'unique paire est $(\emptyset, \emptyset)$, et
 la compilation de $F$ s'obtient comme $\varphi_r(\emptyset, \emptyset)$
-par évaluation de la récurrence~\eqref{eq:bcms-construction} en
+par évaluation de la récurrence \eqref{eq:bcms-construction} en
 remontant l'arbre. La correction de cette compilation est formalisée
-en section~\ref{ssec:theo-bcms-properties}.
+en section \ref{ssec:theo-bcms-properties}.
 
 \subsection{Propriétés du DAG produit}
 \label{ssec:theo-bcms-properties}
 
 La construction décrite à la
-section~\ref{ssec:theo-bcms-construction} est correcte comme
+section \ref{ssec:theo-bcms-construction} est correcte comme
 compilateur de $F$ en d-DNNF structuré. Sa justification s'organise
 autour de trois lemmes du papier BCMS, que l'on énonce sans
 démonstration.
 
-\begin{lemma}[Lemme~4 de \cite{bova2015}]
+\begin{lemma}[Lemme 4 de \cite{bova2015}]
 \label{lem:bcms-correctness}
-Pour tout nœud $v$ de $T$ et toute paire $(C, C')$ admise en $v$, le
+Pour tout noeud $v$ de $T$ et toute paire $(C, C')$ admise en $v$, le
 DAG $\varphi_v(C, C')$ est un d-DNNF dont les variables sont incluses
 dans $\mathsf{var}(F_v)$. Une affectation
 $\tau : \mathsf{var}(F_v) \to \{0,1\}$ satisfait $\varphi_v(C, C')$ si
 et seulement si $\tau \in N_v(C, C')$.
 \end{lemma}
 
-Pour énoncer la structuration, on associe à chaque nœud $v$ un
+Pour énoncer la structuration, on associe à chaque noeud $v$ un
 \emph{vtree} de $\mathsf{var}(F_v)$, noté $\mathsf{vtree}(T, v)$. C'est
 le sous-arbre $T_v$ dans lequel on supprime les feuilles étiquetées
 par une clause, puis dans lequel on contracte les arêtes pendantes
-pour restaurer la binarité (Figure~1 de~\cite{bova2015}). Le résultat
+pour restaurer la binarité (Figure 1 de \cite{bova2015}). Le résultat
 est une branch decomposition de $\mathsf{var}(F_v)$ et joue le rôle
 d'arbre de référence pour la structuration du d-DNNF.
 
-\begin{lemma}[Lemme~5 de \cite{bova2015}]
+\begin{lemma}[Lemme 5 de \cite{bova2015}]
 \label{lem:bcms-structured}
-Pour tout nœud $v$ et toute paire $(C, C')$ admise en $v$, le d-DNNF
+Pour tout noeud $v$ et toute paire $(C, C')$ admise en $v$, le d-DNNF
 $\varphi_v(C, C')$ respecte $\mathsf{vtree}(T, v)$. Le DAG construit
 est donc un d-DNNF structuré.
 \end{lemma}
 
-\begin{lemma}[Lemme~6 de \cite{bova2015}]
+\begin{lemma}[Lemme 6 de \cite{bova2015}]
 \label{lem:bcms-root}
 À la racine $r$ de $T$, la seule paire admise est
 $(\emptyset, \emptyset)$, et $\varphi_r(\emptyset, \emptyset)$ est un
@@ -1244,18 +1258,18 @@ $\mathsf{var}(F)$ satisfaisant $F$.
 
 Les trois lemmes ci-dessus assemblent un compilateur de $F$ en d-DNNF
 structuré, sur lequel les requêtes polytimes étudiées en
-section~\ref{sec:theo-queries} sont directement applicables. La taille
+section \ref{sec:theo-queries} sont directement applicables. La taille
 du DAG produit fait l'objet de la section suivante.
 
 \subsection{Borne de taille (Lemme 7 et Théorème 1)}
 \label{ssec:theo-bcms-bound}
 
-\begin{lemma}[Lemme~7 de \cite{bova2015}]
+\begin{lemma}[Lemme 7 de \cite{bova2015}]
 \label{lem:bcms-size}
 Soit $F$ une formule CNF de $n$ variables et $m$ clauses, et
 $(T, \delta)$ une branch decomposition de $F$ de ps-width $k$. Le
 d-DNNF $\varphi_r(\emptyset, \emptyset)$ produit par la construction
-de la section~\ref{ssec:theo-bcms-construction} a une taille bornée
+de la section \ref{ssec:theo-bcms-construction} a une taille bornée
 par
 \[
   |\varphi_r(\emptyset, \emptyset)| \leq 7\, k^3\, (n + m).
@@ -1263,17 +1277,17 @@ par
 \end{lemma}
 
 La borne se justifie par décompte. Chaque triplet $(C_1, C_2, C')$ de
-la section~\ref{ssec:theo-proc3} ajoute au plus cinq nœuds et arêtes
-au DAG : un nœud AND, deux arêtes vers les fragments des enfants, une
-arête vers le nœud OR de la paire-parent, et éventuellement un nouveau
-nœud OR à allouer. Avec au plus $k^3$ triplets par nœud interne et
-$n + m - 1$ nœuds internes dans $T$, on obtient $5 k^3 (n + m - 1)$
-nœuds et arêtes au plus. Chaque feuille ajoute au plus deux fragments
-mono-nœuds (littéraux ou constantes), soit $2 (n + m)$ au total. La
+la section \ref{ssec:theo-proc3} ajoute au plus cinq noeuds et arêtes
+au DAG : un noeud AND, deux arêtes vers les fragments des enfants, une
+arête vers le noeud OR de la paire-parent, et éventuellement un nouveau
+noeud OR à allouer. Avec au plus $k^3$ triplets par noeud interne et
+$n + m - 1$ noeuds internes dans $T$, on obtient $5 k^3 (n + m - 1)$
+noeuds et arêtes au plus. Chaque feuille ajoute au plus deux fragments
+mono-noeuds (littéraux ou constantes), soit $2 (n + m)$ au total. La
 somme $5 k^3 (n + m - 1) + 2 (n + m)$ se majore par $7 k^3 (n + m)$
 pour $k \geq 1$.
 
-\begin{theorem}[Théorème~1 de \cite{bova2015}]
+\begin{theorem}[Théorème 1 de \cite{bova2015}]
 \label{thm:bcms-main}
 Toute formule CNF $F$ de $n$ variables, $m$ clauses et de ps-width $k$
 admet une compilation en d-DNNF structuré de taille
@@ -1281,15 +1295,15 @@ $O(k^3 (n + m))$. L'algorithme de compilation associé s'exécute en
 temps $O(k^3\, m\, (n + m))$.
 \end{theorem}
 
-La borne en taille reprend le Lemme~\ref{lem:bcms-size}. Le temps
+La borne en taille reprend le Lemme \ref{lem:bcms-size}. Le temps
 incorpore le coût $O(m)$ par opération ensembliste, déjà présent dans
-la complexité du DP de Sæther (Théorème~\ref{thm:dp-total}). La
+la complexité du DP de Saether (Théorème \ref{thm:dp-total}). La
 validation empirique de cette borne sur les instances de test fait
-l'objet du chapitre~\ref{chap:resultats}.
+l'objet du chapitre \ref{chap:resultats}.
 
 Le d-DNNF produit appartient à la classe d-DNNF générale, plus large
 que celle des decision-DNNF
-(chapitre~\ref{chap:etat_art}, section~\ref{sec:kc}). Ce point n'a
+(chapitre \ref{chap:etat_art}, section \ref{sec:kc}). Ce point n'a
 pas d'incidence sur l'applicabilité des requêtes polytimes étudiées
 au chapitre suivant.
 
@@ -1298,19 +1312,19 @@ au chapitre suivant.
 \label{sec:theo-queries}
 % -----------------------------------------------------------------------------
 
-La compilation BCMS (section~\ref{sec:theo-bcms}) produit un d-DNNF
+La compilation BCMS (section \ref{sec:theo-bcms}) produit un d-DNNF
 qui sert de support à six requêtes calculables en temps polynomial,
-déjà nommées au chapitre~\ref{chap:etat_art},
-section~\ref{subsec:queries-ddnnf} : consistance (CO), validité (VA),
+déjà nommées au chapitre \ref{chap:etat_art},
+section \ref{subsec:queries-ddnnf} : consistance (CO), validité (VA),
 implication clausale (CE), test d'implicant (IM), comptage des
 modèles (CT, c'est-à-dire \#SAT) et énumération des modèles (ME). Le
-résultat fondateur est dû à Darwiche et Marquis~\cite{darwiche2002},
+résultat fondateur est dû à Darwiche et Marquis \cite{darwiche2002},
 qui établissent que chacune de ces requêtes se réduit à un parcours
 du DAG dont la complexité est polynomiale en sa taille, dès que
 celui-ci satisfait certaines propriétés structurelles
-(sous-section~\ref{ssec:theo-properties}).
+(sous-section \ref{ssec:theo-properties}).
 
-\subsection{Trois propriétés clés (rappel synthétique)}
+\subsection{Trois propriétés clés}
 \label{ssec:theo-properties}
 
 Les trois propriétés clés du d-DNNF sont la \emph{décomposabilité}
@@ -1318,14 +1332,14 @@ Les trois propriétés clés du d-DNNF sont la \emph{décomposabilité}
 \emph{déterminisme} (enfants d'un OR à ensembles de modèles disjoints)
 et la \emph{lissité} (enfants d'un OR à portées variables identiques).
 Les deux premières définissent la classe d-DNNF, déjà introduite au
-chapitre~\ref{chap:etat_art}, section~\ref{sec:kc}. La lissité, qui
+chapitre \ref{chap:etat_art}, section \ref{sec:kc}. La lissité, qui
 n'y figure pas, simplifie plusieurs des requêtes en garantissant que
 tous les sous-DAGs d'un OR parlent du même ensemble de variables.
 
-Par le Lemme~\ref{lem:bcms-correctness}, le DAG construit en
-section~\ref{sec:theo-bcms} est décomposable et déterministe. Il n'est
+Par le Lemme \ref{lem:bcms-correctness}, le DAG construit en
+section \ref{sec:theo-bcms} est décomposable et déterministe. Il n'est
 pas nécessairement lisse, mais peut être rendu tel à la demande par
-l'opération de lissage décrite en sous-section~\ref{ssec:theo-trans}.
+l'opération de lissage décrite en sous-section \ref{ssec:theo-trans}.
 
 \subsection{CT : model counting}
 \label{ssec:theo-ct}
@@ -1345,17 +1359,17 @@ définit récursivement par
   \qquad
   \mathsf{ct}\Bigl(\bigvee_{i=1}^{k} \varphi_i\Bigr) = \sum_{i=1}^{k} \mathsf{ct}(\varphi_i).
 \]
-La règle multiplicative aux nœuds AND est correcte par
+La règle multiplicative aux noeuds AND est correcte par
 décomposabilité : les enfants ont des variables disjointes, leurs
-modèles se combinent indépendamment. La règle additive aux nœuds OR
+modèles se combinent indépendamment. La règle additive aux noeuds OR
 est correcte par déterminisme : les enfants ont des ensembles de
 modèles disjoints, leur somme ne double aucun compte. La mémoisation
-sur les identifiants des nœuds donne un parcours en temps $O(|D|)$, où
-$|D|$ désigne la taille du DAG (nombre de nœuds plus arêtes).
+sur les identifiants des noeuds donne un parcours en temps $O(|D|)$, où
+$|D|$ désigne la taille du DAG (nombre de noeuds plus arêtes).
 
 Appliqué à la racine $\varphi_r(\emptyset, \emptyset)$ du DAG produit
-par la compilation BCMS (section~\ref{sec:theo-bcms}), $\mathsf{ct}$
-livre directement \#SAT$(F)$ : par le Lemme~\ref{lem:bcms-root}, les
+par la compilation BCMS (section \ref{sec:theo-bcms}), $\mathsf{ct}$
+livre directement \#SAT$(F)$ : par le Lemme \ref{lem:bcms-root}, les
 modèles de $\varphi_r(\emptyset, \emptyset)$ sur $\mathsf{var}(F)$ sont
 précisément les affectations satisfaisantes de $F$.
 
@@ -1363,7 +1377,7 @@ précisément les affectations satisfaisantes de $F$.
 \label{ssec:theo-co-va-me1}
 
 Trois requêtes se déduisent directement du comptage de
-sous-section~\ref{ssec:theo-ct}.
+sous-section \ref{ssec:theo-ct}.
 
 La consistance (CO) revient à
 $\mathsf{ct}(\varphi_r(\emptyset, \emptyset)) > 0$ : le DAG est
@@ -1380,27 +1394,27 @@ $\mathsf{var}(F)$.
 
 L'énumération des modèles (ME) procède top-down par descente dans le
 DAG, guidée par le compte $\mathsf{ct}$ déjà calculé en
-sous-section~\ref{ssec:theo-ct}. À chaque nœud AND, on collecte les
+sous-section \ref{ssec:theo-ct}. À chaque noeud AND, on collecte les
 choix de tous les enfants (variables disjointes par décomposabilité).
-À chaque nœud OR, on choisit un enfant à compte non nul. Aux feuilles
+À chaque noeud OR, on choisit un enfant à compte non nul. Aux feuilles
 littérales, on enregistre la valeur du littéral dans l'affectation en
 construction. La descente produit un modèle complet en $O(|D|)$.
 
 Le même squelette donne l'énumération de \emph{tous} les modèles : à
-chaque nœud OR, au lieu de choisir un enfant on itère sur tous les
-enfants à compte non nul, et à chaque nœud AND, le produit cartésien
+chaque noeud OR, au lieu de choisir un enfant on itère sur tous les
+enfants à compte non nul, et à chaque noeud AND, le produit cartésien
 des sous-énumérations remplace la simple union des choix. Le délai entre
 deux modèles consécutifs reste $O(|D|)$, mais le nombre total de
 modèles peut être exponentiel. Sur un DAG non lisse, l'énumération
 peut produire le même modèle plusieurs fois, et l'opération de
-lissage de la section~\ref{ssec:theo-trans} y remédie.
+lissage de la section \ref{ssec:theo-trans} y remédie.
 
 \subsection{Transformations internes : conditionnement et lissage}
 \label{ssec:theo-trans}
 
 Deux transformations internes sur le d-DNNF préparent le DAG pour les
-requêtes CE (section~\ref{ssec:theo-ce}) et IM
-(section~\ref{ssec:theo-im}).
+requêtes CE (section \ref{ssec:theo-ce}) et IM
+(section \ref{ssec:theo-im}).
 
 Le \emph{conditionnement} de $\varphi$ par un littéral $\ell$, noté
 $\varphi \mid \ell$, remplace chaque occurrence de $\ell$ par $\top$
@@ -1421,7 +1435,7 @@ constantes peut faire disparaître asymétriquement certaines variables
 des sous-DAGs d'un même OR, créant un OR à scopes hétérogènes.
 
 Le \emph{lissage} d'un d-DNNF rétablit la lissité quand elle a été
-perdue. Pour chaque nœud OR dont les enfants ont des scopes différents,
+perdue. Pour chaque noeud OR dont les enfants ont des scopes différents,
 on remplace chaque enfant $\psi_i$ par
 $\psi_i \wedge \bigwedge_{x \in \mathit{missing}_i} (x \vee \neg x)$,
 où $\mathit{missing}_i$ est l'ensemble des variables présentes dans au
@@ -1431,8 +1445,8 @@ sont inchangés et la lissité est restaurée.
 
 Le lissage est nécessaire chaque fois qu'une requête compare le compte
 à une valeur absolue sur l'espace total des affectations (par exemple
-le test $\mathsf{ct} = 2^{n-k}$ de IM, section~\ref{ssec:theo-im}).
-Pour CE en revanche (section~\ref{ssec:theo-ce}), le test se réduit
+le test $\mathsf{ct} = 2^{n-k}$ de IM, section \ref{ssec:theo-im}).
+Pour CE en revanche (section \ref{ssec:theo-ce}), le test se réduit
 à $\mathsf{ct} = 0$, qui est invariant par lissage : on peut omettre
 cette étape.
 
@@ -1452,8 +1466,8 @@ condition s'écrit
   \mathsf{ct}\bigl(\varphi_r(\emptyset, \emptyset) \mid \neg C\bigr) = 0.
 \]
 On conditionne donc le DAG par le terme $\neg C$
-(section~\ref{ssec:theo-trans}) puis on calcule le compte du résultat
-(section~\ref{ssec:theo-ct}). La clause $C$ est conséquence de $F$ si
+(section \ref{ssec:theo-trans}) puis on calcule le compte du résultat
+(section \ref{ssec:theo-ct}). La clause $C$ est conséquence de $F$ si
 et seulement si ce compte est nul.
 
 Le test étant fondé sur la nullité du compte, le lissage n'est pas
@@ -1486,139 +1500,1172 @@ formule, ce qui équivaut à compter exactement $2^{n - k}$ modèles.
 sur l'espace total, et non à zéro. Le compte doit donc être exact
 relativement à $\mathsf{var}(F) \setminus \mathsf{var}(\gamma)$, ce qui
 impose le lissage du DAG résiduel après conditionnement
-(section~\ref{ssec:theo-trans}). L'enchaînement complet
+(section \ref{ssec:theo-trans}). L'enchaînement complet
 (conditionnement, lissage, comptage) est en temps polynomial en $|D|$
 et $k$.
 
 \chapter{Implémentation}
 \label{chap:implementation}
-% À rédiger
+
+
+L'implémentation suit le pipeline théorique présenté au
+chapitre \ref{chap:theorie} en quatre phases successives : construction
+d'une branch decomposition $(T, \delta)$ par l'heuristique GreedyOrder,
+parcours bottom-up qui calcule les $\mathsf{PS}'(F_v)$ (Procédure 1),
+parcours top-down qui calcule les $\mathsf{PS}'(F_{\overline{v}})$
+(Procédure 2), puis programmation dynamique de la Procédure 3 qui
+produit conjointement la valeur de MaxSAT, le compte \#SAT et un
+DAG d-DNNF structuré au sens de \cite{bova2015}. Ce DAG sert ensuite de
+support aux six requêtes polytimes décrites en
+section \ref{sec:theo-queries}.
+
+Le code est écrit en C, sans dépendance hors de la bibliothèque
+standard. Un langage compilé donne une exécution plus rapide qu'un
+langage interprété, choix justifié par les nombreuses itérations de
+la programmation dynamique.
+
+% -----------------------------------------------------------------------------
+\section{Representation des PS-sets par bitsets 64-bit}
+\label{sec:impl-bitsets}
+% -----------------------------------------------------------------------------
+
+Saether et al. \cite{saether2015} recommandent de représenter les
+PS-sets (section \ref{ssec:theo-cuts-psset}) comme des vecteurs
+booléens de longueur $|\mathsf{cla}(F)|$, ce qui rend les opérations
+ensemblistes (test d'appartenance, union, intersection) en temps
+proportionnel à $m$. Notre implémentation
+prolonge ce choix par un packing 64 bits : chaque bitset est un
+tableau de \texttt{uint64\_t} de taille $\lceil m/64 \rceil$, et toute
+opération ensembliste se réduit à un parcours mot par mot.
+
+La formule $F$ utilise la même représentation : pour chaque variable
+$v$, deux bitsets $\mathsf{mask\_pos}[v]$ et $\mathsf{mask\_neg}[v]$
+encodent les clauses où $v$ apparaît respectivement en littéral
+positif ou négatif.
+
+% -----------------------------------------------------------------------------
+\section{Le Binary Trie : deduplication globale des PS-sets}
+\label{sec:impl-trie}
+% -----------------------------------------------------------------------------
+
+Saether et al. \cite{saether2015} préconisent une structure de trie
+binaire pour gérer les PS-sets : un PS-set vu comme une suite de $m$
+bits définit un chemin de la racine à une feuille du trie, où chaque
+bit choisit l'enfant gauche (clause absente) ou l'enfant droit (clause
+présente). À la feuille correspondante, un identifiant entier unique
+est attribué la première fois que le PS-set est inséré, et retrouvé
+tel quel à toute insertion ultérieure. Insertion et recherche se font
+en $O(m)$, et le test d'égalité de deux PS-sets se ramène ensuite à
+une comparaison d'entiers en $O(1)$.
+
+La structure concrète est un pool contigu de noeuds, alloué en bloc
+et redoublé chaque fois qu'il se remplit. La capacité initiale du
+pool vaut $2 m^2$ dès que $m^2 > 10^5$, et $10^5$ sinon ; cette
+valeur empirique couvre les instances de notre suite de tests sans
+réallocation. Chaque noeud
+du pool tient sur trois champs entiers : les deux index d'enfants et
+l'identifiant de PS-set (ou $-1$ si le noeud n'est pas terminal).
+
+La déduplication des PS-sets calculés à un noeud $v$ de la branch
+decomposition demande, à chaque insertion dans le PS-set local de $v$,
+de vérifier si l'identifiant a déjà été ajouté à $v$. Le coût naïf
+est $O(|\mathsf{PS}'(F_v)|)$ par insertion. L'implémentation utilise
+un tableau \texttt{seen\_array} indexé par identifiant de PS-set, qui
+stocke l'identifiant du noeud d'arbre en cours de traitement : le
+test \texttt{seen\_array[ps\_id] == node\_id} suffit alors pour
+décider en $O(1)$ si le PS-set est déjà présent localement.
+
+% -----------------------------------------------------------------------------
+\section{Procedures 1 et 2 : produits cartesiens et masques de coupe}
+\label{sec:impl-proc12}
+% -----------------------------------------------------------------------------
+
+Les Procédures 1 et 2 transcrivent directement les récurrences des
+sections \ref{ssec:theo-proc1} et \ref{ssec:theo-proc2}. Le seul
+ressort propre à l'implémentation tient au masque de coupe et à sa
+gestion mémoire dans la Procédure 1.
+
+Le masque de coupe est précalculé à la construction de l'arbre. Pour
+chaque noeud $v$, $\mathsf{delta\_mask}[v]$ est un bitset sur les
+clauses qui matérialise $\mathsf{cla}(F) \cap \delta(v)$, où
+$\delta(v)$ est la coupe associée au noeud
+(section \ref{ssec:theo-branch-decomp}). Il se calcule bottom-up par
+union des masques des enfants. La Procédure 2 utilise directement ce
+masque, puisque $\mathsf{cla}(F_{\overline{v}}) = \mathsf{cla}(F) \cap
+\delta(v)$. La Procédure 1 calcule à la volée
+$\mathsf{mask\_Fv} = \overline{\mathsf{delta\_mask}[v]} \cap
+\mathsf{all\_clauses}$ à chaque appel récursif et le libère avant le
+retour, pour ne pas accumuler les bitsets temporaires sur la
+profondeur de la récursion.
+
+Les cas de base aux feuilles et à la racine sont codés en dur via les
+masques $\mathsf{mask\_pos}$ et $\mathsf{mask\_neg}$.
+
+% -----------------------------------------------------------------------------
+\section{Procedure 3 : la boucle critique}
+\label{sec:impl-proc3}
+% -----------------------------------------------------------------------------
+
+La Procédure 3 mène dans une même triple boucle l'agrégat MaxSAT
+additif, le décompte \#SAT multiplicatif et la construction du DAG
+d-DNNF (section \ref{sec:impl-dag}). L'astuce de Bui-Xuan, Telle et
+Vatshelle (section \ref{ssec:theo-proc3}) ramène les six indices
+d'une mise à jour de table à trois indices itérés explicitement :
+$(C_{c_1}, C_{c_2}, C'_v) \in \mathsf{PS}'(F_{c_1}) \times
+\mathsf{PS}'(F_{c_2}) \times \mathsf{PS}'(F_{\overline{v}})$. Les
+trois indices restants $C_v$, $C'_{c_1}$, $C'_{c_2}$ sont calculés à
+la volée par les identités déjà énoncées en
+section \ref{ssec:theo-proc3}, puis insérés dans le trie pour
+récupérer leurs identifiants globaux.
+
+Trois bitsets temporaires $\mathsf{temp}_1$, $\mathsf{temp}_2$,
+$\mathsf{temp}_3$ sont alloués une fois à l'entrée de la procédure et
+réutilisés à chaque triplet pour porter les calculs de $C'_{c_1}$,
+$C'_{c_2}$ et $C_v$. Cette pré-allocation évite $\Theta(k^3)$ appels
+à \texttt{malloc} par noeud interne.
+
+La boucle itère sur les tailles effectives des PS-sets, sans branche
+conditionnelle pour le cas linéaire. Sur un caterpillar
+(section \ref{ssec:theo-th23}), l'un des deux PS-sets enfants est de
+cardinal au plus deux, donc la triple boucle à un noeud interne
+parcourt $O(k^2)$ triplets au lieu de $O(k^3)$, et la borne du
+Théorème \ref{thm:dp-linear} est atteinte sans spécialisation du
+code.
+
+% -----------------------------------------------------------------------------
+\section{Construction du DAG d-DNNF en parallele du DP}
+\label{sec:impl-dag}
+% -----------------------------------------------------------------------------
+
+La Procédure 3 construit, dans la même boucle que le DP, le DAG
+d-DNNF de l'équation \eqref{eq:bcms-construction}. À chaque triplet
+$(C_{c_1}, C_{c_2}, C'_v)$ qui met à jour $\mathsf{Tab}_v(C_v, C'_v)$,
+un noeud AND est émis et raccroché au noeud OR de la cellule
+$(C_v, C'_v)$. Mener le DP et la compilation en même temps épargne
+ainsi une seconde passe sur les $\Theta(k^3)$ triplets par noeud
+interne. À la racine, $\varphi_r(\emptyset, \emptyset)$ est le DAG
+d-DNNF structuré calculant $F$ (Lemme \ref{lem:bcms-correctness}).
+
+Le noeud OR d'une cellule est créé paresseusement au premier AND
+ajouté. Une cellule sans aucun AND valide reste vide et n'alloue
+aucun noeud, ce qui correspond aux cellules de compte \#SAT nul.
+Tous les noeuds du DAG résident dans un pool unique alloué à l'entrée
+de la procédure et libéré en bloc à la fin, sans libération
+individuelle.
+
+Le pool partage deux singletons pour les constantes $\top$ et $\bot$,
+ce qui ramène leur test d'égalité à une comparaison de pointeurs. La
+création d'un noeud AND applique alors les simplifications immédiates
+$\bot \wedge X \equiv \bot$ et $\top \wedge X \equiv X$ avant toute
+allocation, conformément à la propagation des constantes
+(section \ref{ssec:theo-bcms-construction}). La taille du DAG produit
+reste majorée par la borne $7 k^3 (n+m)$ du Lemme \ref{lem:bcms-size},
+et sera mesurée empiriquement au chapitre \ref{chap:resultats}.
+
+% -----------------------------------------------------------------------------
+\section{Heuristique GreedyOrder et modes alternatifs}
+\label{sec:impl-greedy}
+% -----------------------------------------------------------------------------
+
+L'implémentation de GreedyOrder (section \ref{sec:theo-greedy}) tient
+sur deux choix d'optimisation. La quantité qui guide la sélection,
+$\mathit{Ldegree}(v)$, compte les voisins de $v$ dans $I(F)$ déjà
+placés dans l'ordre. À chaque itération, sa mise à jour ne porte que
+sur les voisins non choisis du dernier sommet sélectionné, ce qui
+évite un recalcul global. La sélection du meilleur candidat et cette
+mise à jour incrémentale coûtent chacune $O((n+m)^2)$ au total. À
+$\mathit{Ldegree}$ égal entre plusieurs candidats, le sommet de plus
+petit degré dans $I(F)$ est retenu (le moins de clauses pour une
+variable, le moins de variables pour une clause), conformément au
+pseudocode de \cite{saether2015}. Le caterpillar est assemblé au fil
+de la sélection : à chaque itération, la feuille du sommet retenu est
+greffée à la racine courante de l'arbre en construction.
+
+Deux modes alternatifs sont disponibles via la ligne de commande et
+servent de baselines au chapitre \ref{chap:resultats}. Le mode
+\texttt{random} fusionne les feuilles deux à deux dans un ordre
+aléatoire et produit en général une ps-width très élevée. Le mode
+\texttt{linear} construit un caterpillar déterministe selon l'ordre
+des variables DIMACS, chaque clause étant greffée juste après sa
+variable de plus grand indice. Ce dernier sert de référence pour
+mesurer l'apport propre de GreedyOrder par rapport à un ordre brut.
+
+% -----------------------------------------------------------------------------
+\section{Requetes polytimes sur d-DNNF : choix d'implementation}
+\label{sec:impl-queries}
+% -----------------------------------------------------------------------------
+
+Quatre des six requêtes se réduisent à un comptage des modèles ou à
+une descente top-down sur le DAG, selon les règles déjà énoncées en
+section \ref{ssec:theo-co-va-me1}. La fonction \texttt{count} mémoïse
+les comptes par identifiant de noeud, ce qui permet aux quatre
+requêtes \texttt{consistency}, \texttt{validity}, \texttt{find\_model}
+et \texttt{enumerate} de partager la même table lorsqu'elles sont
+enchaînées sur le même DAG.
+
+Les deux dernières requêtes, \texttt{entails} et \texttt{is\_implicant},
+s'appuient sur la transformation \texttt{condition}, qui remplace les
+occurrences d'un littéral par $\top$ ou $\bot$ selon la valeur souhaitée
+et propage les constantes dans le DAG. Le code conserve volontairement
+les sous-DAGs $\top$ dans les noeuds OR, au lieu d'appliquer la
+simplification $\top \vee X \equiv \top$. Cette non-simplification
+préserve les variables apparaissant dans les sous-DAGs $X$, dont le
+lissage ultérieur a besoin pour insérer correctement les fragments
+$(v \vee \neg v)$ aux endroits manquants \cite{darwiche2002}. La
+transformation \texttt{smooth} matérialise ces fragments en exploitant
+une table de portées (les variables présentes dans chaque noeud,
+section \ref{ssec:theo-properties}), recalculée à chaque appel à
+partir de zéro.
+
+\texttt{entails} et \texttt{is\_implicant} composent \texttt{condition}
+avec \texttt{count}, et avec \texttt{smooth} pour
+\texttt{is\_implicant}, selon les réductions des
+sections \ref{ssec:theo-ce} et \ref{ssec:theo-im}.
+
+% -----------------------------------------------------------------------------
+\section{Robustesse : gestion memoire et erreurs}
+\label{sec:impl-robustness}
+% -----------------------------------------------------------------------------
+
+La gestion mémoire suit une discipline d'ownership stricte. Le pool
+du DAG (section \ref{sec:impl-dag}) possède tous ses noeuds, le trie
+binaire (section \ref{sec:impl-trie}) possède les siens, et le
+tableau de PS-sets stocké à chaque noeud $v$ de l'arbre possède les
+bitsets qu'il contient. La libération suit un parcours post-ordre de
+l'arbre de décomposition : chaque appel libère d'abord les enfants,
+puis $\mathsf{PS}'(F_v)$, $\mathsf{PS}'(F_{\overline{v}})$ et le
+$\mathsf{delta\_mask}$ du noeud courant. Les tables de DP ne
+touchent pas aux noeuds du DAG, qui survivent jusqu'à la libération
+en bloc du pool. Les tables elles-mêmes sont stockées comme tableaux
+1D indexés en row-major ($i \cdot \mathrm{cols} + j$), ce qui évite
+la double indirection d'un tableau 2D classique et favorise la
+localité de cache dans les boucles internes de la Procédure 3.
+
+Si une allocation interne échoue dans le trie binaire ou le pool du
+DAG, un drapeau est levé et toutes les opérations suivantes
+deviennent des no-ops renvoyant des valeurs neutres. L'appelant
+détecte ce drapeau et route vers une sortie d'erreur, ce qui évite
+un crash silencieux quand la mémoire vient à manquer.
+
 
 \chapter{Résultats expérimentaux}
 \label{chap:resultats}
-% À rédiger
+
+
+L'évaluation expérimentale poursuit trois buts. Premièrement, mesurer
+le coût réel de la programmation dynamique et de la compilation en
+d-DNNF sur des familles d'instances à ps-width contrôlée ou inconnue.
+Deuxièmement, valider empiriquement les bornes théoriques du
+chapitre \ref{chap:theorie} (taille du DAG, complexité, équivalence
+sémantique avec une formule CNF). Troisièmement, situer l'approche
+par rapport à un solveur de production (Z3) sur deux tâches
+distinctes : la résolution unique de \#SAT/MaxSAT et l'amortissement
+de requêtes multiples sur un même DAG compilé.
+
+% -----------------------------------------------------------------------------
+\section{Instances testées}
+\label{sec:res-instances}
+% -----------------------------------------------------------------------------
+
+Le benchmark évalue le pipeline DP+DAG sur six familles d'instances
+choisies pour leur structure : trois familles synthétiques tirées du
+papier de Saether et al. \cite{saether2015} (type 1, type 2, type 3),
+une famille \texttt{random} de $k$-SAT aléatoire qui sert de
+référence non structurée, et deux familles fournies par Loïc
+Bardi\footnote{Instances \texttt{tseytin} et \texttt{factorization}
+fournies par Loïc Bardi, Projet de Bachelor UNIGE 2024.} qui
+représentent des circuits booléens réalistes (multiplication
+binaire et factorisation entière).
+
+\paragraph{Type 1 : interval ordering libre.}
+Le générateur tire $n + m$ intervalles sur la droite réelle. Une
+clause $c$ contient une variable $x$ si leurs intervalles se
+chevauchent, et la polarité du littéral est tirée uniformément. Le
+graphe d'incidence obtenu est un \emph{interval bigraph}, structure
+pour laquelle Saether et al. (Corollaire 3) bornent la ps-width par
+$\min(m + 1, 2^t)$, avec $t$ la taille maximale des clauses. La
+numérotation DIMACS des variables est ensuite permutée
+aléatoirement par défaut, ce qui efface la trace de l'interval
+ordering : sur la formule permutée, l'ordre DIMACS brut donne une
+mauvaise décomposition, et l'heuristique GreedyOrder
+(section \ref{sec:theo-greedy}) doit retrouver une décomposition
+proche de l'optimale à partir de la structure du graphe. Les
+variantes étiquetées \texttt{\_ordered} préservent l'ordre des right
+endpoints d'intervalles et servent de baseline contrôle au mode
+\texttt{linear} en section \ref{ssec:res-modes}.
+
+\paragraph{Type 2 : interval ordering à taille fixe.}
+Type 2 est la variante de type 1 dans laquelle la taille des
+clauses est forcée à exactement $t$ (typiquement $t = 3$ ou
+$t = 4$), et où chaque intervalle de clause émet quatre clauses sur
+les mêmes variables avec des polarités tirées indépendamment. La
+borne de Saether reste $\min(m + 1, 2^t)$, mais l'instance est plus
+dense et beaucoup plus souvent UNSAT. La même politique de
+permutation et de variante \texttt{\_ordered} s'applique.
+
+\paragraph{Type 3 : XOR circulaires.}
+Type 3 construit la formule à partir de fonctions XOR à $t$
+variables, satisfaites quand le nombre de littéraux vrais est
+impair. Les $n$ variables sont disposées en cercle aux positions
+$1, \ldots, n$. Étant donné un pas $s \leq t$, le générateur place
+les XOR le long du cercle : la $i$-ème couvre les positions
+$[i \cdot s, \ldots, i \cdot s + t - 1] \bmod n$, et l'on émet
+$n / s$ XOR au total pour faire un tour complet. Quand $s < t$,
+deux XOR consécutives partagent $t - s$ variables, ce qui crée une
+chaîne de chevauchements le long du cercle. Chaque XOR est ensuite
+transcrit en $2^{t-1}$ clauses CNF (celles qui interdisent les
+affectations de parité paire des $t$ variables concernées). Le
+graphe d'incidence obtenu est la bipartisation d'un graphe d'arcs
+circulaires, ce qui borne la ps-width par $\min(m^2 + 1, 4^t)$.
+
+\paragraph{random : $k$-SAT aléatoire.}
+La famille \texttt{random} génère des formules $3$-SAT et $4$-SAT
+selon le modèle uniforme classique : $m$ clauses tirées
+indépendamment, chacune composée de $k$ littéraux distincts à
+polarité aléatoire. Les variantes étiquetées \texttt{\_difficile}
+fixent le ratio clauses sur variables près du seuil de
+satisfiabilité (autour de $4{,}27$ pour $k = 3$), où les instances
+sont à la fois denses et incompressibles. Cette famille sert de
+référence non structurée : son graphe d'incidence n'a aucune
+propriété particulière, et la ps-width attendue est élevée.
+
+\paragraph{tseytin : multiplication binaire $k \times k$.}
+Les instances \texttt{tseytin} encodent en CNF la vérification d'une
+multiplication binaire $k \times k$, du circuit $3 \times 3$ au
+circuit $6 \times 6$ pour les tailles activées dans notre benchmark. Une
+variante \texttt{pure} restreint l'encodage aux portes essentielles.
+Le graphe d'incidence n'est pas un interval bigraph, et aucune borne
+théorique générique ne s'applique : on mesure la ps-width
+empiriquement.
+
+\paragraph{factorization : factorisation 5x5.}
+Les deux instances \texttt{factorization\_5x5\_464d} et sa variante
+simplifiée encodent la factorisation d'un produit binaire fixé sur
+cinq bits. Elles correspondent à des instances structurées
+non synthétiques (par opposition aux trois familles tirées du
+papier), et servent de charge réaliste pour le pipeline.
+
+\begin{table}[htbp]
+\centering
+\caption{Couverture du benchmark par famille en mode \texttt{greedy}.
+La colonne \og\,Échecs\,\fg{} agrège dépassements de la limite
+mémoire de 50 GiB par process, crashes et timeouts. Plages $n$, $m$
+et ps-width relevées sur les instances réussies. Le mode
+\texttt{linear} traite quelques instances supplémentaires
+(section \ref{ssec:res-modes}).}
+\label{tab:res-instances}
+\begin{tabular}{lrrlll}
+\toprule
+Famille & \# OK & \# Échecs & $n$ & $m$ & ps-width \\
+\midrule
+type1         & 11 & 3  & 20--200    & 24--213    & 12--21\,000  \\
+type2         & 13 & 5  & 25--200    & 88--800    & 14--456      \\
+type3         & 19 & 1  & 30--5\,000 & 60--10\,000 & 6--64       \\
+random        & 11 & 11 & 7--30      & 20--85     & 32--16\,400  \\
+tseytin       & 4  & 2  & 36--72     & 99--220    & 144--8\,192  \\
+factorization & 0  & 2  & {}         & {}         & {}           \\
+\midrule
+Total         & 58 & 24 & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Le benchmark teste au total 179 paires instance/mode d'arbre en
+passe A, dont 110 réussissent : 58 en mode \texttt{greedy}, 46 en
+mode \texttt{linear} et 6 en mode \texttt{random}. La
+table \ref{tab:res-instances} montre que GreedyOrder couvre presque
+entièrement type 3 (19 sur 20), ramène
+la ps-width entre $6$ et $64$ y compris pour $n = 5\,000$, et tient
+sur l'essentiel de type 1 et type 2. Les échecs se concentrent sur
+\texttt{random} (sept dépassements mémoire et quatre crashes
+parmi 22 instances tentées) et sur \texttt{factorization}, où
+\texttt{greedy} échoue sur les deux instances tandis que
+\texttt{linear} les traite avec une ps-width de $24\,576$. Ces
+contrastes entre familles structurent les sections suivantes :
+\texttt{tseytin} et \texttt{random} concentrent les ps-width
+élevées et les pires temps de DP, alors que les trois familles
+synthétiques restent dans le régime polynomial visé par le
+papier.
+
+Huit instances de très grande taille sont désactivées dans notre
+benchmark : quatre type 3 ($n \in \{50\,000, 100\,000\}$ ou $t = 5$
+avec $n \in \{5\,000, 10\,000\}$) et quatre tseytin
+($k \in \{7, 10\}$). Les activer aurait sensiblement allongé la
+durée totale du benchmark sans révéler de comportement
+qualitativement nouveau, leur ps-width attendue et leur temps de
+DP prolongeant les tendances déjà tracées par les tailles plus
+modestes de la même famille.
+
+% -----------------------------------------------------------------------------
+\section{Méthodologie expérimentale}
+\label{sec:res-methodo}
+% -----------------------------------------------------------------------------
+
+Trois axes structurent la méthodologie : la machine d'exécution
+(section \ref{ssec:res-machine}), le protocole de mesure en trois
+passes complémentaires (section \ref{ssec:res-protocole}) et la
+validation des résultats par invariants théoriques
+(section \ref{ssec:res-invariants}). Les cas qui s'écartent du
+parcours nominal (échecs en exécution, instances désactivées) sont
+recensés en section \ref{ssec:res-degeneres}.
+
+\subsection{Machine et environnement}
+\label{ssec:res-machine}
+
+Le benchmark s'exécute sur \emph{racer}, une machine du laboratoire de \textbf{Arnaud Casteigts}
+équipée de deux processeurs AMD EPYC 9654 (192 cores physiques au
+total, 384 threads via SMT2, boost à environ $3{,}7$ GHz) et de
+$755$ GiB de mémoire vive, sous Ubuntu $24{,}04$. Le solveur est
+compilé avec GCC $13{,}3$ en \texttt{-O3} et la version $4{,}16$ de
+Z3 sert de référence externe.
+
+Deux choix de configuration influencent les mesures. Chaque
+processus du solveur est borné à $50$ GiB de mémoire résidente, ce
+qui transforme les explosions de ps-width en échecs propres plutôt
+qu'en saturation de la machine. Pour le chronométrage le plus
+isolé (section \ref{ssec:res-protocole}), les workers sont
+épinglés sur quatre cores n'appartenant pas au même groupe de
+partage de cache L3, ce qui réduit la contention sur les caches
+partagés. Les chiffres absolus présentés ensuite doivent être lus
+dans ce contexte, alors que les rapports (DP par rapport à Z3,
+\texttt{greedy} par rapport à \texttt{linear}) restent plus
+robustes au changement de machine.
+
+\subsection{Protocole de mesure en trois passes}
+\label{ssec:res-protocole}
+
+Chaque instance traverse trois passes successives, chacune isolant
+un type de mesure différent.
+
+La \emph{passe A} est un large parcours parallèle : 64 jobs
+simultanés exécutent le solveur sur toutes les instances et tous
+les modes d'arbre, en parallèle d'un appel Z3 pour MaxSAT et d'un
+appel Z3 pour la satisfiabilité. Elle produit les mesures
+structurelles (ps-width, taille du DAG, \#SAT, MaxSAT, temps par
+phase) sans isolation CPU stricte. C'est la passe qui permet de
+couvrir le plus grand nombre d'instances dans le budget temps imparti.
+
+La \emph{passe B} reprend chaque instance et la rejoue trois fois
+sur quatre workers épinglés (section \ref{ssec:res-machine}). Les
+quatre temps obtenus sont agrégés en médiane, minimum, maximum et
+écart-type. C'est cette passe qui fournit les temps d'exécution
+chronométrés rapportés en section \ref{sec:res-dp}.
+
+La \emph{passe C} est plus spécifique : elle mesure le coût des
+requêtes décrites en section \ref{sec:theo-queries} sur un DAG
+déjà compilé, sans inclure le temps de compilation. Chaque requête
+(CO, VA, CT, ME, CE, IM) est
+exécutée cinq fois en mémoire dans un même processus, la première
+exécution étant écartée pour absorber l'effet de chauffe du cache.
+Cette passe alimente les résultats de la section \ref{sec:res-queries}
+et l'analyse du break-even N.
+
+Le timeout par instance vaut $1\,800$ s en passe A pour type 1, type 2
+et random, et $3\,600$ s pour type 3, tseytin et factorization, qui
+peuvent demander plus de temps pour les plus grandes tailles. Les
+appels Z3 sont coupés à $600$ s. La durée totale du benchmark est
+de $1$ h $50$ min.
+
+\subsection{Validation par invariants théoriques}
+\label{ssec:res-invariants}
+
+Huit invariants sont vérifiés après chaque exécution. Ils croisent
+les sorties du DP, du DAG compilé et de Z3 pour détecter toute
+divergence sémantique ou tout dépassement de borne théorique. La
+table \ref{tab:res-invariants} les résume.
+
+\begin{table}[htbp]
+\centering
+\caption{Invariants vérifiés sur les 164 exécutions réussies (toutes
+modes et passes confondues). \og\,WARN\,\fg{} signale un dépassement
+\emph{soft} d'une borne théorique générique (sans incidence sur la
+correction de l'algorithme). \og\,Skip\,\fg{} compte les instances où
+l'invariant ne s'applique pas (par exemple Z3 en timeout pour les
+comparaisons croisées).}
+\label{tab:res-invariants}
+\begin{tabular}{lrrr}
+\toprule
+Sémantique de l'invariant & \# OK & \# WARN & \# Skip \\
+\midrule
+MaxSAT(DP) = MaxSAT(Z3)                              & 164 & 0  & 69  \\
+\#SAT(DP) = comptage sur le DAG                      & 164 & 0  & 69  \\
+SAT(DP) cohérent avec SAT(Z3)                        & 164 & 0  & 69  \\
+$|D| \leq 7 k^3 (n + m)$ (Lemme \ref{lem:bcms-size}) & 161 & 0  & 72  \\
+ps-width $\leq$ borne théorique de la famille        & 51  & 33 & 149 \\
+temps par phase $\geq 0$                             & 164 & 0  & 69  \\
+CE(DAG) cohérente avec Z3                            & 54  & 0  & 0   \\
+nombre de modèles énumérés = \#SAT                   & 15  & 0  & 39  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Aucun invariant ne produit de FAIL hard sur l'ensemble du benchmark.
+Les 33 WARN portent uniquement sur l'invariant de ps-width par
+rapport à la borne théorique de la famille, et se répartissent en
+sept instances type 1, vingt instances type 2 et six instances type
+3 où GreedyOrder rate la borne $\min(m+1, 2^t)$ ou
+$\min(m^2+1, 4^t)$ du papier \cite{saether2015} sans pour autant
+invalider l'algorithme. L'analyse de ces WARN figure
+section \ref{ssec:res-pswidth}.
+
+\subsection{Cas dégénérés}
+\label{ssec:res-degeneres}
+
+Sur les $82$ paires (instance, mode \texttt{greedy}), $58$
+aboutissent et $24$ échouent : $14$ dépassements de la limite
+mémoire de $50$ GiB, $8$ segfaults sur des instances très grandes et
+$2$ timeouts. Les dépassements mémoire correspondent à des
+ps-width effectives au-delà de la dizaine de milliers (familles
+\texttt{random\_difficile}, certaines type 1 et type 2), où la
+construction des PS-sets explose. Les segfaults se concentrent sur
+les deux tailles extrêmes de type 3 ($n = 10\,000$) et sur les
+deux instances de factorization en mode \texttt{greedy}. Les
+timeouts sont la limite naturelle des plus grands circuits tseytin.
+
+Les sections de résultats portent sur les 58 instances réussies en
+mode \texttt{greedy}. Les modes d'échec et leur lien avec la
+ps-width sont repris au chapitre \ref{chap:discussion}.
+\newpage
+% -----------------------------------------------------------------------------
+\section{Résultats : programmation dynamique et compilation}
+\label{sec:res-dp}
+% -----------------------------------------------------------------------------
+
+Cette section regroupe les mesures structurelles et chronométriques
+issues des passes A et B (section \ref{ssec:res-protocole}) sur les
+$58$ instances réussies en mode \texttt{greedy} : ps-width effective
+par famille, temps de résolution comparés à Z3, impact du choix
+d'arbre, taille du DAG produit, et corrélation entre la ps-width
+mesurée et le nombre de conflits Z3.
+
+
+\subsection{ps-width observée et bornes théoriques}
+\label{ssec:res-pswidth}
+
+La ps-width est le paramètre central des bornes de complexité du
+chapitre \ref{chap:theorie} (Théorème \ref{thm:dp-total} :
+$O(k^3 m (m+n))$ pour le DP, Lemme \ref{lem:bcms-size} :
+$O(k^3 (n+m))$ pour le DAG). La table \ref{tab:res-pswidth}
+récapitule les valeurs effectivement produites par GreedyOrder
+(section \ref{sec:theo-greedy}) sur les six familles.
+
+\begin{table}[htbp]
+\centering
+\caption{ps-width observée en mode \texttt{greedy} sur les
+instances réussies. La colonne \og\,Borne théorique\,\fg{} reprend
+les bornes établies par Saether et al. \cite{saether2015}
+(Corollaire 3) pour les familles concernées.}
+\label{tab:res-pswidth}
+\begin{tabular}{lrrl}
+\toprule
+Famille & Médiane & Maximum & Borne théorique \\
+\midrule
+type1   & 32     & 21\,000 & $\min(m + 1,\ 2^t)$ \\
+type2   & 184    & 456     & $\min(m + 1,\ 2^t)$ \\
+type3   & 8      & 64      & $\min(m^2 + 1,\ 4^t)$ \\
+random  & 415    & 16\,400 & (pas de borne) \\
+tseytin & 4\,168 & 8\,192  & (pas de borne) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Type 3 reste très en dessous de sa borne : les instances $t = 3$
+plafonnent à une ps-width de $8$ (borne $4^3 = 64$), et le maximum
+observé de $64$ provient des instances $t = 5$ (borne $4^5 = 1\,024$).
+GreedyOrder y maintient la ps-width entre $6$ et $64$ y compris pour
+$n = 5\,000$. Type 1 et type 2 dépassent en revanche la borne sur
+une part importante des instances : c'est l'origine de la majorité
+des $33$ alertes \texttt{psw\_within\_family\_bound} signalées en
+section \ref{ssec:res-invariants} ($7$ pour type 1 et $20$ pour
+type 2). Pour
+type 2, la borne nominale $2^t = 8$ avec $t = 3$ est presque
+toujours ratée, la médiane atteignant $184$. L'écart vient
+principalement de l'heuristique gloutonne, qui ne reconnaît pas
+toujours l'interval ordering caché par la permutation aléatoire des
+identifiants (section \ref{sec:res-instances}). Les familles
+\texttt{random} et \texttt{tseytin}, sans borne théorique
+prédéfinie, montent à plusieurs milliers, ce qui annonce les temps
+de DP correspondants (section \ref{ssec:res-temps}).
+
+\subsection{Temps DP par famille et comparaison à Z3}
+\label{ssec:res-temps}
+
+La table \ref{tab:res-dp-vs-z3} donne les médianes de la passe B
+pour le DP en mode \texttt{greedy} et pour Z3 \texttt{Optimize}
+sur MaxSAT. La figure \ref{fig:res-dp-vs-z3} reporte la même
+mesure par instance.
+
+\begin{table}[htbp]
+\centering
+\caption{Temps de résolution médian par famille en mode
+\texttt{greedy} (passe B) et facteur DP/Z3. Les colonnes
+\og\,DP$>$Z3\,\fg{} et \og\,DP$<$Z3\,\fg{} comptent les instances
+où DP est respectivement plus lent ou plus rapide que Z3.}
+\label{tab:res-dp-vs-z3}
+\begin{tabular}{lrrrrr}
+\toprule
+Famille & DP (ms) & Z3 (ms) & DP/Z3 & DP$>$Z3 & DP$<$Z3 \\
+\midrule
+type1   & 11{,}9    & 1{,}4 & 8{,}3$\times$       & 10 & 1 \\
+type2   & 125{,}7   & 3{,}3 & 38$\times$          & 13 & 0 \\
+type3   & 143{,}1   & 4{,}5 & 32$\times$          & 17 & 2 \\
+random  & 42{,}3    & 1{,}0 & 41$\times$          & 11 & 0 \\
+tseytin & 76\,526{,}1 & 1{,}6 & 47\,734$\times$   & 4  & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Z3 résout plus vite que le DP sur $55$ des $58$ instances
+comparées. Les trois cas où le DP l'emporte sont
+\texttt{type1\_v20\_c25} ($0{,}6$ ms contre $3{,}6$ ms pour Z3) et
+les deux variantes permutée et ordonnée de
+\texttt{type3\_n30\_t3\_s2} (gain inférieur à $10\,\%$). Tous
+sont en deçà de $30$ variables, dans la zone où l'\emph{overhead}
+initial de Z3 pèse plus que le coût d'une passe DP. L'écart
+médian va d'un facteur $8$ sur type 1 à $47\,734$ sur tseytin, où
+le DP s'écroule à cause des ps-width au-delà de $4\,000$
+(table \ref{tab:res-pswidth}). Le pire cas absolu est
+\texttt{type1\_v200\_c250} (ps-width $21\,000$, $456$ secondes
+pour le DP contre $5$ ms pour Z3). Cette infériorité en
+single-shot était attendue : Z3 est un solveur industriel
+optimisé sur des décennies, alors que le DP poursuit une garantie
+de complexité paramétrée (Théorème \ref{thm:dp-total}) qui ne
+devient avantageuse que sur des classes structurées à ps-width
+réellement bornée. Type 3, où la ps-width reste basse, illustre
+cette zone favorable : le DP y prend des temps comparables aux
+autres familles malgré $n = 5\,000$ variables, là où Z3 traite
+l'instance en quelques millisecondes par effort CDCL standard.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/dp_vs_z3_maxsat.png}
+\caption{Temps DP en mode \texttt{greedy} (abscisse) par rapport à
+Z3 \texttt{Optimize} sur MaxSAT (ordonnée), instance par instance.
+La diagonale $y = x$ sépare les instances où le DP est plus
+rapide (au-dessus) de celles où Z3 l'emporte (en-dessous). Trois
+instances se trouvent au-dessus de la diagonale, toutes de très
+petite taille ($n \leq 30$, $m \leq 60$).}
+\label{fig:res-dp-vs-z3}
+\end{figure}
+
+\subsection{Impact du mode de construction d'arbre}
+\label{ssec:res-modes}
+
+La figure \ref{fig:res-greedy-linear} compare les ps-width
+obtenues par les deux modes \texttt{greedy} et \texttt{linear} sur
+les instances où les deux complètent. GreedyOrder produit
+systématiquement une décomposition meilleure ou équivalente, avec
+un ratio médian $\mathsf{psw}_{\texttt{linear}} /
+\mathsf{psw}_{\texttt{greedy}} = 3{,}1$ et un maximum à $6\,144$.
+
+Le cas le plus extrême est \texttt{type3\_n30\_t3\_s2} :
+GreedyOrder atteint $\mathsf{psw} = 8$ (la borne $4^t$ théorique),
+alors que \texttt{linear} sur la même instance permutée monte à
+$49\,152$. L'ordre des variables DIMACS, arbitraire après la
+permutation aléatoire imposée par défaut (section \ref{sec:res-instances}),
+ne reflète plus la structure de la formule, et le mode
+\texttt{linear} le subit directement. Lorsque la permutation est
+désactivée (variantes \texttt{\_ordered}), \texttt{linear}
+retrouve des ps-width proches de GreedyOrder, ce qui confirme que
+l'apport de l'heuristique est de récupérer un ordre adapté à
+partir du seul graphe d'incidence (section \ref{sec:impl-greedy}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/greedy_vs_linear_pswidth.png}
+\caption{ps-width obtenue par les modes \texttt{greedy} (vert) et
+\texttt{linear} (rouge) sur les 25 instances où l'écart est le
+plus marqué, parmi les 40 instances où les deux modes complètent.
+Les instances sont classées par ratio
+$\mathsf{psw}_{\texttt{linear}} / \mathsf{psw}_{\texttt{greedy}}$
+(valeur indiquée à droite de chaque ligne).}
+\label{fig:res-greedy-linear}
+\end{figure}
+
+\subsection{Corrélation entre ps-width DP et conflits Z3}
+\label{ssec:res-correlation}
+
+La figure \ref{fig:res-conflicts-pswidth} confronte la ps-width
+mesurée par le DP au nombre de conflits internes consommés par
+Z3 lors de sa résolution.
+
+Les deux quantités ne sont pas alignées. Les instances tseytin,
+dont la ps-width grimpe entre $144$ et $8\,192$, sont résolues par
+Z3 avec zéro ou deux conflits dans tous les cas observés : Z3 ne
+fait quasiment pas de backtrack, sa résolution est portée par la
+propagation unitaire seule. À l'inverse, type 2 montre une
+ps-width modérée (médiane $184$) pour une médiane de huit
+conflits, le maximum observé restant en deçà de la centaine. Aucun
+cas du benchmark ne combine ps-width faible et nombre de
+conflits élevé, configuration qui aurait pu jouer en faveur du DP
+contre Z3. Ces observations confirment que la ps-width et l'effort
+CDCL mesurent des notions de difficulté différentes : la première
+est une propriété structurelle du graphe d'incidence
+(section \ref{ssec:theo-pswidth-def}), alors que la seconde reflète
+le comportement local d'un solveur d'inférence.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/z3_conflicts_vs_pswidth.png}
+\caption{Conflits Z3 par rapport à la ps-width effective (mode
+\texttt{greedy}), instance par instance. Chaque famille est
+représentée par une couleur distincte.}
+\label{fig:res-conflicts-pswidth}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+\section{Résultats : requêtes sur DAG compilé}
+\label{sec:res-queries}
+% -----------------------------------------------------------------------------
+
+Une fois le DAG compilé, les requêtes polytimes de la
+section \ref{sec:theo-queries} s'exécutent par simple parcours, sans
+revenir au DP. La passe C mesure leur coût propre sur le DAG déjà
+construit (section \ref{ssec:res-protocole}), ce qui permet de
+quantifier le seuil à partir duquel ce coût de compilation est
+amorti par un usage répété.
+
+\subsection{Coût par requête}
+\label{ssec:res-cout-requete}
+
+La table \ref{tab:res-queries} donne le temps médian de chaque
+requête sur l'ensemble des DAG compilés, ainsi que son coût ramené
+à l'arête du DAG.
+
+\begin{table}[H]
+\centering
+\caption{Coût médian des requêtes sur DAG compilé (passe C, médiane
+sur 5 répétitions après warm-up), sur les 39 instances à DAG non
+vide. Le coût par arête rapporte le temps à la taille du DAG. La ligne \og\,tous les modèles\,\fg{} est
+mesurée sur les 15 instances dont l'ensemble des modèles reste
+énumérable (médiane de 47 modèles). Sur les autres, ce nombre
+dépasse les centaines de milliers et l'énumération complète n'est
+pas chronométrée.}
+\label{tab:res-queries}
+\begin{tabular}{lrr}
+\toprule
+Requête & Médiane (µs) & Coût par arête (ns) \\
+\midrule
+CO (consistance)            & 42{,}8  & 10{,}6  \\
+VA (validité)               & 44{,}0  & 10{,}5  \\
+CT (comptage \#SAT)         & 42{,}6  & 10{,}5  \\
+CE (implication clausale)   & 295{,}6 & 66{,}9  \\
+IM (test d'implicant)       & 155{,}4 & 161{,}2 \\
+ME, un modèle               & 50{,}0  & 11{,}2  \\
+ME, tous les modèles        & 47{,}5  & {}      \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+Les requêtes CO, VA et CT coûtent entre $43$ et $44$ µs, soit
+environ $10$ ns par arête, ce qui reflète leur structure commune :
+un parcours unique du DAG en temps $O(|D|)$
+(section \ref{ssec:theo-ct}). CE et IM sont plus chères
+(respectivement $296$ et $155$ µs) car elles conditionnent d'abord
+le DAG, et IM le lisse ensuite, deux transformations qui le
+parcourent avant le comptage (section \ref{sec:impl-queries}).
+
+Les deux variantes de ME se distinguent par le traitement des
+noeuds OR. La recherche d'un modèle ne descend qu'une branche par
+OR et s'arrête au premier modèle trouvé ($50$ µs). L'énumération
+parcourt au contraire toutes les branches pour produire l'ensemble
+des modèles. Sur les $15$ instances où cet ensemble reste
+énumérable, elle prend $47{,}5$ µs, du même ordre que la recherche
+d'un seul modèle, car ces instances ont peu de modèles (médiane
+$47$) et l'énumération ne précalcule pas la table des comptes
+nécessaire à la descente unique.
+
+\subsection{Comparaison CO vs Z3 SAT sur la même question}
+\label{ssec:res-co-z3}
+
+Parmi les six requêtes, seule la consistance (CO) pose à Z3 une
+question identique : la formule est-elle satisfaisable. Les autres
+(VA, CT, CE, IM, ME) répondent à des questions que Z3 ne traite pas
+nativement et ne donnent donc pas lieu à une comparaison directe.
+La figure \ref{fig:res-co-z3} confronte uniquement CO sur DAG
+compilé à une décision SAT de Z3, sur une instance représentative
+de chaque famille.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/co_vs_z3_per_instance.png}
+\caption{Temps de la requête de consistance (CO) sur DAG compilé
+(bleu) face à une décision SAT de Z3 (rouge), sur une instance
+représentative par famille. Le facteur d'accélération est indiqué à
+droite. Échelle logarithmique en abscisse.}
+\label{fig:res-co-z3}
+\end{figure}
+
+Sur ces instances, CO sur DAG va de $4$ à $71$ fois plus vite qu'un
+appel SAT de Z3. L'écart est le plus net sur \texttt{random\_k3\_v8\_c20}
+($\times 71$) et \texttt{type2\_v100\_c400\_t4\_ordered}
+($\times 50$), et le plus mince sur \texttt{type3\_n90\_t5\_s3\_ordered}
+($\times 4$). Cet avantage suppose que le DAG est déjà construit. Il
+faut aussi noter que Z3 est ici relancé à froid pour chaque instance,
+sans réutilisation d'état entre requêtes successives, et un solveur
+incrémental réduirait l'écart. Cette nuance, et la mise en balance
+avec le coût de compilation, sont reprises au
+chapitre \ref{chap:discussion}.
+
+\subsection{Break-even N}
+\label{ssec:res-breakeven}
+
+La requête isolée est rapide, mais la compilation du DAG ne l'est
+pas (section \ref{sec:res-dp}). L'approche n'est rentable que si le
+DAG sert à plusieurs requêtes. Le seuil de rentabilité $N^*$ est le
+nombre de requêtes au-delà duquel compiler le DAG puis poser $N$
+requêtes coûte moins cher que $N$ appels Z3 indépendants. La
+figure \ref{fig:res-breakeven} trace les courbes de coût (panneau
+gauche) et la distribution de $N^*$ sur l'ensemble des instances
+(panneau droit).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/breakeven_n.png}
+\caption{À gauche : coût total du pipeline DP+requêtes en fonction
+du nombre $N$ de requêtes (trait plein), comparé à $N$ appels Z3
+froids (pointillés), pour une instance représentative par famille.
+À droite : distribution cumulée du seuil $N^*$ sur les instances où
+il est fini, médiane à $120$.}
+\label{fig:res-breakeven}
+\end{figure}
+
+La médiane de $N^*$ vaut $120$, avec un premier quartile à $19$ et
+un troisième quartile à $370$. Autrement dit, dès qu'une même
+formule fait l'objet d'environ $120$ requêtes, le pipeline DP+DAG
+devient en moyenne plus économique que des appels Z3 répétés. Le
+seuil est fini sur $36$ des $39$ instances mesurées. Les trois
+exceptions, où aucun nombre raisonnable de requêtes n'amortit la
+compilation, sont les instances à ps-width élevée dont le DAG est
+le plus coûteux à produire. L'amortissement multi-requêtes est donc
+le cas d'usage où la compilation en d-DNNF prend tout son sens,
+par opposition à la résolution unique où Z3 domine
+(section \ref{ssec:res-temps}).
+
 
 \chapter{Discussion}
 \label{chap:discussion}
-% À rédiger
+
+% -----------------------------------------------------------------------------
+\section{Du solveur au compilateur de connaissances}
+\label{sec:disc-pivot}
+% -----------------------------------------------------------------------------
+
+Pris comme solveur de \#SAT et de MaxSAT à coup unique,
+l'algorithme de programmation dynamique de Saether et
+al. \cite{saether2015} ne rivalise pas avec un solveur de
+production. La section \ref{ssec:res-temps} chiffre l'écart : Z3
+résout plus vite sur la quasi-totalité des instances comparées, et
+le facteur de ralentissement du DP atteint environ $47\,734$ sur
+les circuits tseytin. Cette infériorité était attendue. Z3
+capitalise des décennies d'optimisation de la recherche CDCL, là
+où la programmation dynamique poursuit une garantie de complexité
+paramétrée par la ps-width, qui ne devient favorable que sur des
+familles réellement structurées.
+
+L'intérêt de l'approche ne tient donc pas à sa vitesse de
+résolution. La même exécution qui calcule \#SAT et MaxSAT construit
+un DAG d-DNNF structuré (section \ref{ssec:theo-bcms-construction}),
+et ce DAG est un objet réutilisable : une fois compilé, il répond à
+toute une famille de requêtes par simple parcours, sans relancer la
+programmation dynamique (section \ref{sec:res-queries}). La carte de
+compilation de Darwiche et Marquis \cite{darwiche2002} garantit que
+le d-DNNF rend polynomiales les six requêtes exploitées dans ce
+travail : consistance, validité, comptage des modèles, implication
+clausale, test d'implicant et énumération
+(section \ref{sec:theo-queries}). La contribution de ce mémoire
+n'est ainsi pas un solveur plus rapide, mais un compilateur de
+connaissances.
+
+La compilation a toutefois un coût, celui de la programmation
+dynamique elle-même (section \ref{sec:res-dp}), alors qu'une requête
+isolée sur le DAG est presque gratuite. L'approche n'est rentable
+que si le même DAG sert à plusieurs requêtes. La
+section \ref{ssec:res-breakeven} quantifie ce seuil : sur la médiane
+des instances mesurées, compiler le DAG puis poser $N^* = 120$
+requêtes coûte autant que $120$ appels Z3 indépendants, et
+l'avantage passe au compilateur au-delà. C'est dans cet usage
+répété, et non dans la résolution unique, que la compilation en
+d-DNNF prend sa valeur.
+
+% -----------------------------------------------------------------------------
+\section{ps-width et effort CDCL : des difficultés orthogonales}
+\label{sec:disc-pswidth-cdcl}
+% -----------------------------------------------------------------------------
+
+La ps-width et l'effort de recherche d'un solveur CDCL mesurent
+deux difficultés sans rapport l'une avec l'autre. La
+section \ref{ssec:res-correlation} le met en évidence : les
+instances tseytin atteignent une ps-width allant jusqu'à $8\,192$,
+là où Z3 les résout avec zéro à deux conflits. Une ps-width élevée
+n'entraîne donc pas une résolution coûteuse pour Z3, et rien dans
+nos mesures ne suggère la relation inverse. L'écart tient à la
+nature des deux quantités. La ps-width est une propriété
+structurelle du graphe d'incidence de la formule
+(section \ref{ssec:theo-pswidth-def}) et borne la largeur des états
+que la programmation dynamique maintient le long de la
+décomposition. Le nombre de conflits, lui, mesure l'effort de
+recherche que Z3 consent au fil de sa résolution. Aucune des deux
+ne se déduit de l'autre.
+
+Cette indépendance pèse directement sur la comparaison de la
+section \ref{sec:disc-pivot}. Le seul régime qui aurait avantagé la
+programmation dynamique, une ps-width basse couplée à un grand
+nombre de conflits, n'apparaît dans aucune instance testée, tandis
+que les familles à ps-width élevée que le DP peine à traiter sont
+justement celles que Z3 résout sans effort. Aucun des deux
+paradigmes ne domine l'autre en général : chacun capture une forme
+de difficulté que l'autre ignore.
+
+% -----------------------------------------------------------------------------
+\section{GreedyOrder, maillon faible et principal levier}
+\label{sec:disc-greedy}
+% -----------------------------------------------------------------------------
+
+La qualité des résultats du DP dépend entièrement de la branch
+decomposition fournie en entrée, et celle-ci provient de
+l'heuristique GreedyOrder, que Saether et al. \cite{saether2015}
+décrivent eux-mêmes comme \og\,very simple\,\fg{}. Sur les familles
+structurées, cette simplicité se paie. Type 2 illustre le cas le
+plus net : sa borne théorique vaut $2^t = 8$ pour $t = 3$, alors
+que GreedyOrder y produit une ps-width de médiane $184$
+(section \ref{ssec:res-pswidth}). Au total, $33$ instances
+franchissent la borne de leur famille sans que l'algorithme en soit
+pour autant invalidé (section \ref{ssec:res-invariants}).
+
+Ce dépassement est le point le plus coûteux de tout le pipeline. La
+complexité du DP croît comme le cube de la ps-width
+(Théorème \ref{thm:dp-total}), si bien que diviser la ps-width par
+deux divise le temps de résolution par environ huit. Aucun autre
+paramètre n'a un effet aussi marqué sur le coût. Or l'écart à la
+borne ne vient pas de la formule, mais de l'ordre dans lequel la
+décomposition est construite. La numérotation des variables est
+permutée aléatoirement par défaut, ce qui masque l'interval
+ordering sous-jacent, et l'heuristique ne le reconstitue pas
+toujours à partir du seul graphe d'incidence
+(section \ref{ssec:res-modes}).
+
+Deux voies pourraient resserrer cet écart. La première est exacte :
+pour les formules dont le graphe d'incidence est un \emph{interval
+bigraph}, ce qui couvre les familles type 1 et type 2, le
+Théorème 6 de Saether et al. \cite{saether2015} fournit en temps
+polynomial une décomposition linéaire atteignant la borne
+$\min(m + 1,\ 2^t)$. Reconnaître ces formules et leur appliquer
+cette construction dédiée remplacerait l'heuristique par une
+décomposition optimale là où elle échoue le plus. La seconde est
+plus générale : les heuristiques de calcul de décompositions
+arborescentes, éprouvées de longue date pour minimiser la
+treewidth, pourraient être transposées à la recherche d'une branch
+decomposition de faible ps-width. Dans les deux cas, le constat
+reste le même. L'écart aux bornes du papier tient à l'heuristique
+de décomposition, non à l'algorithme de programmation dynamique,
+dont aucune exécution n'a produit de résultat incorrect
+(section \ref{ssec:res-invariants}).
+
+% -----------------------------------------------------------------------------
+\section{Limites de l'évaluation et améliorations possibles}
+\label{sec:disc-limites}
+% -----------------------------------------------------------------------------
+
+Plusieurs choix du protocole limitent la portée de la comparaison
+avec Z3, et tous flattent notre approche. Z3 est relancé à froid à
+chaque appel, sans réutilisation de son état interne d'une requête à
+la suivante. L'avantage mesuré de la consistance sur DAG
+(section \ref{ssec:res-co-z3}) en ressort surévalué, puisqu'un usage
+incrémental de Z3 amortirait une partie de son coût de démarrage. Une
+comparaison à un Z3 incrémental, sur des séquences de requêtes
+proches, en donnerait une image plus juste. Plus fondamentalement, Z3
+est un solveur SMT généraliste, ni un solveur de \#SAT dédié, ni un
+compilateur de connaissances. Les solveurs de comptage spécialisés
+comme sharpSAT \cite{thurley2006} et les compilateurs comme
+d4 \cite{lagniez2017} ou ganak offriraient une comparaison plus
+exigeante, que nous n'avons pas conduite, et les intégrer comme
+références situerait l'approche par rapport à l'état de l'art réel du
+domaine.
+
+Deux autres réserves portent sur la portée des conclusions plutôt que
+sur la comparaison. Le benchmark ne retient que les instances menées à
+terme (section \ref{ssec:res-degeneres}). Les plus difficiles
+dépassent la limite mémoire imposée et n'apparaissent pas dans les
+statistiques, qui décrivent donc le comportement du DP sur les
+instances faisables et sous-représentent son pire cas. La borne de
+taille $7 k^3 (n + m)$ (Lemme \ref{lem:bcms-size}) appelle une
+réserve du même ordre. Elle est respectée sur toutes les instances
+vérifiées (section \ref{ssec:res-invariants}), mais la taille réelle
+du DAG lui reste inférieure d'environ six ordres de grandeur en
+médiane. La borne garde sa valeur de garantie théorique et ne sert à
+rien pour dimensionner la mémoire d'une exécution concrète.
+
+Ces réserves dessinent les prolongements naturels du côté de
+l'évaluation : intégrer un Z3 incrémental et des outils de \#SAT
+spécialisés comme références, et repousser la limite mémoire pour
+mesurer le DP là où il échoue aujourd'hui. Avec les pistes
+algorithmiques de la section \ref{sec:disc-greedy}, elles tracent le
+programme d'une suite à ce travail, centrée sur la qualité de la
+compilation plutôt que sur la vitesse de résolution.
 
 \chapter{Conclusion}
 \label{chap:conclusion}
-% À rédiger
+
+% -----------------------------------------------------------------------------
+\section{Bilan et réponse à la question de recherche}
+\label{sec:concl-bilan}
+% -----------------------------------------------------------------------------
+
+Ce mémoire visait deux objectifs complémentaires
+(chapitre \ref{chap:intro}), l'un d'implémentation, l'autre
+d'extension. Le premier est atteint : l'algorithme de programmation
+dynamique de Saether et al. \cite{saether2015} est implémenté de bout
+en bout en C, depuis la lecture des formules CNF jusqu'au calcul
+conjoint de \#SAT et de MaxSAT, en passant par la construction d'une
+branch decomposition et les trois procédures du papier. Le second
+l'est aussi : la programmation dynamique est instrumentée à la
+manière de Bova, Capelli, Mengel et Slivovsky \cite{bova2015} pour
+produire, au cours de la même exécution, un DAG d-DNNF structuré, sur
+lequel les six requêtes que la carte de compilation de Darwiche et
+Marquis \cite{darwiche2002} rend polynomiales ont toutes été
+réalisées. Une évaluation empirique sur les familles synthétiques à
+ps-width contrôlée, les formules aléatoires et les circuits de
+multiplication accompagne ces deux volets
+(chapitre \ref{chap:resultats}).
+
+La cohérence de l'ensemble a été contrôlée par une batterie
+d'invariants théoriques (section \ref{ssec:res-invariants}). Sur
+toutes les instances vérifiées, la valeur de MaxSAT et le comptage des
+modèles coïncident avec ceux de Z3, le compte effectué sur le DAG
+redonne le \#SAT de la programmation dynamique, et la taille du DAG
+respecte sa borne théorique, sans aucun échec. Théorie
+(chapitre \ref{chap:theorie}) et implémentation
+(chapitre \ref{chap:implementation}) concordent ainsi sur tout le
+benchmark.
+
+L'introduction posait une question : dans quels régimes la
+décomposition structurelle apporte-t-elle un avantage ? La réponse est
+nuancée. Pour résoudre une formule une seule fois, elle n'en apporte
+aucun, et un solveur de production traite plus vite la quasi-totalité
+des instances (section \ref{ssec:res-temps}). L'avantage se loge
+ailleurs, dans la réutilisation du DAG compilé : dès qu'une même
+formule fait l'objet d'environ $N^* = 120$ requêtes, le coût de
+compilation est amorti et le pipeline devient le plus économique
+(section \ref{ssec:res-breakeven}). La décomposition structurelle ne
+livre donc pas un meilleur solveur, mais un compilateur de
+connaissances dont la valeur tient à l'usage répété
+(section \ref{sec:disc-pivot}).
+
+% -----------------------------------------------------------------------------
+\section{Perspectives}
+\label{sec:concl-perspectives}
+% -----------------------------------------------------------------------------
+
+La portée de ce résultat dépasse le cadre du benchmark. Un DAG
+compilé une fois sert de support à un raisonnement répété sur la même
+formule, qu'il s'agisse de compter ses modèles, d'en énumérer ou de
+tester des implications, sans jamais relancer la programmation
+dynamique (section \ref{sec:disc-pivot}). Les usages évoqués en
+introduction (chapitre \ref{chap:intro}), de l'inférence probabiliste
+exacte à la vérification quantitative, relèvent précisément de ce
+schéma, où une même théorie est interrogée un grand nombre de fois.
+
+Le seuil de rentabilité mesuré (section \ref{ssec:res-breakeven})
+cerne le contexte où la compilation trouve son intérêt :
+l'interrogation répétée d'une formule, et non sa résolution
+ponctuelle. C'est là, plus que dans la course à la vitesse face aux
+solveurs de production, que la programmation dynamique sur branch
+decomposition et la compilation en d-DNNF prennent leur sens.
 
 % =============================================================
-
-% Annexes
-\appendix
-\chapter{Annexes}
-\label{chap:annexes}
-\clearpage
-
-% Bibliographie
-\chapter*{Bibliographie}
-\addcontentsline{toc}{chapter}{Bibliographie}
 
 \begin{thebibliography}{99}
 
 \bibitem{cook1971}
-  S.~A. Cook.
+  S. A. Cook.
   \newblock The complexity of theorem-proving procedures.
-  \newblock In \emph{Proc.\ 3rd Annual ACM Symposium on Theory of Computing (STOC)}, pp.~151--158, 1971.
+  \newblock In \emph{Proc.\ 3rd Annual ACM Symposium on Theory of Computing (STOC)}, pp. 151--158, 1971.
 
 \bibitem{karp1972}
-  R.~M. Karp.
+  R. M. Karp.
   \newblock Reducibility among combinatorial problems.
-  \newblock In R.~E. Miller and J.~W. Thatcher (eds.), \emph{Complexity of Computer Computations}, pp.~85--103. Plenum Press, 1972.
+  \newblock In R. E. Miller and J. W. Thatcher (eds.), \emph{Complexity of Computer Computations}, pp. 85--103. Plenum Press, 1972.
 
 \bibitem{valiant1979}
-  L.~G. Valiant.
+  L. G. Valiant.
   \newblock The complexity of enumeration and reliability problems.
   \newblock \emph{SIAM Journal on Computing}, 8(3):410--421, 1979.
 
 \bibitem{moskewicz2001}
-  M.~W. Moskewicz, C.~F. Madigan, Y.~Zhao, L.~Zhang, and S.~Malik.
+  M. W. Moskewicz, C. F. Madigan, Y. Zhao, L. Zhang, and S. Malik.
   \newblock Chaff: Engineering an efficient SAT solver.
-  \newblock In \emph{Proc.\ 38th Design Automation Conference (DAC)}, pp.~530--535, 2001.
+  \newblock In \emph{Proc.\ 38th Design Automation Conference (DAC)}, pp. 530--535, 2001.
 
 \bibitem{een2003}
-  N.~Eén and N.~Sörensson.
+  N. Eén and N. Sörensson.
   \newblock An extensible SAT-solver.
-  \newblock In \emph{Proc.\ 6th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 2919, pp.~502--518. Springer, 2003.
+  \newblock In \emph{Proc.\ 6th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 2919, pp. 502--518. Springer, 2003.
 
 \bibitem{marques1999}
-  J.~P. Marques-Silva and K.~A. Sakallah.
+  J. P. Marques-Silva and K. A. Sakallah.
   \newblock GRASP: A search algorithm for propositional satisfiability.
   \newblock \emph{IEEE Transactions on Computers}, 48(5):506--521, 1999.
 
 \bibitem{thurley2006}
-  M.~Thurley.
+  M. Thurley.
   \newblock sharpSAT -- Counting models with advanced component caching and implicit BCP.
-  \newblock In \emph{Proc.\ 9th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 4121, pp.~424--429. Springer, 2006.
+  \newblock In \emph{Proc.\ 9th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 4121, pp. 424--429. Springer, 2006.
 
 \bibitem{lagniez2017}
-  J.-M. Lagniez and P.~Marquis.
+  J.-M. Lagniez and P. Marquis.
   \newblock An improved decision-DNNF compiler.
-  \newblock In \emph{Proc.\ 26th International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~667--673, 2017.
+  \newblock In \emph{Proc.\ 26th International Joint Conference on Artificial Intelligence (IJCAI)}, pp. 667--673, 2017.
 
 \bibitem{moura2008}
-  L.~de Moura and N.~Bjørner.
+  L. de Moura and N. Bjørner.
   \newblock Z3: An efficient SMT solver.
-  \newblock In \emph{Proc.\ 14th International Conference on Tools and Algorithms for the Construction and Analysis of Systems (TACAS)}, LNCS 4963, pp.~337--340. Springer, 2008.
+  \newblock In \emph{Proc.\ 14th International Conference on Tools and Algorithms for the Construction and Analysis of Systems (TACAS)}, LNCS 4963, pp. 337--340. Springer, 2008.
 
 \bibitem{darwiche2002}
-  A.~Darwiche and P.~Marquis.
+  A. Darwiche and P. Marquis.
   \newblock A knowledge compilation map.
   \newblock \emph{Journal of Artificial Intelligence Research (JAIR)}, 17:229--264, 2002.
 
 \bibitem{darwiche2011}
-  A.~Darwiche.
+  A. Darwiche.
   \newblock SDD: A new canonical representation of propositional knowledge bases.
-  \newblock In \emph{Proc.\ 22nd International Joint Conference on Artificial Intelligence (IJCAI)}, pp.~819--826, 2011.
+  \newblock In \emph{Proc.\ 22nd International Joint Conference on Artificial Intelligence (IJCAI)}, pp. 819--826, 2011.
 
 \bibitem{bryant1986}
-  R.~E. Bryant.
+  R. E. Bryant.
   \newblock Graph-based algorithms for Boolean function manipulation.
   \newblock \emph{IEEE Transactions on Computers}, C-35(8):677--691, 1986.
 
 \bibitem{samer2010}
-  M.~Samer and S.~Szeider.
+  M. Samer and S. Szeider.
   \newblock Algorithms for propositional model counting.
   \newblock \emph{Journal of Discrete Algorithms}, 8(1):50--64, 2010.
 
 \bibitem{slivovsky2020}
-  F.~Slivovsky and S.~Szeider.
+  F. Slivovsky and S. Szeider.
   \newblock A faster algorithm for propositional model counting parameterized by incidence treewidth.
-  \newblock In \emph{Proc.\ 23rd International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 12178, pp.~267--276. Springer, 2020.
+  \newblock In \emph{Proc.\ 23rd International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 12178, pp. 267--276. Springer, 2020.
 
 \bibitem{vatshelle2012}
-  M.~Vatshelle.
+  M. Vatshelle.
   \newblock \emph{New Width Parameters of Graphs}.
   \newblock PhD thesis, University of Bergen, 2012.
 
 \bibitem{bergougnoux2025}
-  B.~Bergougnoux, É.~Bonnet, and J.~Duron.
+  B. Bergougnoux, É. Bonnet, and J. Duron.
   \newblock Mim-width is paraNP-complete.
   \newblock In \emph{Proc.\ 52nd International Colloquium on Automata, Languages, and Programming (ICALP 2025)}, LIPIcs, 2025.
   \newblock DOI: 10.4230/LIPIcs.ICALP.2025.25.
 
 \bibitem{bova2015}
-  S.~Bova, F.~Capelli, S.~Mengel, and F.~Slivovsky.
+  S. Bova, F. Capelli, S. Mengel, and F. Slivovsky.
   \newblock On compiling CNFs into structured deterministic DNNFs.
-  \newblock In \emph{Proc.\ 18th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 9340, pp.~199--214. Springer, 2015.
-
-\bibitem{bryant2023}
-  R.~E. Bryant, W.~Nawrocki, J.~Avigad, and M.~J.~H. Heule.
-  \newblock Certified knowledge compilation with application to formally verified model counting.
-  \newblock In \emph{Proc.\ 26th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LIPIcs, 2023.
-  \newblock DOI: 10.4230/LIPIcs.SAT.2023.6.
-
-\bibitem{fichte2025}
-  J.~Fichte and M.~Hecher.
-  \newblock The model counting competitions 2021-2023.
-  \newblock \emph{arXiv preprint} arXiv:2504.13842, 2025.
+  \newblock In \emph{Proc.\ 18th International Conference on Theory and Applications of Satisfiability Testing (SAT)}, LNCS 9340, pp. 199--214. Springer, 2015.
 
 \bibitem{saether2015}
-  S.~H. Sæther, J.~A. Telle, and M.~Vatshelle.
+  S. H. Saether, J. A. Telle, and M. Vatshelle.
   \newblock Solving \#SAT and MaxSAT by dynamic programming.
   \newblock \emph{Journal of Artificial Intelligence Research (JAIR)}, 54:59--82, 2015.
 
@@ -1627,6 +2674,26 @@ et $k$.
 % Déclaration d'utilisation de l'IA
 \chapter*{Déclaration d'utilisation de l'IA}
 \addcontentsline{toc}{chapter}{Déclaration d'utilisation de l'IA}
+
+Je déclare avoir eu recours à des assistants d'intelligence
+artificielle selon les modalités suivantes :
+
+\begin{itemize}
+  \item \textbf{Recherche et théorie} : l'IA a servi d'aide à la
+  recherche bibliographique et à la consolidation de ma compréhension
+  des concepts abordés dans ce travail. \\
+
+  \item \textbf{Aide au développement} : l'IA a été utilisée comme
+  partenaire de travail pour le débogage, l'optimisation, la
+  suggestion de structures modulaires pour l'implémentation et la
+  réalisation de figures soignées présentant les résultats.
+  L'intégralité du code produit demeure néanmoins mon propre travail. \\
+
+  \item \textbf{Rédaction et mise en forme} : l'IA m'a aidé pour la
+  correction orthographique et grammaticale du texte et pour la
+  reformulation de certains passages, afin d'en améliorer la clarté.
+\end{itemize}
+
 \clearpage
 
 \end{document}

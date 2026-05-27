@@ -1,0 +1,13 @@
+\babel@toc {french}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Couverture du benchmark par famille en mode \texttt {greedy}. La colonne \@FB@og \,Échecs\,\@FB@fg \relax {} agrège dépassements de la limite mémoire de 50~GiB par process, crashes et timeouts. Plages $n$, $m$ et ps-width relevées sur les instances réussies. Le mode \texttt {linear} traite quelques instances supplémentaires (section~\ref {ssec:res-modes}).}}{29}{table.5.1}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Invariants vérifiés sur les 164 instances réussies (toutes modes confondus). \@FB@og \,WARN\,\@FB@fg \relax {} signale un dépassement \emph {soft} d'une borne théorique générique (sans incidence sur la correction de l'algorithme). \@FB@og \,Skip\,\@FB@fg \relax {} compte les instances où l'invariant ne s'applique pas (par exemple Z3 en timeout pour les comparaisons croisées).}}{31}{table.5.2}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces ps-width observée en mode \texttt {greedy} sur les instances réussies. La colonne \@FB@og \,Borne théorique\,\@FB@fg \relax {} reprend les bornes établies par Sæther et al.~\cite {saether2015} (Corollaire~3) pour les familles concernées.}}{32}{table.5.3}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Temps de résolution médian par famille en mode \texttt {greedy} (passe~B) et facteur DP/Z3. Les colonnes \@FB@og \,DP$>$Z3\,\@FB@fg \relax {} et \@FB@og \,DP$<$Z3\,\@FB@fg \relax {} comptent les instances où DP est respectivement plus lent ou plus rapide que Z3.}}{32}{table.5.4}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }

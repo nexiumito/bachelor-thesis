@@ -50,10 +50,5 @@ coverage.xml
 *.o
 sat_solver
 
-# notes
-checkpoint/
 
-# self-docs
-.claude/
 
-tests/
