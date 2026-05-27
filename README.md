@@ -9,7 +9,7 @@
   **Travail de Bachelor en Sciences Informatiques** @ *Université de Genève - Faculté des Sciences*
 
   ![Language](https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c) ![Year](https://img.shields.io/badge/Année-2025%20--%202026-orange?style=for-the-badge)
-  ![Status](https://img.shields.io/badge/Status-En%20Cours-green?style=for-the-badge)
+  ![Status](https://img.shields.io/badge/Status-Termin%C3%A9-brightgreen?style=for-the-badge)
 
 </div>
 
